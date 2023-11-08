@@ -21,9 +21,8 @@ import Bar from "./pages/bar";
 import Line from "./pages/line";
 import Pie from "./pages/pie";
 import Calendar from "./pages/calendar";
-
-import Test from "./pages/test/test";
-import Add from "./pages/test/add"
+import PatientGenForm from "./pages/patientgenform";
+import PatientDetail from "./pages/patientdetail";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -34,7 +33,6 @@ const router = createBrowserRouter(
         <Route path="/" element={ <Dashboard /> } />
       </Route>
         <Route path="/form" element={<Form />} />
-        <Route path="/add" element={<Add />} />
         <Route path="/patient_info" element={<Patient_Info />} />
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/symptoms" element={<Symptoms />} />
@@ -43,14 +41,16 @@ const router = createBrowserRouter(
         <Route path="/pie" element={<Pie />} />
         <Route path="/line" element={<Line />} />
         <Route path="/calendar" element={<Calendar />} />
+        <Route path="/patientgenform" element={<PatientGenForm />} />
+        <Route path="/patient_info/:caseNumber" element={<PatientDetail />} />
 
-        <Route path="/test" element={<Test />} />
     </Route>
   )
 );
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <RouterProvider router={router} />
+  <React.StrictMode>
+    <RouterProvider router={router} />
+  </React.StrictMode>
 );
-
