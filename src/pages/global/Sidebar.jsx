@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { auth } from '../../config/firestore';
+import { auth } from '../../firebase.config';
 import { Link, useNavigate } from "react-router-dom";
 import { signOut } from 'firebase/auth';
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
@@ -10,7 +10,8 @@ import { tokens } from "../../theme";
 // Import Icons
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
-import LogoutIcon from '@mui/icons-material/Logout';
+import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+//import LogoutIcon from '@mui/icons-material/Logout';
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
@@ -18,7 +19,7 @@ import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
 import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
-import BuildIcon from '@mui/icons-material/Build';
+
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -120,10 +121,10 @@ const Sidebar = () => {
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Data
+              Patients
             </Typography>
             <Item
-              title="Patient Information"
+              title="General Information"
               to="/patient_info"
               icon={<PeopleOutlinedIcon />}
               selected={selected}
@@ -151,15 +152,15 @@ const Sidebar = () => {
             >
               Pages
             </Typography>
-            
+
             <Item
-              title="Test"
-              to="/test"
-              icon={<BuildIcon />}
+              title="Patient Gen Info"
+              to="/patientgenform"
+              icon={<PersonOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
-
+            
             <Item
               title="Calendar"
               to="/calendar"

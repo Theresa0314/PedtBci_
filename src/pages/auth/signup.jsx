@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { auth } from '../../config/firestore';
+import { auth } from '../../firebase.config';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { Link, useNavigate } from 'react-router-dom';
 
-import * as yup from "yup";
+//import * as yup from "yup";
 import { Box, Button, TextField, Grid } from "@mui/material";
 import { Formik } from "formik";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -41,7 +41,7 @@ const Signup = () => {
     justifyContent="center"
     sx={{ minHeight: '100vh' }}
   >
-      <Box m="20px" width="300px">
+      <Box m="20px">
       <Header title="SIGN UP" subtitle="Register User" />
 
       <Formik
