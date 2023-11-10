@@ -153,7 +153,7 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
     return (
         <Container component="main" maxWidth="md" sx={{
             backgroundColor: colors.blueAccent[800], 
-            padding: theme.spacing(6), 
+            padding: theme.spacing(5), 
             borderRadius: theme.shape.borderRadius
         }}>
             <Typography variant="h2" gutterBottom sx={{ color: colors.white, fontWeight: 'bold' }}>
