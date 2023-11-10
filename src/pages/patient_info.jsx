@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, useTheme, Button, Modal, TextField, InputAdornment } from "@mui/material";
+import { Box, Typography, useTheme, Button, TextField, InputAdornment } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../theme";
 import Header from "../components/Header";
-import PatientGenForm from './patientgenform'; 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { collection, getDocs } from "firebase/firestore";
 import { db } from '../firebase.config';
 import SearchIcon from '@mui/icons-material/Search';
@@ -15,31 +14,14 @@ const Patient_Info = () => {
 
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const navigate = useNavigate(); 
 
-  const style = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: '100%', // Use a percentage to make it responsive
-    maxWidth: 1000, // You can also set a maxWidth
-    bgcolor: 'background.paper',
-    boxShadow: 20,
-    p: 4,
-    borderRadius: 2, // Optional: if you want rounded corners
-  };
   
-  const [open, setOpen] = useState(false);
-
   const handleAddNewPatient = () => {
-    setOpen(true);
+    navigate("/patientgenform");
   };
 
-  const handleCloseForm = () => {
-    setOpen(false);
-  };
-
-
+  
 
     const [patientsData, setPatientsData] = useState([]);
 
@@ -49,18 +31,6 @@ const Patient_Info = () => {
     // Function to handle the search input change
     const handleSearchChange = (event) => {
       setSearchText(event.target.value);
-    };
-
-    const handleUpdatePatients = (newPatient) => {
-      setPatientsData((currentPatients) => {
-        const updatedPatients = [...currentPatients, newPatient];
-        updatedPatients.sort((a, b) => {
-          const dateA = new Date(a.dateAdded);
-          const dateB = new Date(b.dateAdded);
-          return dateA - dateB; // Ascending order
-        });
-        return updatedPatients;
-      });
     };
 
   
@@ -99,7 +69,7 @@ const Patient_Info = () => {
       flex: 1,
     },
     {
-      field: 'fullName', // This should match the field name in your Firestore documents for the patient's full name
+      field: 'fullName', 
       headerName: 'Full Name',
       flex: 1,
     },
@@ -155,7 +125,7 @@ const Patient_Info = () => {
   });
 
  return (
-<Box sx={{ flexGrow: 1, height: '100%', p: 3 }}>
+  <Box m="20px">
       <Header title="Patient Information" subtitle="Managing patient data" />
       <Box sx={{
         display: 'flex',
@@ -183,33 +153,19 @@ const Patient_Info = () => {
           style={{ 
             backgroundColor: colors.greenAccent[600],
             color: colors.grey[100],
-            height: '50px', // Adjust based on your theme's input height
-            marginLeft: theme.spacing(2)
+            height: '50px',
           }}
         >
           Add New Patient
         </Button>
       </Box>
- {/* Modal for the PatientGenForm */}
-      <Modal
-        open={open}
-        onClose={handleCloseForm}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-      <PatientGenForm handleCloseForm={handleCloseForm} handleUpdatePatients={handleUpdatePatients} />
-
-        </Box>
-      </Modal>
-
-      <Box sx={{
-          height: 650, // Adjust based on your layout
-          width: '100%',
+      <Box 
+      sx={{
+          width: 'auto',
           '& .MuiDataGrid-root': {
             border: `1px solid ${colors.primary[700]}`,
             color: colors.grey[100],
-            backgroundColor: colors.primary[400], // Background color for the DataGrid
+            backgroundColor: colors.primary[400],
           },
           '& .MuiDataGrid-columnHeaders': {
             backgroundColor: colors.blueAccent[700],
@@ -231,7 +187,7 @@ const Patient_Info = () => {
           },
         }}>
         <DataGrid
-          rows={filteredRows} // Use filteredRows here
+          rows={filteredRows}
           columns={columns}
           pageSize={10}
           rowsPerPageOptions={[5, 10, 20]}

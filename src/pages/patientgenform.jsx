@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, RadioGroup, FormControlLabel, FormHelperText, Radio, Container, Divider, Checkbox, useTheme
 } from '@mui/material';
@@ -11,7 +12,7 @@ const provinces = ["Metro Manila", "Cavite", "Laguna", "Batangas"];
 const cities = ["Manila", "Quezon City", "Caloocan", "Dasmariñas"];
 const barangays = ["Barangay 1", "Barangay 2", "Barangay 3", "Barangay 4"];
 
-const PatientGenForm = ({ handleCloseForm, handleUpdatePatients }) => {
+const PatientGenForm = ({ handleUpdatePatients }) => {
     // State hooks for patient information
     const [fullName, setFullName] = useState('');
     const [alias, setAlias] = useState('');
@@ -40,13 +41,21 @@ const PatientGenForm = ({ handleCloseForm, handleUpdatePatients }) => {
     const [tbDrugHistory, setTbDrugHistory] = useState('');
     const [symptomsLastTwoWeeks, setSymptomsLastTwoWeeks] = useState('');
 
+    // State to track if radio groups have been touched
+    const [touched, setTouched] = useState({
+        chestXrayAvailable: false,
+        tbDrugHistory: false,
+        symptomsLastTwoWeeks: false,
+    });
+
+
     const [consent, setConsent] = useState(false);
     const [formErrors, setFormErrors] = useState({});
 
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     
-    
+    const navigate = useNavigate();
 
     const validateForm = () => {
         const errors = {};
@@ -64,10 +73,30 @@ const PatientGenForm = ({ handleCloseForm, handleUpdatePatients }) => {
         return Object.keys(errors).length === 0;
     };
 
+    const handleCancel = () => {
+                navigate("/patient_info");
+            };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
       
-        if (!validateForm()) return;
+       // Perform validation checks
+        const errors = {};
+        if (!chestXrayAvailable) {
+            errors.chestXrayAvailable = 'Please indicate if an annual chest x-ray is available.';
+        }
+        if (!tbDrugHistory) {
+            errors.tbDrugHistory = 'Please indicate the TB drug history.';
+        }
+        if (!symptomsLastTwoWeeks) {
+            errors.symptomsLastTwoWeeks = 'Please indicate if there have been any symptoms in the last two weeks.';
+        }
+
+        // Check for any errors in the form including the new radio group validations
+        if (!validateForm() || Object.keys(errors).length > 0) {
+            setFormErrors({ ...formErrors, ...errors });
+            return; 
+        }
       
         // Generate a unique case number
         const caseNumber = 'CN-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
@@ -101,19 +130,25 @@ const PatientGenForm = ({ handleCloseForm, handleUpdatePatients }) => {
           caseNumber, // Add the generated case number
           dateAdded,  // Add the generated date added
         };
+
+       
+        
       
         try {
             const docRef = await addDoc(collection(db, "patientsinfo"), patientData);
             console.log("Document written with ID: ", docRef.id);
         
-            const newPatient = { ...patientData, id: docRef.id };
-            handleUpdatePatients(newPatient); // Update the patients list in the parent component
-            
-            handleCloseForm(); // Close the form after submission
-          } catch (e) {
-            console.error("Error adding document: ", e);
-          }
-        };
+            if (handleUpdatePatients) {
+                const newPatient = { ...patientData, id: docRef.id };
+                handleUpdatePatients(newPatient);
+              }
+              
+              // Navigate back to the patient_info page
+              navigate("/patient_info");
+            } catch (e) {
+              console.error("Error adding document: ", e);
+            }
+          };
 
     return (
         <Container component="main" maxWidth="md" sx={{
@@ -422,39 +457,64 @@ const PatientGenForm = ({ handleCloseForm, handleUpdatePatients }) => {
                 <Grid item xs={4}>
                     <Typography variant="body1" gutterBottom>Annual chest x-ray available:</Typography>
                     <RadioGroup
-                    row
-                    name="chestXrayAvailable"
-                    value={chestXrayAvailable}
-                    onChange={(e) => setChestXrayAvailable(e.target.value)}
+                        row
+                        name="chestXrayAvailable"
+                        value={chestXrayAvailable}
+                        onChange={(e) => {
+                        setChestXrayAvailable(e.target.value);
+                        // If there is a change, clear the error for this field
+                        setFormErrors({ ...formErrors, chestXrayAvailable: '' });
+                        }}
                     >
-                    <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-                    <FormControlLabel value="no" control={<Radio />} label="No" />
+                        <FormControlLabel value="yes" control={<Radio required/>} label="Yes" />
+                        <FormControlLabel value="no" control={<Radio required/>} label="No" />
                     </RadioGroup>
-                </Grid>
-                <Grid item xs={4}>
+                    {formErrors.chestXrayAvailable && (
+                        <FormHelperText error>{formErrors.chestXrayAvailable}</FormHelperText>
+                    )}
+                    </Grid>
+
+                    <Grid item xs={4}>
                     <Typography variant="body1" gutterBottom>History of TB drug treatment (of the child):</Typography>
                     <RadioGroup
-                    row
-                    name="tbDrugHistory"
-                    value={tbDrugHistory}
-                    onChange={(e) => setTbDrugHistory(e.target.value)}
+                        row
+                        name="tbDrugHistory"
+                        value={tbDrugHistory}
+                        onChange={(e) => {
+                        setTbDrugHistory(e.target.value);
+                        // If there is a change, clear the error for this field
+                        setFormErrors({ ...formErrors, tbDrugHistory: '' });
+                        }}
                     >
-                    <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-                    <FormControlLabel value="no" control={<Radio />} label="No" />
+                        <FormControlLabel value="yes" control={<Radio required/>} label="Yes" />
+                        <FormControlLabel value="no" control={<Radio required/>} label="No" />
                     </RadioGroup>
-                </Grid>
-                <Grid item xs={4}>
+                    {formErrors.tbDrugHistory && (
+                        <FormHelperText error>{formErrors.tbDrugHistory}</FormHelperText>
+                    )}
+                    </Grid>
+
+                    <Grid item xs={4}>
                     <Typography variant="body1" gutterBottom>Experiencing symptoms in the past 2 weeks:</Typography>
                     <RadioGroup
-                    row
-                    name="symptomsLastTwoWeeks"
-                    value={symptomsLastTwoWeeks}
-                    onChange={(e) => setSymptomsLastTwoWeeks(e.target.value)}
+                        row
+                        name="symptomsLastTwoWeeks"
+                        value={symptomsLastTwoWeeks}
+                        onChange={(e) => {
+                        setSymptomsLastTwoWeeks(e.target.value);
+                        // If there is a change, clear the error for this field
+                        setFormErrors({ ...formErrors, symptomsLastTwoWeeks: '' });
+                        }}
                     >
-                    <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-                    <FormControlLabel value="no" control={<Radio />} label="No" />
+                        <FormControlLabel value="yes" control={<Radio required/>} label="Yes" />
+                        <FormControlLabel value="no" control={<Radio required/>} label="No" />
                     </RadioGroup>
-                </Grid>
+                    {formErrors.symptomsLastTwoWeeks && (
+                        <FormHelperText error>{formErrors.symptomsLastTwoWeeks}</FormHelperText>
+                    )}
+                    </Grid>
+
+
                 </Grid>
 
             <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
@@ -482,8 +542,8 @@ const PatientGenForm = ({ handleCloseForm, handleUpdatePatients }) => {
                     <Button type="submit" variant="contained" sx={{ backgroundColor: colors.greenAccent[600], color: colors.grey[100], mr: 1 }}>
                         Save Information
                     </Button>
-                    <Button variant="outlined" onClick={handleCloseForm} sx={{ color: colors.grey[100], borderColor: colors.grey[700] }}>
-                        Cancel
+                    <Button variant="outlined" onClick={handleCancel} sx={{ color: colors.grey[100], borderColor: colors.grey[700] }}>
+                        Back
                     </Button>
                 </Grid>
             </form>
