@@ -10,8 +10,7 @@ import { tokens } from "../../theme";
 // Import Icons
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
-import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
-//import LogoutIcon from '@mui/icons-material/Logout';
+import LogoutIcon from '@mui/icons-material/Logout';
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
@@ -152,14 +151,6 @@ const Sidebar = () => {
             >
               Pages
             </Typography>
-
-            <Item
-              title="Patient Gen Info"
-              to="/patientgenform"
-              icon={<PersonOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
             
             <Item
               title="Calendar"
@@ -198,7 +189,19 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
 
-           <Button onClick={handleLogout}>LOGOUT</Button>
+            <Menu iconShape="square">
+              <MenuItem
+                icon={<LogoutIcon />}
+                onClick={handleLogout}
+                style={{
+                  position: 'absolute', 
+                  bottom: 0,
+                  width: '100%', 
+                }}
+              >
+                Logout
+              </MenuItem>
+            </Menu>
             
           </Box>
         </Menu>
