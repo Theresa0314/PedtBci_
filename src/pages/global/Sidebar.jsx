@@ -204,7 +204,7 @@ const Sidebar = () => {
               icon={<TimelineOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
-            />
+            /> */}
 
             <Menu iconShape="square">
               <MenuItem
