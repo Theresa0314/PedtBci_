@@ -19,6 +19,9 @@ import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
 import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
+import InventoryIcon from '@mui/icons-material/Inventory';
+import NoteAddIcon from '@mui/icons-material/NoteAdd';
+import { LogoutOutlined } from "@mui/icons-material";
 
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
@@ -144,6 +147,20 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
+                         <Item
+              title="Treatment Plan"
+              to="/TPList"
+              icon={<NoteAddIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+              <Item
+              title="Clinical Inventory"
+              to="/inventoryList"
+              icon={<InventoryIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
 
             <Typography
               variant="h6"
@@ -169,7 +186,7 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
 
-            <Typography
+            {/* <Typography
               variant="h6"
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
@@ -196,9 +213,19 @@ const Sidebar = () => {
               icon={<TimelineOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
-            />
+            /> */}
 
-           <Button onClick={handleLogout}>LOGOUT</Button>
+            <Button
+              sx={{ marginX:'3vh' }}
+              style={{
+                color: colors.grey[100],
+              }} variant="outline"
+              startIcon={<LogoutOutlined />}
+              size="large"
+              onClick={handleLogout}>
+                LOGOUT
+              </Button>
+            
             
           </Box>
         </Menu>
