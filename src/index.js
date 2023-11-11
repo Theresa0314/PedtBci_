@@ -23,17 +23,18 @@ import Pie from "./pages/pie";
 import Calendar from "./pages/calendar";
 import PatientGenForm from "./pages/patientgenform";
 import PatientDetail from "./pages/patientdetail";
+import TPList from "./pages/treatmentPlan/TPlist";
+import TPForm from "./pages/treatmentPlan/TPform";
+import TPDetail from "./pages/treatmentPlan/TPdetail";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />}>
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
+      
       <Route path="/" element={ <Protected /> } >
         <Route path="/" element={ <Dashboard /> } />
-      </Route>
-        <Route path="/form" element={<Form />} />
-        <Route path="/patient_info" element={<Patient_Info />} />
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/symptoms" element={<Symptoms />} />
         <Route path="/form" element={<Form />} />
@@ -41,9 +42,16 @@ const router = createBrowserRouter(
         <Route path="/pie" element={<Pie />} />
         <Route path="/line" element={<Line />} />
         <Route path="/calendar" element={<Calendar />} />
+
+        <Route path="/patient_info" element={<Patient_Info />} />
         <Route path="/patientgenform" element={<PatientGenForm />} />
         <Route path="/patient_info/:caseNumber" element={<PatientDetail />} />
 
+        <Route path="/TPlist/" element={<TPList />} />
+        <Route path="/TPform/" element={<TPForm />} />
+        <Route path="/TPlist/:caseNumber" element={<TPDetail />} />
+      </Route>
+        <Route path="/form" element={<Form />} />
     </Route>
   )
 );
