@@ -338,7 +338,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                             <MenuItem key={option} value={option}>{option}</MenuItem>
                         ))}
                         </Select>
-                    </FormControl>
+                        </FormControl>
                     </Grid>
                     </Grid>
                 </Grid>
