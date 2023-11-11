@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, RadioGroup, FormControlLabel, FormHelperText, Radio, Container, Divider, Checkbox, useTheme
+  Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, RadioGroup, 
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
+  FormControlLabel, FormHelperText, Radio, Container, Divider, Checkbox, useTheme
 } from '@mui/material';
 import { tokens } from "../theme";
 import { db } from '../firebase.config';
@@ -41,16 +43,10 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
     const [tbDrugHistory, setTbDrugHistory] = useState('');
     const [symptomsLastTwoWeeks, setSymptomsLastTwoWeeks] = useState('');
 
-    // State to track if radio groups have been touched
-    const [touched, setTouched] = useState({
-        chestXrayAvailable: false,
-        tbDrugHistory: false,
-        symptomsLastTwoWeeks: false,
-    });
-
-
     const [consent, setConsent] = useState(false);
     const [formErrors, setFormErrors] = useState({});
+    const [openConsentDialog, setOpenConsentDialog] = useState(true); // Opens the dialog by default
+
 
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -143,8 +139,7 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
                 handleUpdatePatients(newPatient);
               }
               
-              // Navigate back to the patient_info page
-              navigate("/patient_info");
+              navigate("/patientinfo");
             } catch (e) {
               console.error("Error adding document: ", e);
             }
@@ -156,6 +151,54 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
             padding: theme.spacing(5), 
             borderRadius: theme.shape.borderRadius
         }}>
+
+            <Dialog
+            open={openConsentDialog}
+            onClose={() => setOpenConsentDialog(false)}
+            aria-labelledby="consent-dialog-title"
+            aria-describedby="consent-dialog-description"
+            PaperProps={{
+                style: {
+                backgroundColor: colors.primary[500], // or whichever color you want from your theme
+                justifyContent: 'center',
+                boxShadow: 'none',
+                },
+            }}
+            >
+            <DialogTitle id="consent-dialog-title" style={{ color: colors.greenAccent[600], fontSize: '1.5rem' }}>
+                Privacy Consent Reminder
+            </DialogTitle>
+            <DialogContent>
+                <DialogContentText id="consent-dialog-description" style={{ color: colors.grey[100], marginBottom: theme.spacing(2) }}>
+                In keeping with our commitment to your privacy and safeguarding your personal data, we assure you that the collection of information is solely for <strong style={{ color: colors.redAccent[500] }}>legitimate healthcare operations</strong>. These operations include clinical and program management, as well as the offering of psychosocial and financial assistance where applicable.
+                </DialogContentText>
+                <DialogContentText id="consent-dialog-description" style={{ color: colors.grey[100], marginBottom: theme.spacing(2) }}>
+                Should you have any questions, or wish to withdraw consent, please contact our facility head or reach out to:
+                <ul>
+                    <li>Email: <a href="mailto:ntp.helpdesk@doh.gov.ph" style={{ color: colors.greenAccent[600] }}>ntp.helpdesk@doh.gov.ph</a></li>
+                    <li>Phone: <span style={{ color: colors.greenAccent[600] }}>(02) 8230-9626</span></li>
+                </ul>
+                </DialogContentText>
+                <DialogContentText id="consent-dialog-description" style={{ color: colors.grey[100] }}>
+                Rest assured, your personal information is secured and will be accessible only to <strong style={{ color: colors.redAccent[500] }}>authorized staff</strong> for your care and support.
+                </DialogContentText>
+            </DialogContent>
+            <DialogActions style={{ justifyContent: 'center', padding: theme.spacing(3) }}>
+                <Button onClick={() => {
+                setOpenConsentDialog(false);
+                navigate("/patientinfo"); // Navigate back to patient info page
+                }} style={{ color: colors.grey[100], borderColor: colors.greenAccent[500], marginRight: theme.spacing(1) }}>
+                Disagree
+                </Button>
+                <Button onClick={() => {
+                setConsent(true);
+                setOpenConsentDialog(false);
+                }} style={{ backgroundColor: colors.greenAccent[600], color: colors.grey[100] }}>
+                Agree
+                </Button>
+            </DialogActions>
+            </Dialog>
+
             <Typography variant="h2" gutterBottom sx={{ color: colors.white, fontWeight: 'bold' }}>
                 Patient General Information
             </Typography>
