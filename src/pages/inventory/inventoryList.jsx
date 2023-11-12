@@ -117,22 +117,6 @@ const InvList = () => {
         headerName: 'Acronym',
         flex: 1,
       },
-      {
-        field: 'increment', 
-        headerName: '',
-        flex: 1,
-        renderCell: (params) => (
-        <Box  display="flex" justifyContent="center">
-        <Button 
-              className = "increment"
-                variant="contained"
-                style={{backgroundColor: colors.greenAccent[600]}}
-              >
-                 <AddIcon />
-        </Button>
-      </Box>
-        ),
-      },
     {
       field: 'quantity',
       headerName: 'Quantity',
@@ -145,22 +129,6 @@ const InvList = () => {
         >
           {params.value}
         </Typography>
-      ),
-    },
-    {
-      field: 'decrement', 
-      headerName: '',
-      flex: 1,
-      renderCell: (params) => (
-      <Box  display="flex" justifyContent="center">
-      <Button 
-            className = "decrement"
-              variant="contained"
-              style={{backgroundColor: colors.redAccent[600]}}
-            >
-            <RemoveIcon />
-      </Button>
-    </Box>
       ),
     },
     {
