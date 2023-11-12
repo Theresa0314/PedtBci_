@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, RadioGroup, 
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
-  FormControlLabel, FormHelperText, Radio, Container, Divider, Checkbox, useTheme
+  FormControlLabel, FormHelperText, Radio, Container, Divider, useTheme
 } from '@mui/material';
 import { tokens } from "../theme";
 import { db } from '../firebase.config';
@@ -145,12 +145,24 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
             }
           };
 
+          const drawerWidth = 240;
+
     return (
-        <Container component="main" maxWidth="md" sx={{
-            backgroundColor: colors.blueAccent[800], 
-            padding: theme.spacing(5), 
-            borderRadius: theme.shape.borderRadius
-        }}>
+    <Container
+    component="main"
+    sx={{
+        backgroundColor: colors.blueAccent[800],
+        padding: theme.spacing(5),
+        borderRadius: theme.shape.borderRadius,
+        marginLeft: { sm: `${drawerWidth}px` }, // Use the drawerWidth here
+        width: { sm: `calc(100% - ${drawerWidth}px)` }, // Use the drawerWidth here
+        boxSizing: 'border-box',
+        transition: theme.transitions.create(['margin', 'width'], {
+          easing: theme.transitions.easing.sharp,
+          duration: theme.transitions.duration.leavingScreen,
+        }),
+        }}
+        >
 
             <Dialog
             open={openConsentDialog}
@@ -160,7 +172,7 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
             PaperProps={{
                 style: {
                 backgroundColor: colors.primary[500], // or whichever color you want from your theme
-                justifyContent: 'center',
+                color: colors.grey[100],
                 boxShadow: 'none',
                 },
             }}
@@ -559,27 +571,6 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
 
 
                 </Grid>
-
-            <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
-
-            <Grid item xs={12}>
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            required
-                            checked={consent}
-                            onChange={(e) => setConsent(e.target.checked)}
-                            name="consentCheckbox"
-                            color="primary"
-                        />
-                    }
-                    label="Patient has signed consent form"
-                />
-                {formErrors.consent && (
-                    <FormHelperText error>{formErrors.consent}</FormHelperText>
-                )}
-            </Grid>
-
 
                 <Grid container justifyContent="center" sx={{ mt: 4 }}>
                     <Button type="submit" variant="contained" sx={{ backgroundColor: colors.greenAccent[600], color: colors.grey[100], mr: 1 }}>
