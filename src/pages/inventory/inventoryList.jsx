@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, useTheme, Button, Modal, TextField, InputAdornment } from "@mui/material";
+import { Box, Typography, useTheme, Button, Modal, TextField, InputAdornment, Grid } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import InvForm from "./inventoryForm"; 
 import { Link } from 'react-router-dom';
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDocs, deleteDoc } from "firebase/firestore";
 import { db } from '../../firebase.config';
 import SearchIcon from '@mui/icons-material/Search';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import EditIcon from '@mui/icons-material/Edit';
 
 const InvList = () => {
 
@@ -29,6 +33,7 @@ const InvList = () => {
   
   const [open, setOpen] = useState(false);
 
+
   const handleAddNewMed = () => {
     setOpen(true);
   };
@@ -38,6 +43,15 @@ const InvList = () => {
   };
 
     const [medData, setmedData] = useState([]);
+
+    const handleDelete = async (id) => {
+      try {
+        await deleteDoc(doc(db, "inventory", id));
+        setmedData(medData.filter((item) => item.id !== id));
+      } catch (err) {
+        console.log(err);
+      }
+    };
 
     // New state for search text
     const [searchText, setSearchText] = useState('');
@@ -103,18 +117,50 @@ const InvList = () => {
         headerName: 'Acronym',
         flex: 1,
       },
+      {
+        field: 'increment', 
+        headerName: 'Increment',
+        flex: 1,
+        renderCell: (params) => (
+        <Box  display="flex" justifyContent="center">
+        <Button 
+              className = "increment"
+                variant="contained"
+                style={{backgroundColor: colors.greenAccent[600]}}
+              >
+                 <AddIcon />
+        </Button>
+      </Box>
+        ),
+      },
     {
       field: 'quantity',
       headerName: 'Quantity',
       flex: 1,
       renderCell: (params) => (
-        <Typography
+        <Typography  display="flex" justifyContent="center"
           style={{
-            color: params.value === '0' ? 'lightcoral' : 'lightgreen', 
+            color: params.value === '0' ? colors.redAccent[400] : colors.greenAccent[400], 
           }}
         >
           {params.value}
         </Typography>
+      ),
+    },
+    {
+      field: 'decrement', 
+      headerName: 'Decrement',
+      flex: 1,
+      renderCell: (params) => (
+      <Box  display="flex" justifyContent="center">
+      <Button 
+            className = "decrement"
+              variant="contained"
+              style={{backgroundColor: colors.redAccent[600]}}
+            >
+            <RemoveIcon />
+      </Button>
+    </Box>
       ),
     },
     {
@@ -130,22 +176,38 @@ const InvList = () => {
     {
       field: 'action',
       headerName: 'Action',
-      flex: 1,
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
           <Link to={`/inventoryList/${params.id}`} style={{ textDecoration: 'none' }}>
-            <Button
-              variant="contained"
-              style={{
-                backgroundColor: colors.greenAccent[600],
-                color: colors.grey[100],
-              }}
-            >
-              + / -
-            </Button>
+          <Button 
+                className = "editButton"
+                startIcon={<EditIcon />}
+                variant="outlined"
+                color="success"
+                //  onClick={() => handleEdit(params.row.id)}
+                >
+                  EDIT
+          </Button>
           </Link>
         </Box>
-        
+      ),
+    },
+    {
+      field: 'delete', 
+      headerName: '',
+      flex: 1,
+      renderCell: (params) => (
+      <Box  display="flex" justifyContent="center">
+          <Button 
+                className = "deleteButton"
+                startIcon={<DeleteIcon />}
+                  variant="outlined"
+                  color="error"
+                  onClick={() => handleDelete(params.row.id)}
+                >
+                  DELETE
+          </Button>
+    </Box>
       ),
     },
   ];
@@ -191,6 +253,7 @@ const InvList = () => {
           Add New Medicine
         </Button>
       </Box>
+      
  {/* Modal for the invForm */}
       <Modal
         open={open}
