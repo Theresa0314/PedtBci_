@@ -91,11 +91,12 @@ const TPDetail = () => {
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Status:</strong> {patientData.status}</Typography>
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>TP Start Date:</strong> {new Date(patientData.sdateTP).toLocaleDateString()}</Typography>
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Regimen:</strong> {patientData.regimen}</Typography>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Duration:</strong> {patientData.duration}</Typography>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Treatment Duration:</strong> {patientData.duration}</Typography>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Medical Prescription:</strong> {patientData.medPrescription}</Typography>
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Medicine/s:</strong> {patientData.drug}</Typography>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Dosage:</strong> {patientData.dosage}</Typography>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Frequency:</strong> {patientData.frequency}</Typography>
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Medication Start Date:</strong> {new Date(patientData.sdateMed).toLocaleDateString()}</Typography>
           </Grid>
           <Grid item xs={12} sm={6}>

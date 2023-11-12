@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, useTheme, Button, Modal, TextField, InputAdornment, Grid } from "@mui/material";
+import { Box, Typography, useTheme, Button, Modal, TextField, InputAdornment } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
@@ -119,7 +119,7 @@ const InvList = () => {
       },
       {
         field: 'increment', 
-        headerName: 'Increment',
+        headerName: '',
         flex: 1,
         renderCell: (params) => (
         <Box  display="flex" justifyContent="center">
@@ -149,7 +149,7 @@ const InvList = () => {
     },
     {
       field: 'decrement', 
-      headerName: 'Decrement',
+      headerName: '',
       flex: 1,
       renderCell: (params) => (
       <Box  display="flex" justifyContent="center">
@@ -178,17 +178,17 @@ const InvList = () => {
       headerName: 'Action',
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
-          <Link to={`/inventoryList/${params.id}`} style={{ textDecoration: 'none' }}>
+          {/* <Link to={`/inventoryList/${params.id}`} style={{ textDecoration: 'none' }}> */}
           <Button 
                 className = "editButton"
                 startIcon={<EditIcon />}
                 variant="outlined"
                 color="success"
-                //  onClick={() => handleEdit(params.row.id)}
+                onClick={handleAddNewMed}
                 >
                   EDIT
           </Button>
-          </Link>
+          {/* </Link> */}
         </Box>
       ),
     },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, useTheme, Button, Modal, TextField, InputAdornment, Grid } from "@mui/material";
+import { Box, Typography, useTheme, Button, Modal, TextField, InputAdornment } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
@@ -9,7 +9,6 @@ import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { db } from '../../firebase.config';
 import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
-import RemoveIcon from '@mui/icons-material/Remove';
 import EditIcon from '@mui/icons-material/Edit';
 import PageviewIcon from '@mui/icons-material/Pageview';
 
@@ -61,6 +60,15 @@ const TPList = () => {
       }
     };
 
+    const handleEdit = async (id) => {
+      try {
+        await deleteDoc(doc(db, "treatmentPlan", id));
+        setPatientsData(patientsData.filter((item) => item.id !== id));
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
     const handleUpdateTP = (newPatient) => {
       setPatientsData((currentPatients) => {
         const updatedPatients = [...currentPatients, newPatient];
@@ -100,57 +108,6 @@ const TPList = () => {
         
         fetchData();
       }, []);
-
-      const actionColumn = [
-        {
-          field: "action",
-          headerName: "Action",
-          flex: 2,
-          renderCell: (params) => {
-            return (
-              <Grid className="cellAction" container spacing={3} margin={2}>
-              {/* more details */}
-              <Grid>
-              <Box display="flex" justifyContent="center" xs={6} >
-              <Link to={`/TPlist/${params.id}`} style={{ textDecoration: 'none' }}>
-                <Button
-                className = "moreDetails"
-                  variant="contained"
-                  style={{
-                    backgroundColor: colors.greenAccent[600],
-                    color: colors.grey[100],
-                  }}
-                >
-                  More Details
-                </Button>
-                </Link>
-              </Box>
-              </Grid>
-
-              {/* Delete */}
-              <Grid marginLeft="2vh">
-              <Box display="flex" justifyContent="center" xs={6} >
-              <Link to={`/TPlist/${params.id}`} style={{ textDecoration: 'none' }}>
-                <Button 
-                className = "deleteButton"
-                startIcon={<DeleteIcon />}
-                  variant="outlined"
-                  color="error"
-                //  onClick={() => handleDelete(params.row.id)}
-                >
-                  DELETE
-                </Button>
-                </Link>
-                </Box>
-                </Grid>
-
-
-              </Grid>     
-  
-            );
-          },
-        },
-      ];
 
 // table columns
   const columns = [
@@ -215,17 +172,17 @@ const TPList = () => {
       headerName: '',
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
-          <Link to={`/inventoryList/${params.id}`} style={{ textDecoration: 'none' }}>
+         {/* <Link to={`/inventoryList/${params.id}`} style={{ textDecoration: 'none' }}> */}
           <Button 
                 className = "editButton"
                 startIcon={<EditIcon />}
                 variant="outlined"
                 color="success"
-                //  onClick={() => handleEdit(params.row.id)}
+                onClick={handleAddNewPatient}
                 >
                   EDIT
           </Button>
-          </Link>
+          {/* </Link> */}
         </Box>
       ),
     },
