@@ -34,7 +34,9 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
     const [parentContactNumber, setParentContactNumber] = useState('');
     const [relationshipToPatient, setRelationshipToPatient] = useState('');
     const [secondaryContactName, setSecondaryContactName] = useState('');
+    const [secondaryContactEmail, setSecondaryContactEmail] = useState('');
     const [secondaryContactNumber, setSecondaryContactNumber] = useState('');
+    const [secondaryRelationshipToPatient, setSecondaryRelationshipToPatient] = useState('');
     const [emergencyContactName, setEmergencyContactName] = useState('');
     const [emergencyContactNumber, setEmergencyContactNumber] = useState('');
 
@@ -117,9 +119,11 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
           parentContactNumber,
           relationshipToPatient,
           secondaryContactName,
+          secondaryContactEmail,
           secondaryContactNumber,
           emergencyContactName,
           emergencyContactNumber,
+          secondaryRelationshipToPatient,
           chestXrayAvailable,
           tbDrugHistory,
           symptomsLastTwoWeeks,
@@ -465,6 +469,19 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
                     <Grid item xs={6}>
                         <TextField
                             fullWidth
+                            id="secondaryContactEmail"
+                            label="Secondary Contact Email"
+                            name="secondaryContactEmail"
+                            type="email"
+                            variant="outlined"
+                            margin="dense"
+                            value={secondaryContactEmail}
+                            onChange={(e) => setSecondaryContactEmail(e.target.value)}
+                        />
+                    </Grid>
+                    <Grid item xs={6}>
+                        <TextField
+                            fullWidth
                             id="secondaryContactNumber"
                             label="Secondary Contact Number"
                             name="secondaryContactNumber"
@@ -473,6 +490,25 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
                             value={secondaryContactNumber}
                             onChange={(e) => setSecondaryContactNumber(e.target.value)}
                         />
+                    </Grid>
+                    <Grid item xs={6}>
+                        <FormControl fullWidth margin="dense">
+                            <InputLabel id="secondary-relationship-label">Relationship to Patient</InputLabel>
+                            <Select
+                            labelId="secondary-relationship-label"
+                            id="secondaryRelationshipToPatient"
+                            name="secondaryRelationshipToPatient"
+                            value={secondaryRelationshipToPatient}
+                            onChange={(e) => setSecondaryRelationshipToPatient(e.target.value)}
+                            >
+                            {/* Add your options here */}
+                            <MenuItem value="father">Father</MenuItem>
+                            <MenuItem value="mother">Mother</MenuItem>
+                            <MenuItem value="sibling">Sibling</MenuItem>
+                            <MenuItem value="grandparent">Grandparent</MenuItem>
+                            <MenuItem value="other">Other</MenuItem>
+                            </Select>
+                        </FormControl>
                     </Grid>
                     <Grid item xs={6}>
                         <TextField
