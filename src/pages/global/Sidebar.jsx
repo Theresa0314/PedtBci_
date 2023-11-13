@@ -3,7 +3,7 @@ import { auth } from '../../firebase.config';
 import { Link, useNavigate } from "react-router-dom";
 import { signOut } from 'firebase/auth';
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
-import { Box, IconButton, Typography, useTheme, Button } from "@mui/material";
+import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
 
@@ -14,13 +14,12 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
-import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
-import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
-import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
+// import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
+// import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
+// import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import InventoryIcon from '@mui/icons-material/Inventory';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
-import { LogoutOutlined } from "@mui/icons-material";
 
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
@@ -155,7 +154,7 @@ const Sidebar = () => {
             />
               <Item
               title="Clinical Inventory"
-              to="/inventoryList"
+              to="/inventory"
               icon={<InventoryIcon />}
               selected={selected}
               setSelected={setSelected}

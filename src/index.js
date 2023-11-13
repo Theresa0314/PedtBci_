@@ -23,13 +23,12 @@ import Pie from "./pages/pie";
 import Calendar from "./pages/calendar";
 import PatientGenForm from "./pages/patientgenform";
 import PatientDetail from "./pages/patientdetail";
-
+import Inventory from "./pages/inventory";
 import TPList from "./pages/treatmentPlan/TPlist";
 import TPForm from "./pages/treatmentPlan/TPform";
 import TPDetail from "./pages/treatmentPlan/TPdetail";
 
-import InvList from "./pages/inventory/inventoryList";
-import InvForm from "./pages/inventory/inventoryForm";
+
 
 
 const router = createBrowserRouter(
@@ -51,13 +50,10 @@ const router = createBrowserRouter(
         <Route path="/patientInfo" element={<PatientInfo />} />
         <Route path="/patientgenform" element={<PatientGenForm />} />
         <Route path="/patientInfo/:caseNumber" element={<PatientDetail />} />
-
+        <Route path="/inventory" element={<Inventory />} />
         <Route path="/TPlist" element={<TPList />} />
         <Route path="/TPform" element={<TPForm />} />
         <Route path="/TPlist/:caseNumber" element={<TPDetail />} />
-
-        <Route path="/inventoryList" element={<InvList />} />
-        <Route path="/inventoryForm" element={<InvForm />} />
 
       </Route>
     </Route>
