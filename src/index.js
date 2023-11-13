@@ -11,7 +11,6 @@ import {
 import Protected from './components/Protected';
 import Login from "./pages/auth/login";
 import Signup from "./pages/auth/signup";
-import Form from "./pages/form";
 
 import Dashboard from "./pages/dashboard";
 import PatientInfo from "./pages/patientInfo";
@@ -36,7 +35,6 @@ const router = createBrowserRouter(
     <Route path="/" element={<App />}>
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/form" element={<Form />} />
 
       <Route path="/" element={ <Protected /> } >
         <Route path="/" element={ <Dashboard /> } />

@@ -3,14 +3,15 @@ import { auth } from '../../firebase.config';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Link, useNavigate } from 'react-router-dom';
 
-//import * as yup from "yup";
-import { Box, Button, TextField, Grid } from "@mui/material";
-import { Formik } from "formik";
-import useMediaQuery from "@mui/material/useMediaQuery";
+import * as yup from "yup";
+import {Button, TextField, Grid, Container, Divider, useTheme } from "@mui/material";
+import { Formik, ErrorMessage } from "formik";
+import { tokens } from "../../theme";
 import Header from "../../components/Header";
 
 const Login = () => {
-  const isNonMobile = useMediaQuery("(min-width:600px)");
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,75 +33,76 @@ const Login = () => {
   }
 
   return (
-  <Grid
-    container
-    spacing={0}
-    direction="column"
-    alignItems="center"
-    justifyContent="center"
-    sx={{ minHeight: '100vh' }}
-  >
-      <Box m="20px">
-      <Header title="LOG IN" subtitle="Login User" />
+<Container 
+  component="main" 
+  maxWidth="sm" sx={{
+  backgroundColor: colors.blueAccent[800], 
+  padding: theme.spacing(6), 
+  borderRadius: theme.shape.borderRadius
+}}><Header title="LOG IN" subtitle="Login User" />
 
       <Formik
         onSubmit={handleSubmit}
-        // validationSchema={loginSchema}
+        validationSchema={validationSchema}
         className='login-form'
       >
-          <form onSubmit={handleSubmit}>
-            <Box
-              display="grid"
-              gap="30px"
-              gridTemplateColumns="repeat(4, minmax(0, 1fr))"
-              sx={{
-                "& > div": { gridColumn: isNonMobile ? undefined : "span 4" },
-              }}
-            >
-
+        <form onSubmit={handleSubmit}>
+        <Grid container spacing={5} direction="column" >
+          <Grid item xs={6}>
             {/* email */}
               <TextField
                 fullWidth
                 variant="filled"
                 type="text"
-                label="Email"
+                label="Email*"
                 name="email"
                 onChange={(e) => setEmail(e.target.value)}
                 value={email}
+                helperText={<ErrorMessage name="password" />}
                 sx={{ gridColumn: "span 4" }}
               />
+            </Grid>
 
+            <Grid item xs={6}>
               {/* password */}
               <TextField
                 fullWidth
                 variant="filled"
                 type="password"
-                label="Password"
+                label="Password*"
                 name="password"
+                helperText={<ErrorMessage name="password" />}
                 onChange={(e) => setPassword(e.target.value)}
                 value={password}
                 sx={{ gridColumn: "span 4" }}/>
-            </Box>
+              </Grid>
+            </Grid>
               {/* submit button */}
-            <Box display="flex" justifyContent="end" mt="20px">
+            <Grid container justifyContent="right" sx={{ mt: 4 }}>
               <Button type="submit" color="secondary" variant="contained">
                 LOGIN
               </Button>
-            </Box>
+            </Grid>
           </form>
       </Formik>
-      <p>Don't have an account?   <Link to={"/signup"}>{"Create Account"}</Link></p>
-    </Box>
-    </Grid>
+      <div style={{ width: '100%', marginTop: '5vh' }}>
+      <p className="forget" style={{ width: '100%', display: 'inline' }}>Don't have an account?</p> 
+      <Link to={"/signup"}>
+        <Button  color="secondary" style={{ display: 'inline' }}>
+            Create an Account
+          </Button>
+      </Link>
+      </div>
+      </Container>
 
   );
 };
 
-// const loginSchema = yup.object().shape({
-//   email: yup.string().email("invalid email").required("required"),
-//   password: yup
-//   .string()
-//   .required("required")
-// });
+const validationSchema = yup.object().shape({
+  email: yup.string().email("invalid email").required("required"),
+  password: yup
+  .string()
+  .required("required")
+});
 
 export default Login;
