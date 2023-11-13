@@ -96,9 +96,13 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
             return; 
         }
       
-        // Generate a unique case number
-        const caseNumber = 'CN-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
-      
+        // Generate a 10-digit number first
+        const randomNumber = Math.floor(1000000000 + Math.random() * 9000000000);
+
+        // Convert to string and add 'CN-' prefix
+        const caseNumber = 'CN-' + randomNumber.toString();
+
+
         // Get the current date and time in Philippine time
         const dateAdded = new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' });
       
@@ -129,6 +133,7 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
           symptomsLastTwoWeeks,
           caseNumber, // Add the generated case number
           dateAdded,  // Add the generated date added
+          caseStatus: 'Open', 
         };
 
        
