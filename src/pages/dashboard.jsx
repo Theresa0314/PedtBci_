@@ -11,11 +11,25 @@ import LineChart from "../components/LineChart";
 import BarChart from "../components/BarChart";
 import StatBox from "../components/StatBox";
 import ProgressCircle from "../components/ProgressCircle";
+import { db } from '../firebase.config';
+import { collection, getCountFromServer, query, } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
 
 const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
+  useEffect(() => {
+    // Load data from Firebase when the component mounts
+    loadTableData();
+  }, []);
+
+  const loadTableData = async () => {
+    const result = await getCountFromServer(query(collection(db, 'patientsinfo')));
+    const counter = result.data().count;
+    console.log(`Collection Patients contains ${counter} docs`);  
+  }
+  
   return (
     <Box m="20px">
       {/* HEADER */}
@@ -54,7 +68,7 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="12,361"
+            title= "156456"
             subtitle="Emails Sent"
             progress="0.75"
             increase="+14%"
