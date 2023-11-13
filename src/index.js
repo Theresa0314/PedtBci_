@@ -24,6 +24,10 @@ import Calendar from "./pages/calendar";
 import PatientGenForm from "./pages/patientgenform";
 import PatientDetail from "./pages/patientdetail";
 
+import ReferralInfo from "./pages/referral/referralinfo";
+import ReferralForm from './pages/referral/referralform';
+import ReferralDetails from './pages/referral/referraldetails';
+
 import TPList from "./pages/treatmentPlan/TPlist";
 import TPForm from "./pages/treatmentPlan/TPform";
 import TPDetail from "./pages/treatmentPlan/TPdetail";
@@ -51,6 +55,10 @@ const router = createBrowserRouter(
         <Route path="/patientInfo" element={<PatientInfo />} />
         <Route path="/patientgenform" element={<PatientGenForm />} />
         <Route path="/patientInfo/:caseNumber" element={<PatientDetail />} />
+
+        <Route path="/referralinfo" element={<ReferralInfo />} />
+        <Route path="/referralform" element={<ReferralForm/>} />
+        <Route path="/referralinfo/:caseNumber" element={<ReferralDetails/>} />
 
         <Route path="/TPlist" element={<TPList />} />
         <Route path="/TPform" element={<TPForm />} />
