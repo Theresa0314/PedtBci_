@@ -122,7 +122,252 @@ const ReferralDetails = () => {
           </CardContent>
        // </Card>
          )}
-       {/* Referring Facility */}
+
+       {/* Referral Information */}
+       {currentTab === 1 && referralData && (
+        <>
+    
+    {/* Referring Facility Information Card */}
+        <Card raised sx={{ backgroundColor: colors.primary[400], mb: 4 }}>
+        <CardContent>
+
+  
+        <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', color: colors.greenAccent[500], fontSize: '1.25rem' }}>
+            Referring Facility Information
+        </Typography>
+        <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
+
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+
+          <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Referring Facility:</strong> {referralData.referringFacilityName}</Typography>
+          <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Contact Number:</strong> {referralData.referringFacilityContactNumber}</Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+          <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Email:</strong> {referralData.referringFacilityEmail}</Typography>
+          <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Address:</strong> {referralData.referringFacilityAddress}</Typography>
+          </Grid>
+        </Grid>
+        </CardContent>
+        </Card>
+
+       {/* Referring DOTS Staff Information Card */}
+       <Card raised sx={{ backgroundColor: colors.primary[400], mb: 4 }}>
+        <CardContent>
+            <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', color: colors.greenAccent[500], fontSize: '1.25rem' }}>
+                 DOTS Staff Information
+            </Typography>
+            <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
+            <Grid container spacing={2}>
+            <Grid item xs={12} sm={4}>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Full Name:</strong> {referralData.dotsStaffName}</Typography>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Contact Info:</strong> {referralData.dotsStaffContact} </Typography>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Designation:</strong> {referralData.dotsStaffDesignation}</Typography>
+            </Grid>
+        </Grid>
+      </CardContent>
+    </Card>
+
+        {/* Reason for Referral Card */}
+        <Card raised sx={{ backgroundColor: colors.primary[400], mb: 4 }}>
+        <CardContent>
+            <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', color: colors.greenAccent[500], fontSize: '1.25rem' }}>
+            Reason For Referral
+            </Typography>
+            <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
+            
+            {/* Always show the main reason */}
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+            <strong>Main Reason:</strong> {referralData.reasonForReferral}
+            </Typography>
+
+            {/* Additional details based on the main reason */}
+            {referralData.reasonForReferral === 'For Screening' && referralData.subReason && (
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                <strong>Screening Details:</strong> {referralData.subReason}
+            </Typography>
+            )}
+
+            {referralData.reasonForReferral === 'For Continuation of Treatment/Decentralize' && (
+            <>
+                {referralData.bacteriologicalStatus && (
+                <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                    <strong>Bacteriological Status:</strong> {referralData.bacteriologicalStatus}
+                </Typography>
+                )}
+                {referralData.anatomicalSite && (
+                <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                    <strong>Anatomical Site:</strong> {referralData.anatomicalSite}
+                </Typography>
+                )}
+                {referralData.drugSusceptibility && (
+                <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                    <strong>Drug Susceptibility:</strong> {referralData.drugSusceptibility}
+                </Typography>
+                )}
+                {referralData.treatmentHistory && (
+                <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                    <strong>Treatment History:</strong> {referralData.treatmentHistory}
+                </Typography>
+                )}
+            </>
+            )}
+
+            {/* Other reasons */}
+            {referralData.reasonForReferral === 'Other/s, Specify' && referralData.otherReason && (
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                <strong>Other Reason:</strong> {referralData.otherReason}
+            </Typography>
+            )}
+        </CardContent>
+        </Card>
+
+      </>
+        )}
+
+        {/* Receiving Information */}
+        {currentTab === 2 && (
+        <>
+            {/* Receiving Facility Information Card */}
+            <Card raised sx={{ backgroundColor: colors.primary[400], mb: 4 }}>
+                <CardContent>
+                    <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', color: colors.greenAccent[500], fontSize: '1.25rem' }}>
+                    Receiving Facility Information
+                    </Typography>
+                    <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
+                    <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                    <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                    <strong>Name of Receiving Unit:</strong> {referralData.receivingFacilityName}
+                    </Typography>
+                    
+                    <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                    <strong>Date Received:</strong> {referralData.receivingFacilityDateReceived}
+                    </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                    <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                    <strong>Contact Number:</strong> {referralData.receivingFacilityContact}
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                    <strong>Address:</strong> {referralData.receivingFacilityAddress}
+                    </Typography>
+                    </Grid>
+                    </Grid>
+                </CardContent>
+                </Card>
+    
+                {/* Receiving DOTS Staff Information Card */}
+                <Card raised sx={{ backgroundColor: colors.primary[400], mb: 4 }}>
+                <CardContent>
+                    <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', color: colors.greenAccent[500], fontSize: '1.25rem' }}>
+                    Receiving DOTS Staff Information
+                    </Typography>
+                    <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
+
+                    <Grid container spacing={2}>
+                    <Grid item xs={12} sm={4}>
+                    <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                    <strong>Name:</strong> {referralData.receivingStaffName}
+                    </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                    <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                    <strong>Contact
+                         Info:</strong> {referralData.receivingStaffContact}
+                    </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                    <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                    <strong>Designation:</strong> {referralData.receivingStaffDesignation}
+                    </Typography>
+                    </Grid>
+                    </Grid>
+                </CardContent>
+                </Card>
+
+                {/* Action Taken Card */}
+                <Card raised sx={{ backgroundColor: colors.primary[400], mb: 4 }}>
+                <CardContent>
+                    <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', color: colors.greenAccent[500], fontSize: '1.25rem' }}>
+                    Action Taken
+                    </Typography>
+                    <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
+                    <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                    <strong>Action:</strong> {referralData.actionTaken}
+                    </Typography>
+
+                    {/* Display fields based on action taken */}
+                    {referralData.actionTaken === 'Lab Test Performed' && (
+                    <>
+                        {referralData.labTestType && (
+                        <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                            <strong>Type of Test:</strong> {referralData.labTestType}
+                        </Typography>
+                        )}
+                        {referralData.labTestDate && (
+                        <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                            <strong>Date of Test:</strong> {referralData.labTestDate}
+                        </Typography>
+                        )}
+                        {referralData.labTestResults && (
+                        <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                            <strong>Results:</strong> {referralData.labTestResults}
+                        </Typography>
+                        )}
+                    </>
+                    )}
+
+                    {referralData.actionTaken === 'Patient Started/Resumed Treatment' && (
+                    <>
+                        {referralData.treatmentDateRegistered && (
+                        <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                            <strong>Date Registered/Resumed:</strong> {referralData.treatmentDateRegistered}
+                        </Typography>
+                        )}
+                        {referralData.treatmentRegimen && (
+                        <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                            <strong>Regimen:</strong> {referralData.treatmentRegimen}
+                        </Typography>
+                        )}
+                    </>
+                    )}
+
+                    {referralData.actionTaken === 'Not Treated' && (
+                    <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                        <strong>Reason for Not Treating:</strong> {referralData.notTreatedReason || 'Not specified'}
+                    </Typography>
+                    )}
+
+                    {referralData.actionTaken === 'Other' && (
+                    <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                        <strong>Specify Other Action:</strong> {referralData.otherActionSpecification || 'Not specified'}
+                    </Typography>
+                    )}
+                </CardContent>
+                </Card>
+
+
+             {/* Remarks Card */}
+             <Card raised sx={{ backgroundColor: colors.primary[400], mb: 4 }}>
+                <CardContent>
+                <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', color: colors.greenAccent[500], fontSize: '1.25rem' }}>
+                    Remarks
+                </Typography>
+                <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
+                    <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                        <strong>Addtional Notes:</strong> {referralData.remarks}
+                    </Typography>
+                </CardContent>
+            </Card>
+
+        </>
+        )}
+
 
         </Container>
       ) : (

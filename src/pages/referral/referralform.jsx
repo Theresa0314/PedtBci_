@@ -137,14 +137,25 @@ const ReferralForm = () => {
         // Define the data object to save
         const referralData = {
         caseNumber,
+        //referral info
         referringFacilityName,
         referringFacilityContactNumber,
         referringFacilityEmail,
         referringFacilityAddress,
+        dotsStaffName,
+        dotsStaffContact,
+        dotsStaffDesignation,
+
+        //reason
+        reasonForReferral,
+        subReason,
         bacteriologicalStatus,
         anatomicalSite,
         drugSusceptibility,
         treatmentHistory,
+        otherReason,
+
+        //receiving info
         receivingFacilityName,
         receivingFacilityContact,
         receivingFacilityAddress,
@@ -152,8 +163,8 @@ const ReferralForm = () => {
         receivingStaffName,
         receivingStaffContact,
         receivingStaffDesignation,
+
         actionTaken,
-        remarks,
         labTestType,
         labTestDate,
         labTestResults,
@@ -161,6 +172,8 @@ const ReferralForm = () => {
         treatmentRegimen,
         notTreatedReason,
         otherActionSpecification,
+
+        remarks,
         dateReferred, // Add the generated date referred
         caseStatus: 'Pending', 
         };
