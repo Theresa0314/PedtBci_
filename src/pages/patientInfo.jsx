@@ -10,7 +10,7 @@ import SearchIcon from '@mui/icons-material/Search';
 
 
 
-const Patient_Info = () => {
+const PatientInfo = () => {
 
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -200,4 +200,4 @@ const Patient_Info = () => {
   );
 };
 
-export default Patient_Info;
+export default PatientInfo;

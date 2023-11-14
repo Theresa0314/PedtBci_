@@ -74,7 +74,7 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
     };
 
     const handleCancel = () => {
-                navigate("/patient_info");
+                navigate("/patientInfo");
             };
 
     const handleSubmit = async (event) => {
