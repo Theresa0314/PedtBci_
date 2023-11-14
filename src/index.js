@@ -13,13 +13,15 @@ import Login from "./pages/auth/login";
 import Signup from "./pages/auth/signup";
 
 import Dashboard from "./pages/dashboard";
-import PatientInfo from "./pages/patientInfo";
+
 import Symptoms from "./pages/symptoms";
 import Contacts from "./pages/contacts";
 
 import Calendar from "./pages/calendar";
-import PatientGenForm from "./pages/patientgenform";
-import PatientDetail from "./pages/patientdetail";
+
+import PatientInfo from "./pages/patientinfo/patientInfo";
+import PatientGenForm from "./pages/patientinfo/patientgenform";
+import PatientDetail from "./pages/patientinfo/patientdetail";
 
 import ReferralInfo from "./pages/referral/referralinfo";
 import ReferralForm from './pages/referral/referralform';

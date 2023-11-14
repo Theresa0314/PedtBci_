@@ -5,8 +5,8 @@ import {
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
   FormControlLabel, FormHelperText, Radio, Container, Divider, useTheme
 } from '@mui/material';
-import { tokens } from "../theme";
-import { db } from '../firebase.config';
+import { tokens } from "../../theme";
+import { db } from '../../firebase.config';
 import { collection, addDoc } from 'firebase/firestore';
 
 // Sample data for dropdowns

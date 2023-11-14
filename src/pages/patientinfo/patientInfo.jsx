@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, useTheme, Button, TextField, InputAdornment } from "@mui/material";
+import { Box, Typography, useTheme, Button, TextField, InputAdornment,
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
+} from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-import { tokens } from "../theme";
-import Header from "../components/Header";
+import { tokens } from "../../theme";
+import Header from "../../components/Header";
 import { Link, useNavigate } from 'react-router-dom';
-import { collection, getDocs } from "firebase/firestore";
-import { db } from '../firebase.config';
+import { collection, getDocs,  deleteDoc, doc } from "firebase/firestore";
+import { db } from '../../firebase.config';
 import SearchIcon from '@mui/icons-material/Search';
-
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import PageviewIcon from '@mui/icons-material/Pageview';
 
 
 const PatientInfo = () => {
@@ -16,12 +20,48 @@ const PatientInfo = () => {
   const colors = tokens(theme.palette.mode);
   const navigate = useNavigate(); 
 
+  // Delete Dialogs
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
+
   
   const handleAddNewPatient = () => {
     navigate("/patientgenform");
   };
 
+  const handleClickDelete = (id) => {
+    // Set the id to be deleted and open the dialog
+    setDeleteId(id);
+    setOpenDeleteDialog(true);
+  };
+  const handleCloseDeleteDialog = () => {
+    setOpenDeleteDialog(false);
+  };
   
+
+  const handleDelete = async () => {
+    handleCloseDeleteDialog();
+    if (deleteId) {
+      try {
+        await deleteDoc(doc(db, "patientsinfo", deleteId));
+        setPatientsData(patientsData.filter((item) => item.id !== deleteId));
+      } catch (error) {
+        console.error("Error deleting patient: ", error);
+      }
+    }
+  };
+  
+  
+  const handleEdit = (id) => {
+    // Navigate to the edit page or open an edit modal
+    navigate(`/patientedit/${id}`);
+  };
+  
+  const handleViewDetails = (id) => {
+    // Navigate to the details page
+    navigate(`/patientinfo/${id}`);
+  };
 
     const [patientsData, setPatientsData] = useState([]);
 
@@ -100,22 +140,38 @@ const PatientInfo = () => {
     {
       field: 'action',
       headerName: 'Action',
-      flex: 1,
+      sortable: false,
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
-          <Link to={`/patientinfo/${params.id}`} style={{ textDecoration: 'none' }}>
-            <Button
-              variant="contained"
-              style={{
-                backgroundColor: colors.greenAccent[600],
-                color: colors.grey[100],
-              }}
-            >
-              More Details
-            </Button>
-          </Link>
+          <Button
+            startIcon={<PageviewIcon />}
+            onClick={() => handleViewDetails(params.id)}
+            variant="contained"
+            color="primary"
+            style={{ marginRight: 8 }}
+          >
+            View
+          </Button>
+          <Button
+            startIcon={<EditIcon />}
+            onClick={() => handleEdit(params.id)}
+            variant="contained"
+            color="secondary"
+            style={{ marginRight: 8 }}
+          >
+            Edit
+          </Button>
+          <Button
+            startIcon={<DeleteIcon />}
+            onClick={() => handleClickDelete(params.id)}
+            variant="contained"
+            color="error"
+          >
+            Delete
+          </Button>
         </Box>
       ),
+      width: 300,
     },
   ];
   columns.forEach(column => {
@@ -194,6 +250,32 @@ const PatientInfo = () => {
           disableSelectionOnClick
           sortingMode="client"
         />
+
+        
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={openDeleteDialog}
+          onClose={handleCloseDeleteDialog}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title" style={{ color: colors.greenAccent[600], fontSize: '1.5rem' }}>
+            Confirm Deletion
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description" style={{ color: colors.grey[100] }}>
+              Are you sure you want to delete this patient? This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions style={{ justifyContent: 'center', padding: theme.spacing(3) }}>
+            <Button onClick={handleCloseDeleteDialog} style={{ color: colors.grey[100], borderColor: colors.greenAccent[500], marginRight: theme.spacing(1) }}>
+              Cancel
+            </Button>
+            <Button onClick={handleDelete} style={{ backgroundColor: colors.greenAccent[600], color: colors.grey[100] }} autoFocus>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
 
       </Box>
     </Box>

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { db } from '../firebase.config';
+import { db } from '../../firebase.config';
 import { doc, getDoc } from "firebase/firestore";
 import { Box, Typography, CircularProgress, Paper, Grid, Container, useTheme,  Card, CardContent, Divider, Tab, Tabs } from '@mui/material';
-import Header from '../components/Header';
-import { tokens } from '../theme';
+import Header from '../../components/Header';
+import { tokens } from '../../theme';
 
 const PatientDetail = () => {
   const { caseNumber } = useParams();
