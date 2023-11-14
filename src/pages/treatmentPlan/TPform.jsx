@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, RadioGroup, FormControlLabel, Radio, Container, Divider, Checkbox, useTheme,
+  Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, Container, Divider, Checkbox, useTheme,
   OutlinedInput, ListItemText
 } from '@mui/material';
 import { tokens } from "../../theme";
@@ -9,7 +9,7 @@ import { collection, addDoc } from 'firebase/firestore';
 
 // Sample data for dropdowns
 const outcomes = ["Cured/Treatment Completed", "Treatment Failed", "Died", "Lost to Follow up", "Not Evaluated"];
-const statuses = ["Start", "In Progress", "End"];
+const statuses = ["Start", "Ongoing", "End"];
 const regimens = ["I. 2HRZE/4HR", "Ia. 2HRZE/10HR", "II. 2HRZES/1HRZE/5HRE", "IIa. 2HRZES/1HRZE/9HRE"];
 const durations = ["6 months", "8 months", "12 months"]; //duration of treatment
 const drugs = ["[H] Isonlazid", "[R] Rifampicin", "[Z] Pyrazinamide", "[E] Ethambutol", "[S] Streptomycin "];

@@ -229,7 +229,7 @@ const Inventory = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Container component="div" maxWidth="lg">
-      <Header title="Clinical Inventory" subtitle="Managing drug inventory data" />
+      <Header title="Clinical Inventory" subtitle="Managing TB drug inventory data" />
 
 <Box m="40px 0 0 0" height="75vh">
           <Box
