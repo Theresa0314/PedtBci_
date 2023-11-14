@@ -5,10 +5,12 @@ import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import TPForm from "./TPform"; 
 import { Link } from 'react-router-dom';
-import { collection, getDocs } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { db } from '../../firebase.config';
 import SearchIcon from '@mui/icons-material/Search';
-
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import PageviewIcon from '@mui/icons-material/Pageview';
 
 
 const TPList = () => {
@@ -49,6 +51,24 @@ const TPList = () => {
       setSearchText(event.target.value);
     };
 
+    const handleDelete = async (id) => {
+      try {
+        await deleteDoc(doc(db, "treatmentPlan", id));
+        setPatientsData(patientsData.filter((item) => item.id !== id));
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    const handleEdit = async (id) => {
+      try {
+        await deleteDoc(doc(db, "treatmentPlan", id));
+        setPatientsData(patientsData.filter((item) => item.id !== id));
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
     const handleUpdateTP = (newPatient) => {
       setPatientsData((currentPatients) => {
         const updatedPatients = [...currentPatients, newPatient];
@@ -60,7 +80,7 @@ const TPList = () => {
         return updatedPatients;
       });
     };
-
+    
     // Generate filtered rows based on search text
     const filteredRows = searchText
       ? patientsData.filter((row) => {
@@ -89,6 +109,7 @@ const TPList = () => {
         fetchData();
       }, []);
 
+// table columns
   const columns = [
     {
       field: 'caseNumber',
@@ -125,24 +146,62 @@ const TPList = () => {
       },
     },
     {
-      field: 'action',
-      headerName: 'Action',
-      flex: 1,
+      field: "action",
+      headerName: "Action",
       renderCell: (params) => (
-        <Box display="flex" justifyContent="center">
+          // view
+          <Box display="flex" justifyContent="center" xs={6} >
           <Link to={`/TPlist/${params.id}`} style={{ textDecoration: 'none' }}>
             <Button
+            className = "view"
+            startIcon={<PageviewIcon />}
               variant="contained"
               style={{
-                backgroundColor: colors.greenAccent[600],
-                color: colors.grey[100],
+               
+                color: colors.greenAccent[600]
               }}
             >
-              More Details
+              VIEW
             </Button>
-          </Link>
+            </Link>
+          </Box>
+        ),
+      },
+    {
+      field: 'edit',
+      headerName: '',
+      renderCell: (params) => (
+        <Box display="flex" justifyContent="center">
+         {/* <Link to={`/inventoryList/${params.id}`} style={{ textDecoration: 'none' }}> */}
+          <Button 
+                className = "editButton"
+                startIcon={<EditIcon />}
+                variant="outlined"
+                color="success"
+                onClick={handleAddNewPatient}
+                >
+                  EDIT
+          </Button>
+          {/* </Link> */}
         </Box>
-        
+      ),
+    },
+    {
+      field: 'delete', 
+      headerName: '',
+      flex: 1,
+      renderCell: (params) => (
+      <Box  display="flex" justifyContent="center">
+          <Button 
+                className = "deleteButton"
+                startIcon={<DeleteIcon />}
+                variant="outlined"
+                  color="error"
+                  onClick={() => handleDelete(params.row.id)}
+                >
+                  DELETE
+          </Button>
+    </Box>
       ),
     },
   ];
@@ -188,6 +247,7 @@ const TPList = () => {
           Add New Data
         </Button>
       </Box>
+
  {/* Modal for the TPform */}
       <Modal
         open={open}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, RadioGroup, FormControlLabel, Radio, Container, Divider, Checkbox, useTheme,
+  Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, Container, Divider, Checkbox, useTheme,
   OutlinedInput, ListItemText
 } from '@mui/material';
 import { tokens } from "../../theme";
@@ -9,7 +9,7 @@ import { collection, addDoc } from 'firebase/firestore';
 
 // Sample data for dropdowns
 const outcomes = ["Cured/Treatment Completed", "Treatment Failed", "Died", "Lost to Follow up", "Not Evaluated"];
-const statuses = ["Start", "In Progress", "End"];
+const statuses = ["Start", "Ongoing", "End"];
 const regimens = ["I. 2HRZE/4HR", "Ia. 2HRZE/10HR", "II. 2HRZES/1HRZE/5HRE", "IIa. 2HRZES/1HRZE/9HRE"];
 const durations = ["6 months", "8 months", "12 months"]; //duration of treatment
 const drugs = ["[H] Isonlazid", "[R] Rifampicin", "[Z] Pyrazinamide", "[E] Ethambutol", "[S] Streptomycin "];
@@ -22,10 +22,11 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
     const [edateTP, setEdateTP] = useState('');
     const [sdateMed, setSdateMed] = useState('');
     const [edateMed, setEdateMed] = useState('');
+    const [dosage, setDosage] = useState('');
+    const [frequency, setFrequency] = useState('');
     const [duration, setDuration] = useState('');
     const [regimen, setRegimen] = useState('');
     const [drug, setDrug] = React.useState([]);; 
-    const [medPrescription, setMedPrescription] = useState('');
     const [notes, setNotes] = useState('');
     const [outcome, setOutcome] = useState('');
     const [followUpSched, setFollowUpSched] = useState('');
@@ -73,10 +74,11 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
           edateTP,
           sdateMed,
           edateMed,
+          dosage,
+          frequency,
           duration,
           regimen,
           drug,
-          medPrescription,
           notes,
           outcome,
           followUpSched,
@@ -177,7 +179,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                     </Select>
                 </FormControl>
                 </Grid>
-                <Grid item xs={3} marginBottom="2vh">
+                <Grid item xs={3}>
                 <FormControl fullWidth required margin="dense">
                     <InputLabel id="duration-label">Duration of Treatment</InputLabel>
                     <Select
@@ -195,22 +197,9 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                     </Select>
                 </FormControl>
                 </Grid>
-                <Grid container spacing={3}>
-                <Grid item xs={4}  marginLeft="3vh">
-                    <Typography variant="body1" gutterBottom>Medical Prescription Available:</Typography>
-                    <RadioGroup
-                    row
-                    name="medPrescription"
-                    value={medPrescription}
-                    onChange={(e) => setMedPrescription(e.target.value)}
-                    >
-                    <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-                    <FormControlLabel value="no" control={<Radio />} label="No" />
-                    </RadioGroup>
-                </Grid>
                 <Grid item xs={6}>
                 <FormControl fullWidth margin="dense">
-                    <InputLabel id="drug-label">Type of Drug Intake</InputLabel>
+                    <InputLabel id="drug-label">Medicine / Type of Drug Intake</InputLabel>
                     <Select 
                     
                     labelId="drug-label"
@@ -233,7 +222,33 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                     </Select >
                 </FormControl>
                 </Grid>
-                <Grid item xs={3}  marginLeft="3vh">
+                <Grid item xs={3}>
+                <TextField
+                        required
+                        fullWidth
+                        id="dosage"
+                        label="Dosage"
+                        name="dosage"
+                        variant="outlined"
+                        margin="dense"
+                        value={dosage}
+                        onChange={(e) => setDosage(e.target.value)}
+                    />
+                </Grid>
+                <Grid item xs={3}>
+                <TextField
+                        required
+                        fullWidth
+                        id="frequency"
+                        label="Frequency"
+                        name="frequency"
+                        variant="outlined"
+                        margin="dense"
+                        value={frequency}
+                        onChange={(e) => setFrequency(e.target.value)}
+                    />
+                </Grid>
+                <Grid item xs={3}>
                 <TextField
                         required
                         fullWidth
@@ -250,7 +265,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                 </Grid>
                 <Grid item xs={3}>
                 <TextField
-                
+                        required
                         fullWidth
                         id="edateMed"
                         label="Date Medication Ended"
@@ -259,7 +274,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                         InputLabelProps={{ shrink: true }}
                         variant="outlined"
                         margin="dense"
-                        value={edateTP}
+                        value={edateMed}
                         onChange={(e) => setEdateMed(e.target.value)}
                     />
                 </Grid>
@@ -267,10 +282,10 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                 <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
 
                 {/* In Progress Section */}
-                <Typography marginTop="1vh" variant="h5"marginLeft="3vh" gutterBottom sx={{ color: colors.greenAccent[500], fontWeight: 'bold' }}>
+                <Typography marginTop="1vh" variant="h5" gutterBottom sx={{ color: colors.greenAccent[500], fontWeight: 'bold' }}>
                     Patient Progress TP Information
                 </Typography>
-                <Grid container spacing={3}marginLeft="1vh">
+                <Grid container spacing={3}>
                     <Grid item xs={6} >
                         <TextField
                         
@@ -304,10 +319,10 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                 <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
 
                 {/* End Section */}
-                <Typography marginTop="1vh" marginLeft="3vh" variant="h5" gutterBottom sx={{ color: colors.greenAccent[500], fontWeight: 'bold' }}>
+                <Typography marginTop="1vh" variant="h5" gutterBottom sx={{ color: colors.greenAccent[500], fontWeight: 'bold' }}>
                     End of Treatment Plan Information
                 </Typography>
-                <Grid container spacing={3} marginLeft="1vh">
+                <Grid container spacing={3}>
                 <Grid item xs={6}>
                         <TextField
                         
@@ -339,7 +354,6 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                         ))}
                         </Select>
                         </FormControl>
-                    </Grid>
                     </Grid>
                 </Grid>
 
