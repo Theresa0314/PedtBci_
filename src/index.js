@@ -58,7 +58,7 @@ const router = createBrowserRouter(
 
         <Route path="/referralinfo" element={<ReferralInfo />} />
         <Route path="/referralform" element={<ReferralForm/>} />
-        <Route path="/referralinfo/:caseNumber" element={<ReferralDetails/>} />
+        <Route path="/referralinfo/:referralId" element={<ReferralDetails/>} />
 
         <Route path="/TPlist" element={<TPList />} />
         <Route path="/TPform" element={<TPForm />} />

@@ -9,7 +9,7 @@ import Header from '../../components/Header';
 import { tokens } from '../../theme';
 
 const ReferralDetails = () => {
-  const { caseNumber } = useParams(); // Use the referral ID from the URL
+  const { referralId } = useParams(); // Use the referral ID from the URL
   const [referralData, setReferralData] = useState(null);
   const [loading, setLoading] = useState(true);
   const theme = useTheme();
@@ -17,7 +17,7 @@ const ReferralDetails = () => {
 
   useEffect(() => {
     const fetchReferralData = async () => {
-      const docRef = doc(db, "referralform", caseNumber);
+      const docRef = doc(db, "referralform", referralId);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
@@ -29,7 +29,7 @@ const ReferralDetails = () => {
     };
 
     fetchReferralData();
-  }, [caseNumber]);
+  }, [referralId]);
 
   if (loading) {
     return (
