@@ -27,7 +27,6 @@ import {
   updateDoc,
   deleteDoc,
 } from 'firebase/firestore';
-import { mockDataContacts } from '../data/mockData';
 
 const Contacts = () => {
   const theme = useTheme();

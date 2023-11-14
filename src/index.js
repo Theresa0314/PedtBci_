@@ -16,9 +16,7 @@ import Dashboard from "./pages/dashboard";
 import PatientInfo from "./pages/patientInfo";
 import Symptoms from "./pages/symptoms";
 import Contacts from "./pages/contacts";
-import Bar from "./pages/bar";
-import Line from "./pages/line";
-import Pie from "./pages/pie";
+
 import Calendar from "./pages/calendar";
 import PatientGenForm from "./pages/patientgenform";
 import PatientDetail from "./pages/patientdetail";
@@ -38,16 +36,12 @@ const router = createBrowserRouter(
 
       <Route path="/" element={ <Protected /> } >
         <Route path="/" element={ <Dashboard /> } />
-        <Route path="/contacts" element={<Contacts />} />
-        <Route path="/symptoms" element={<Symptoms />} />
-        <Route path="/bar" element={<Bar />} />
-        <Route path="/pie" element={<Pie />} />
-        <Route path="/line" element={<Line />} />
         <Route path="/calendar" element={<Calendar />} />
-
         <Route path="/patientInfo" element={<PatientInfo />} />
         <Route path="/patientgenform" element={<PatientGenForm />} />
         <Route path="/patientInfo/:caseNumber" element={<PatientDetail />} />
+        <Route path="/contacts" element={<Contacts />} />
+        <Route path="/symptoms" element={<Symptoms />} />
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/TPlist" element={<TPList />} />
         <Route path="/TPform" element={<TPForm />} />

@@ -4,7 +4,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Link, useNavigate } from 'react-router-dom';
 
 import * as yup from "yup";
-import {Button, TextField, Grid, Container, Divider, useTheme } from "@mui/material";
+import {Button, TextField, Grid, Container, useTheme } from "@mui/material";
 import { Formik, ErrorMessage } from "formik";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
