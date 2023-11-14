@@ -114,30 +114,36 @@ const PatientDetail = () => {
             <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-                <strong>Parent/Guardian Name:</strong> {patientData.parentName}
+                  <strong>Parent/Guardian Name:</strong> {patientData.parentName}
                 </Typography>
                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-                <strong>Parent/Guardian Email:</strong> {patientData.parentEmail}
+                  <strong>Parent/Guardian Email:</strong> {patientData.parentEmail}
                 </Typography>
                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-                <strong>Secondary Contact Name:</strong> {patientData.secondaryContactName}
+                  <strong>Secondary Contact Name:</strong> {patientData.secondaryContactName || 'N/A'}
                 </Typography>
                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-                <strong>Emergency Contact Name:</strong> {patientData.emergencyContactName}
+                  <strong>Secondary Contact Email:</strong> {patientData.secondaryContactEmail || 'N/A'}
+                </Typography>
+                <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                  <strong>Emergency Contact Name:</strong> {patientData.emergencyContactName}
                 </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-                <strong>Relationship to Patient:</strong> {patientData.relationshipToPatient}
+                  <strong>Relationship to Patient:</strong> {patientData.relationshipToPatient}
                 </Typography>
                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-                <strong>Parent/Guardian Contact No.:</strong> {patientData.parentContactNumber}
+                  <strong>Parent/Guardian Contact No.:</strong> {patientData.parentContactNumber}
                 </Typography>
                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-                <strong>Secondary Contact Number:</strong> {patientData.secondaryContactNumber}
+                  <strong>Secondary Relationship to Patient:</strong> {patientData.secondaryRelationshipToPatient || 'N/A'}
                 </Typography>
                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-                <strong>Emergency Contact Number:</strong> {patientData.emergencyContactNumber}
+                  <strong>Secondary Contact Number:</strong> {patientData.secondaryContactNumber || 'N/A'}
+                </Typography>
+                <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                  <strong>Emergency Contact Number:</strong> {patientData.emergencyContactNumber}
                 </Typography>
             </Grid>
             </Grid>

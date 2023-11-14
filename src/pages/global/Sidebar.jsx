@@ -10,13 +10,14 @@ import { tokens } from "../../theme";
 // Import Icons
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
+import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
-// import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
-// import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
-// import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
+//import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
+//import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
+//import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import InventoryIcon from '@mui/icons-material/Inventory';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
@@ -128,6 +129,13 @@ const Sidebar = () => {
               title="General Information"
               to="/patientInfo"
               icon={<PeopleOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Referrals"
+              to="/referralinfo"
+              icon={<AssignmentIndOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />

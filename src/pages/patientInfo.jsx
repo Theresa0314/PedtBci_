@@ -103,7 +103,7 @@ const PatientInfo = () => {
       flex: 1,
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
-          <Link to={`/patient_info/${params.id}`} style={{ textDecoration: 'none' }}>
+          <Link to={`/patientinfo/${params.id}`} style={{ textDecoration: 'none' }}>
             <Button
               variant="contained"
               style={{
