@@ -4,7 +4,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import TPForm from "./TPform"; 
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { db } from '../../firebase.config';
 import SearchIcon from '@mui/icons-material/Search';
@@ -17,7 +17,8 @@ const TPList = () => {
 
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-
+  const navigate = useNavigate(); 
+  
   const style = {
     position: 'absolute',
     top: '50%',
@@ -51,6 +52,11 @@ const TPList = () => {
       setSearchText(event.target.value);
     };
 
+    const handleViewDetails = (id) => {
+      // Navigate to the details page
+      navigate(`/TPlist/${id}`);
+    };
+
     const handleDelete = async (id) => {
       try {
         await deleteDoc(doc(db, "treatmentPlan", id));
@@ -61,12 +67,8 @@ const TPList = () => {
     };
 
     const handleEdit = async (id) => {
-      try {
-        await deleteDoc(doc(db, "treatmentPlan", id));
-        setPatientsData(patientsData.filter((item) => item.id !== id));
-      } catch (err) {
-        console.log(err);
-      }
+      // Navigate to the edit page or open an edit modal
+      navigate(`/TPedit/${id}`);
     };
 
     const handleUpdateTP = (newPatient) => {
@@ -148,61 +150,40 @@ const TPList = () => {
     {
       field: "action",
       headerName: "Action",
+      sortable: false,
       renderCell: (params) => (
           // view
-          <Box display="flex" justifyContent="center" xs={6} >
-          <Link to={`/TPlist/${params.id}`} style={{ textDecoration: 'none' }}>
+          <Box display="flex" justifyContent="center">
             <Button
-            className = "view"
-            startIcon={<PageviewIcon />}
+              className = "view"
+              startIcon={<PageviewIcon />}
+              onClick={() => handleViewDetails(params.id)}
               variant="contained"
-              style={{
-               
-                color: colors.greenAccent[600]
-              }}
+              color="primary"
+              style={{ marginRight: 8 }}
             >
-              VIEW
+              View
             </Button>
-            </Link>
-          </Box>
-        ),
-      },
-    {
-      field: 'edit',
-      headerName: '',
-      renderCell: (params) => (
-        <Box display="flex" justifyContent="center">
-         {/* <Link to={`/inventoryList/${params.id}`} style={{ textDecoration: 'none' }}> */}
-          <Button 
-                className = "editButton"
-                startIcon={<EditIcon />}
-                variant="outlined"
-                color="success"
-                onClick={handleAddNewPatient}
-                >
-                  EDIT
+            <Button
+            startIcon={<EditIcon />}
+            onClick={() => handleEdit(params.id)}
+            variant="contained"
+            color="secondary"
+            style={{ marginRight: 8 }}
+          >
+            Edit
           </Button>
-          {/* </Link> */}
+          <Button
+            startIcon={<DeleteIcon />}
+            onClick={() => handleDelete(params.id)}
+            variant="contained"
+            color="error"
+          >
+            Delete
+          </Button>
         </Box>
       ),
-    },
-    {
-      field: 'delete', 
-      headerName: '',
-      flex: 1,
-      renderCell: (params) => (
-      <Box  display="flex" justifyContent="center">
-          <Button 
-                className = "deleteButton"
-                startIcon={<DeleteIcon />}
-                variant="outlined"
-                  color="error"
-                  onClick={() => handleDelete(params.row.id)}
-                >
-                  DELETE
-          </Button>
-    </Box>
-      ),
+      width: 300,
     },
   ];
   columns.forEach(column => {

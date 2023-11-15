@@ -33,6 +33,7 @@ import Inventory from "./pages/inventory";
 import TPList from "./pages/treatmentPlan/TPlist";
 import TPForm from "./pages/treatmentPlan/TPform";
 import TPDetail from "./pages/treatmentPlan/TPdetail";
+import TPEdit from "./pages/treatmentPlan/TPedit";
 
 import { Form } from "react-router-dom";
 import Patient_Info from "./pages/patientinfo/patientInfo";
@@ -68,6 +69,7 @@ const router = createBrowserRouter(
         <Route path="/TPlist" element={<TPList />} />
         <Route path="/TPform" element={<TPForm />} />
         <Route path="/TPlist/:caseNumber" element={<TPDetail />} />
+        <Route path="/TPedit/:treatmentId" element={<TPEdit/>} />
 
       </Route>
       <Route path="/" element={<Protected />}>
