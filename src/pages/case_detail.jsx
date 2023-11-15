@@ -494,6 +494,7 @@ const Case_Detail = () => {
                         <XrayGenForm
                           handleCloseForm={handleCloseForm}
                           handleUpdatePatients={handleAddNewXray}
+                          caseNumber={caseData.caseNumber}
                         />
                       </Modal>
                     </div>
