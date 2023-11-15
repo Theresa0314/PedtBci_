@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, RadioGroup, FormControlLabel, FormHelperText, Radio, Container, Divider, Checkbox, useTheme
+  Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, RadioGroup, 
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
+  FormControlLabel, FormHelperText, Radio, Container, Divider, useTheme
 } from '@mui/material';
-import { tokens } from "../theme";
-import { db } from '../firebase.config';
+import { tokens } from "../../theme";
+import { db } from '../../firebase.config';
 import { collection, addDoc } from 'firebase/firestore';
 
 // Sample data for dropdowns
@@ -32,7 +34,9 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
     const [parentContactNumber, setParentContactNumber] = useState('');
     const [relationshipToPatient, setRelationshipToPatient] = useState('');
     const [secondaryContactName, setSecondaryContactName] = useState('');
+    const [secondaryContactEmail, setSecondaryContactEmail] = useState('');
     const [secondaryContactNumber, setSecondaryContactNumber] = useState('');
+    const [secondaryRelationshipToPatient, setSecondaryRelationshipToPatient] = useState('');
     const [emergencyContactName, setEmergencyContactName] = useState('');
     const [emergencyContactNumber, setEmergencyContactNumber] = useState('');
 
@@ -41,16 +45,10 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
     const [tbDrugHistory, setTbDrugHistory] = useState('');
     const [symptomsLastTwoWeeks, setSymptomsLastTwoWeeks] = useState('');
 
-    // State to track if radio groups have been touched
-    const [touched, setTouched] = useState({
-        chestXrayAvailable: false,
-        tbDrugHistory: false,
-        symptomsLastTwoWeeks: false,
-    });
-
-
     const [consent, setConsent] = useState(false);
     const [formErrors, setFormErrors] = useState({});
+    const [openConsentDialog, setOpenConsentDialog] = useState(true); // Opens the dialog by default
+
 
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -74,7 +72,7 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
     };
 
     const handleCancel = () => {
-                navigate("/patient_info");
+                navigate("/patientInfo");
             };
 
     const handleSubmit = async (event) => {
@@ -98,9 +96,13 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
             return; 
         }
       
-        // Generate a unique case number
-        const caseNumber = 'CN-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
-      
+        // Generate a 10-digit number first
+        const randomNumber = Math.floor(1000000000 + Math.random() * 9000000000);
+
+        // Convert to string and add 'CN-' prefix
+        const caseNumber = 'CN-' + randomNumber.toString();
+
+
         // Get the current date and time in Philippine time
         const dateAdded = new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' });
       
@@ -121,14 +123,17 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
           parentContactNumber,
           relationshipToPatient,
           secondaryContactName,
+          secondaryContactEmail,
           secondaryContactNumber,
           emergencyContactName,
           emergencyContactNumber,
+          secondaryRelationshipToPatient,
           chestXrayAvailable,
           tbDrugHistory,
           symptomsLastTwoWeeks,
           caseNumber, // Add the generated case number
           dateAdded,  // Add the generated date added
+          caseStatus: 'Open', 
         };
 
        
@@ -143,19 +148,78 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
                 handleUpdatePatients(newPatient);
               }
               
-              // Navigate back to the patient_info page
-              navigate("/patient_info");
+              navigate("/patientinfo");
             } catch (e) {
               console.error("Error adding document: ", e);
             }
           };
 
+          const drawerWidth = 240;
+
     return (
-        <Container component="main" maxWidth="md" sx={{
-            backgroundColor: colors.blueAccent[800], 
-            padding: theme.spacing(5), 
-            borderRadius: theme.shape.borderRadius
-        }}>
+    <Container
+    component="main"
+    sx={{
+        backgroundColor: colors.blueAccent[800],
+        padding: theme.spacing(5),
+        borderRadius: theme.shape.borderRadius,
+        marginLeft: { sm: `${drawerWidth}px` }, // Use the drawerWidth here
+        width: { sm: `calc(100% - ${drawerWidth}px)` }, // Use the drawerWidth here
+        boxSizing: 'border-box',
+        transition: theme.transitions.create(['margin', 'width'], {
+          easing: theme.transitions.easing.sharp,
+          duration: theme.transitions.duration.leavingScreen,
+        }),
+        }}
+        >
+
+            <Dialog
+            open={openConsentDialog}
+            onClose={() => setOpenConsentDialog(false)}
+            aria-labelledby="consent-dialog-title"
+            aria-describedby="consent-dialog-description"
+            PaperProps={{
+                style: {
+                backgroundColor: colors.primary[500], // or whichever color you want from your theme
+                color: colors.grey[100],
+                boxShadow: 'none',
+                },
+            }}
+            >
+            <DialogTitle id="consent-dialog-title" style={{ color: colors.greenAccent[600], fontSize: '1.5rem' }}>
+                Privacy Consent Reminder
+            </DialogTitle>
+            <DialogContent>
+                <DialogContentText id="consent-dialog-description" style={{ color: colors.grey[100], marginBottom: theme.spacing(2) }}>
+                In keeping with our commitment to your privacy and safeguarding your personal data, we assure you that the collection of information is solely for <strong style={{ color: colors.redAccent[500] }}>legitimate healthcare operations</strong>. These operations include clinical and program management, as well as the offering of psychosocial and financial assistance where applicable.
+                </DialogContentText>
+                <DialogContentText id="consent-dialog-description" style={{ color: colors.grey[100], marginBottom: theme.spacing(2) }}>
+                Should you have any questions, or wish to withdraw consent, please contact our facility head or reach out to:
+                <ul>
+                    <li>Email: <a href="mailto:ntp.helpdesk@doh.gov.ph" style={{ color: colors.greenAccent[600] }}>ntp.helpdesk@doh.gov.ph</a></li>
+                    <li>Phone: <span style={{ color: colors.greenAccent[600] }}>(02) 8230-9626</span></li>
+                </ul>
+                </DialogContentText>
+                <DialogContentText id="consent-dialog-description" style={{ color: colors.grey[100] }}>
+                Rest assured, your personal information is secured and will be accessible only to <strong style={{ color: colors.redAccent[500] }}>authorized staff</strong> for your care and support.
+                </DialogContentText>
+            </DialogContent>
+            <DialogActions style={{ justifyContent: 'center', padding: theme.spacing(3) }}>
+                <Button onClick={() => {
+                setOpenConsentDialog(false);
+                navigate("/patientinfo"); // Navigate back to patient info page
+                }} style={{ color: colors.grey[100], borderColor: colors.greenAccent[500], marginRight: theme.spacing(1) }}>
+                Disagree
+                </Button>
+                <Button onClick={() => {
+                setConsent(true);
+                setOpenConsentDialog(false);
+                }} style={{ backgroundColor: colors.greenAccent[600], color: colors.grey[100] }}>
+                Agree
+                </Button>
+            </DialogActions>
+            </Dialog>
+
             <Typography variant="h2" gutterBottom sx={{ color: colors.white, fontWeight: 'bold' }}>
                 Patient General Information
             </Typography>
@@ -410,6 +474,19 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
                     <Grid item xs={6}>
                         <TextField
                             fullWidth
+                            id="secondaryContactEmail"
+                            label="Secondary Contact Email"
+                            name="secondaryContactEmail"
+                            type="email"
+                            variant="outlined"
+                            margin="dense"
+                            value={secondaryContactEmail}
+                            onChange={(e) => setSecondaryContactEmail(e.target.value)}
+                        />
+                    </Grid>
+                    <Grid item xs={6}>
+                        <TextField
+                            fullWidth
                             id="secondaryContactNumber"
                             label="Secondary Contact Number"
                             name="secondaryContactNumber"
@@ -418,6 +495,25 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
                             value={secondaryContactNumber}
                             onChange={(e) => setSecondaryContactNumber(e.target.value)}
                         />
+                    </Grid>
+                    <Grid item xs={6}>
+                        <FormControl fullWidth margin="dense">
+                            <InputLabel id="secondary-relationship-label">Relationship to Patient</InputLabel>
+                            <Select
+                            labelId="secondary-relationship-label"
+                            id="secondaryRelationshipToPatient"
+                            name="secondaryRelationshipToPatient"
+                            value={secondaryRelationshipToPatient}
+                            onChange={(e) => setSecondaryRelationshipToPatient(e.target.value)}
+                            >
+                            {/* Add your options here */}
+                            <MenuItem value="father">Father</MenuItem>
+                            <MenuItem value="mother">Mother</MenuItem>
+                            <MenuItem value="sibling">Sibling</MenuItem>
+                            <MenuItem value="grandparent">Grandparent</MenuItem>
+                            <MenuItem value="other">Other</MenuItem>
+                            </Select>
+                        </FormControl>
                     </Grid>
                     <Grid item xs={6}>
                         <TextField
@@ -516,27 +612,6 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
 
 
                 </Grid>
-
-            <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
-
-            <Grid item xs={12}>
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            required
-                            checked={consent}
-                            onChange={(e) => setConsent(e.target.checked)}
-                            name="consentCheckbox"
-                            color="primary"
-                        />
-                    }
-                    label="Patient has signed consent form"
-                />
-                {formErrors.consent && (
-                    <FormHelperText error>{formErrors.consent}</FormHelperText>
-                )}
-            </Grid>
-
 
                 <Grid container justifyContent="center" sx={{ mt: 4 }}>
                     <Button type="submit" variant="contained" sx={{ backgroundColor: colors.greenAccent[600], color: colors.grey[100], mr: 1 }}>

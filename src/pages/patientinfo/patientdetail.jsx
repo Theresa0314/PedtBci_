@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { db } from "../firebase.config";
+import { db } from '../../firebase.config';
 import { doc, collection, getDoc, getDocs } from "firebase/firestore";
 import {
   Box,
@@ -19,8 +19,8 @@ import {
   TextField,
   InputAdornment,
 } from "@mui/material";
-import Header from "../components/Header";
-import { tokens } from "../theme";
+import Header from "../../components/Header";
+import { tokens } from "../../theme";
 import { DataGrid } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
 
