@@ -111,6 +111,7 @@ const ReferralForm = () => {
   const handleReasonChange = (event) => {
     setReasonForReferral(event.target.value);
     setSubReason(''); // Reset sub-reason when main reason changes
+    
   };
 
   const handleSubReasonChange = (event) => {

@@ -27,6 +27,7 @@ import PatientEdit from "./pages/patientinfo/patientedit";
 import ReferralInfo from "./pages/referral/referralinfo";
 import ReferralForm from './pages/referral/referralform';
 import ReferralDetails from './pages/referral/referraldetails';
+import ReferralEdit from "./pages/referral/referraledit";
 
 import Inventory from "./pages/inventory";
 import TPList from "./pages/treatmentPlan/TPlist";
@@ -54,6 +55,7 @@ const router = createBrowserRouter(
         <Route path="/referralinfo" element={<ReferralInfo />} />
         <Route path="/referralform" element={<ReferralForm/>} />
         <Route path="/referralinfo/:referralId" element={<ReferralDetails/>} />
+        <Route path="/referraledit/:referralId" element={<ReferralEdit/>} />
 
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/symptoms" element={<Symptoms />} />
