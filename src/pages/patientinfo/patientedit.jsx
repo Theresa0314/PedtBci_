@@ -8,7 +8,6 @@ import { tokens } from "../../theme";
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase.config';
-// ... other necessary imports
 
 // Sample data for dropdowns
 const provinces = ["Metro Manila", "Cavite", "Laguna", "Batangas"];
@@ -32,7 +31,7 @@ const PatientEditForm = () => {
     const [province, setProvince] = useState('');
     const [city, setCity] = useState('');
     const [barangay, setBarangay] = useState('');
-    const [consent, setConsent] = useState(false); // Assuming consent is a boolean
+    const [consent, setConsent] = useState(false); 
     const [parentName, setParentName] = useState('');
     const [parentEmail, setParentEmail] = useState('');
     const [parentContactNumber, setParentContactNumber] = useState('');
@@ -43,9 +42,9 @@ const PatientEditForm = () => {
     const [emergencyContactName, setEmergencyContactName] = useState('');
     const [emergencyContactNumber, setEmergencyContactNumber] = useState('');
     const [secondaryRelationshipToPatient, setSecondaryRelationshipToPatient] = useState('');
-    const [chestXrayAvailable, setChestXrayAvailable] = useState(''); // Assuming this is a string like 'yes' or 'no'
-    const [tbDrugHistory, setTbDrugHistory] = useState(''); // Same as above
-    const [symptomsLastTwoWeeks, setSymptomsLastTwoWeeks] = useState(''); // Same as above
+    const [chestXrayAvailable, setChestXrayAvailable] = useState(''); 
+    const [tbDrugHistory, setTbDrugHistory] = useState(''); 
+    const [symptomsLastTwoWeeks, setSymptomsLastTwoWeeks] = useState(''); 
 
 
     // This useEffect hook fetches the patient data from Firebase
@@ -80,10 +79,9 @@ const PatientEditForm = () => {
                 setChestXrayAvailable(data.chestXrayAvailable);
                 setTbDrugHistory(data.tbDrugHistory);
                 setSymptomsLastTwoWeeks(data.symptomsLastTwoWeeks);
-                // ... set the rest of your state variables with the fetched data
             } else {
                 console.log("No such document!");
-                navigate("/patientinfo"); // or show an error message
+                navigate("/patientinfo"); 
             }
         };
 
@@ -93,8 +91,6 @@ const PatientEditForm = () => {
     // Function to handle form submission
     const handleSubmit = async (event) => {
         event.preventDefault();
-        // ... form validation and data gathering
-
         const patientData = {
             fullName,
             alias,
@@ -126,7 +122,7 @@ const PatientEditForm = () => {
             const docRef = doc(db, "patientsinfo", patientId);
             await updateDoc(docRef, patientData);
             console.log("Document updated with ID: ", docRef.id);
-            navigate("/patientinfo"); // Redirect to the patient info page
+            navigate("/patientinfo"); 
         } catch (e) {
             console.error("Error updating document: ", e);
         }
