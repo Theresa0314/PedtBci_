@@ -20,6 +20,7 @@ import XrayGenForm from "./xraygenform";
 import MTBRIFGenForm from "./mtbrifgenform";
 import TSTGenForm from "./tstgenform";
 import IGRAGenForm from "./igragenform";
+import DSTGenForm from "./dstgenform";
 
 const Case_Detail = () => {
   const theme = useTheme();
@@ -150,6 +151,53 @@ const Case_Detail = () => {
     {
       field: "result",
       headerName: "Result",
+      flex: 1,
+    },
+    {
+      field: "validity",
+      headerName: "Validity",
+      flex: 1,
+    },
+  ];
+
+  const dstColumns = [
+    {
+      field: "location",
+      headerName: "Test Location",
+      headerAlign: "left",
+      flex: 1,
+    },
+    {
+      field: "testDate",
+      headerName: "Date Tested",
+      type: "date",
+      headerAlign: "left",
+      align: "left",
+    },
+    {
+      field: "referenceNumber",
+      headerName: "Reference #",
+      headerAlign: "left",
+      align: "left",
+    },
+    {
+      field: "isoniazid",
+      headerName: "Isoniazid",
+      flex: 1,
+    },
+    {
+      field: "ethionamide",
+      headerName: "Ethionamide",
+      flex: 1,
+    },
+    {
+      field: "fluoroquinolones",
+      headerName: "Fluoroquinolones",
+      flex: 1,
+    },
+    {
+      field: "amikacin",
+      headerName: "Amikacin",
       flex: 1,
     },
     {
@@ -397,55 +445,26 @@ const Case_Detail = () => {
                   <Tab label="MTB/RIF Tests" />
                   <Tab label="TST Tests" />
                   <Tab label="IGRA Tests" />
+                  <Tab label="DST Tests" />
                 </Tabs>
 
                 {/* Different tabs for Xray, MTB/RIF, TST, IGRA */}
                 {currentCaseTab === 0 ? (
                   <div>
-                    <Typography
-                      variant="h4"
-                      fontWeight="bold"
-                      color={colors.grey[100]}
-                    >
-                      Xray Tests
-                    </Typography>
-                    <Box
-                      m="10px 0 0 0"
-                      height="auto"
-                      sx={{
-                        "& .MuiDataGrid-root": {
-                          border: "none",
-                        },
-                        "& .MuiDataGrid-cell": {
-                          borderBottom: "none",
-                        },
-                        "& .name-column--cell": {
-                          color: colors.greenAccent[300],
-                        },
-                        "& .MuiDataGrid-columnHeaders": {
-                          backgroundColor: colors.blueAccent[700],
-                          borderBottom: "none",
-                        },
-                        "& .MuiDataGrid-virtualScroller": {
-                          backgroundColor: colors.primary[400],
-                        },
-                        "& .MuiDataGrid-footerContainer": {
-                          borderTop: "none",
-                          backgroundColor: colors.blueAccent[700],
-                        },
-                        "& .MuiCheckbox-root": {
-                          color: `${colors.greenAccent[200]} !important`,
-                        },
-                      }}
-                    >
-                      <DataGrid rows={mockDataXrayTests} columns={columns} />
-                    </Box>
                     <div
                       style={{
                         display: "flex",
                         justifyContent: "space-between",
+                        alignItems: "center",
                       }}
                     >
+                      <Typography
+                        variant="h4"
+                        fontWeight="bold"
+                        color={colors.grey[100]}
+                      >
+                        Xray Tests
+                      </Typography>
                       <div style={{ marginLeft: "auto" }}>
                         <Button
                           variant="contained"
@@ -453,7 +472,7 @@ const Case_Detail = () => {
                           style={{
                             backgroundColor: colors.greenAccent[600],
                             color: colors.grey[100],
-                            height: "50px",
+                            height: "40px",
                             marginTop: theme.spacing(1),
                           }}
                         >
@@ -478,98 +497,6 @@ const Case_Detail = () => {
                         />
                       </Modal>
                     </div>
-                  </div>
-                ) : (
-                  currentCaseTab === 1 && (
-                    <div>
-                      <Typography
-                        variant="h4"
-                        fontWeight="bold"
-                        color={colors.grey[100]}
-                      >
-                        MTB/RIF Tests
-                      </Typography>
-                      <Box
-                        m="10px 0 0 0"
-                        height="auto"
-                        sx={{
-                          "& .MuiDataGrid-root": {
-                            border: "none",
-                          },
-                          "& .MuiDataGrid-cell": {
-                            borderBottom: "none",
-                          },
-                          "& .name-column--cell": {
-                            color: colors.greenAccent[300],
-                          },
-                          "& .MuiDataGrid-columnHeaders": {
-                            backgroundColor: colors.blueAccent[700],
-                            borderBottom: "none",
-                          },
-                          "& .MuiDataGrid-virtualScroller": {
-                            backgroundColor: colors.primary[400],
-                          },
-                          "& .MuiDataGrid-footerContainer": {
-                            borderTop: "none",
-                            backgroundColor: colors.blueAccent[700],
-                          },
-                          "& .MuiCheckbox-root": {
-                            color: `${colors.greenAccent[200]} !important`,
-                          },
-                        }}
-                      >
-                        <DataGrid rows={mockDataXrayTests} columns={columns} />
-                      </Box>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <div style={{ marginLeft: "auto" }}>
-                          <Button
-                            variant="contained"
-                            onClick={handleOpenForm}
-                            style={{
-                              backgroundColor: colors.greenAccent[600],
-                              color: colors.grey[100],
-                              height: "50px",
-                              marginTop: theme.spacing(1),
-                            }}
-                          >
-                            Add New MTB/RIF
-                          </Button>
-                        </div>
-                        {/* Modal for the PatientGenForm */}
-                        <Modal
-                          open={open}
-                          onClose={handleCloseForm}
-                          aria-labelledby="modal-modal-title"
-                          aria-describedby="modal-modal-description"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <MTBRIFGenForm
-                            handleCloseForm={handleCloseForm}
-                            handleUpdatePatients={handleAddNewXray}
-                          />
-                        </Modal>
-                      </div>
-                    </div>
-                  )
-                )}
-                {currentCaseTab === 2 ? (
-                  <div>
-                    <Typography
-                      variant="h4"
-                      fontWeight="bold"
-                      color={colors.grey[100]}
-                    >
-                      TST Tests
-                    </Typography>
                     <Box
                       m="10px 0 0 0"
                       height="auto"
@@ -601,55 +528,56 @@ const Case_Detail = () => {
                     >
                       <DataGrid rows={mockDataXrayTests} columns={columns} />
                     </Box>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <div style={{ marginLeft: "auto" }}>
-                        <Button
-                          variant="contained"
-                          onClick={handleOpenForm}
-                          style={{
-                            backgroundColor: colors.greenAccent[600],
-                            color: colors.grey[100],
-                            height: "50px",
-                            marginTop: theme.spacing(1),
-                          }}
-                        >
-                          Add New TST
-                        </Button>
-                      </div>
-                      {/* Modal for the PatientGenForm */}
-                      <Modal
-                        open={open}
-                        onClose={handleCloseForm}
-                        aria-labelledby="modal-modal-title"
-                        aria-describedby="modal-modal-description"
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <TSTGenForm
-                          handleCloseForm={handleCloseForm}
-                          handleUpdatePatients={handleAddNewXray}
-                        />
-                      </Modal>
-                    </div>
                   </div>
                 ) : (
-                  currentCaseTab === 3 && (
+                  currentCaseTab === 1 && (
                     <div>
-                      <Typography
-                        variant="h4"
-                        fontWeight="bold"
-                        color={colors.grey[100]}
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
                       >
-                        IGRA Tests
-                      </Typography>
+                        <Typography
+                          variant="h4"
+                          fontWeight="bold"
+                          color={colors.grey[100]}
+                        >
+                          MTB/RIF Tests
+                        </Typography>
+                        <div style={{ marginLeft: "auto" }}>
+                          <Button
+                            variant="contained"
+                            onClick={handleOpenForm}
+                            style={{
+                              backgroundColor: colors.greenAccent[600],
+                              color: colors.grey[100],
+                              height: "40px",
+                              marginTop: theme.spacing(1),
+                            }}
+                          >
+                            Add New MTB/RIF
+                          </Button>
+                        </div>
+                        {/* Modal for the PatientGenForm */}
+                        <Modal
+                          open={open}
+                          onClose={handleCloseForm}
+                          aria-labelledby="modal-modal-title"
+                          aria-describedby="modal-modal-description"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <MTBRIFGenForm
+                            handleCloseForm={handleCloseForm}
+                            handleUpdatePatients={handleAddNewXray}
+                          />
+                        </Modal>
+                      </div>
                       <Box
                         m="10px 0 0 0"
                         height="auto"
@@ -681,12 +609,106 @@ const Case_Detail = () => {
                       >
                         <DataGrid rows={mockDataXrayTests} columns={columns} />
                       </Box>
+                    </div>
+                  )
+                )}
+                {currentCaseTab === 2 ? (
+                  <div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Typography
+                        variant="h4"
+                        fontWeight="bold"
+                        color={colors.grey[100]}
+                      >
+                        TST Tests
+                      </Typography>
+                      <div style={{ marginLeft: "auto" }}>
+                        <Button
+                          variant="contained"
+                          onClick={handleOpenForm}
+                          style={{
+                            backgroundColor: colors.greenAccent[600],
+                            color: colors.grey[100],
+                            height: "40px",
+                            marginTop: theme.spacing(1),
+                          }}
+                        >
+                          Add New TST
+                        </Button>
+                      </div>
+                      {/* Modal for the PatientGenForm */}
+                      <Modal
+                        open={open}
+                        onClose={handleCloseForm}
+                        aria-labelledby="modal-modal-title"
+                        aria-describedby="modal-modal-description"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <TSTGenForm
+                          handleCloseForm={handleCloseForm}
+                          handleUpdatePatients={handleAddNewXray}
+                        />
+                      </Modal>
+                    </div>
+                    <Box
+                      m="10px 0 0 0"
+                      height="auto"
+                      sx={{
+                        "& .MuiDataGrid-root": {
+                          border: "none",
+                        },
+                        "& .MuiDataGrid-cell": {
+                          borderBottom: "none",
+                        },
+                        "& .name-column--cell": {
+                          color: colors.greenAccent[300],
+                        },
+                        "& .MuiDataGrid-columnHeaders": {
+                          backgroundColor: colors.blueAccent[700],
+                          borderBottom: "none",
+                        },
+                        "& .MuiDataGrid-virtualScroller": {
+                          backgroundColor: colors.primary[400],
+                        },
+                        "& .MuiDataGrid-footerContainer": {
+                          borderTop: "none",
+                          backgroundColor: colors.blueAccent[700],
+                        },
+                        "& .MuiCheckbox-root": {
+                          color: `${colors.greenAccent[200]} !important`,
+                        },
+                      }}
+                    >
+                      <DataGrid rows={mockDataXrayTests} columns={columns} />
+                    </Box>
+                  </div>
+                ) : (
+                  currentCaseTab === 3 && (
+                    <div>
                       <div
                         style={{
                           display: "flex",
                           justifyContent: "space-between",
+                          alignItems: "center",
                         }}
                       >
+                        <Typography
+                          variant="h4"
+                          fontWeight="bold"
+                          color={colors.grey[100]}
+                        >
+                          IGRA Tests
+                        </Typography>
                         <div style={{ marginLeft: "auto" }}>
                           <Button
                             variant="contained"
@@ -694,7 +716,7 @@ const Case_Detail = () => {
                             style={{
                               backgroundColor: colors.greenAccent[600],
                               color: colors.grey[100],
-                              height: "50px",
+                              height: "40px",
                               marginTop: theme.spacing(1),
                             }}
                           >
@@ -719,8 +741,134 @@ const Case_Detail = () => {
                           />
                         </Modal>
                       </div>
+                      <Box
+                        m="10px 0 0 0"
+                        height="auto"
+                        sx={{
+                          "& .MuiDataGrid-root": {
+                            border: "none",
+                          },
+                          "& .MuiDataGrid-cell": {
+                            borderBottom: "none",
+                          },
+                          "& .name-column--cell": {
+                            color: colors.greenAccent[300],
+                          },
+                          "& .MuiDataGrid-columnHeaders": {
+                            backgroundColor: colors.blueAccent[700],
+                            borderBottom: "none",
+                          },
+                          "& .MuiDataGrid-virtualScroller": {
+                            backgroundColor: colors.primary[400],
+                          },
+                          "& .MuiDataGrid-footerContainer": {
+                            borderTop: "none",
+                            backgroundColor: colors.blueAccent[700],
+                          },
+                          "& .MuiCheckbox-root": {
+                            color: `${colors.greenAccent[200]} !important`,
+                          },
+                        }}
+                      >
+                        <DataGrid rows={mockDataXrayTests} columns={columns} />
+                      </Box>
                     </div>
                   )
+                )}
+                {currentCaseTab === 4 && (
+                  <div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Typography
+                        variant="h4"
+                        fontWeight="bold"
+                        color={colors.grey[100]}
+                      >
+                        DST Tests
+                      </Typography>
+                      <div style={{ marginLeft: "auto" }}>
+                        <Button
+                          variant="contained"
+                          onClick={handleOpenForm}
+                          style={{
+                            backgroundColor: colors.greenAccent[600],
+                            color: colors.grey[100],
+                            height: "40px",
+                            marginTop: theme.spacing(1),
+                          }}
+                        >
+                          Add New DST
+                        </Button>
+                      </div>
+                      {/* Modal for the PatientGenForm */}
+                      <Modal
+                        open={open}
+                        onClose={handleCloseForm}
+                        aria-labelledby="modal-modal-title"
+                        aria-describedby="modal-modal-description"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <div
+                          style={{
+                            maxHeight: "90vh",
+                            overflow: "auto",
+                            marginTop: "10px",
+                            marginBottom: "10px",
+                          }}
+                        >
+                          <DSTGenForm
+                            handleCloseForm={handleCloseForm}
+                            handleUpdatePatients={handleAddNewXray}
+                          />
+                        </div>
+                      </Modal>
+                    </div>
+                    {/*  */}
+
+                    {/* Place DST Data Grid here */}
+                    <Box
+                      m="10px 0 0 0"
+                      height="auto"
+                      sx={{
+                        "& .MuiDataGrid-root": {
+                          border: "none",
+                        },
+                        "& .MuiDataGrid-cell": {
+                          borderBottom: "none",
+                        },
+                        "& .name-column--cell": {
+                          color: colors.greenAccent[300],
+                        },
+                        "& .MuiDataGrid-columnHeaders": {
+                          backgroundColor: colors.blueAccent[700],
+                          borderBottom: "none",
+                        },
+                        "& .MuiDataGrid-virtualScroller": {
+                          backgroundColor: colors.primary[400],
+                        },
+                        "& .MuiDataGrid-footerContainer": {
+                          borderTop: "none",
+                          backgroundColor: colors.blueAccent[700],
+                        },
+                        "& .MuiCheckbox-root": {
+                          color: `${colors.greenAccent[200]} !important`,
+                        },
+                      }}
+                    >
+                      <DataGrid rows={mockDataXrayTests} columns={dstColumns} />
+                    </Box>
+
+                    {/*  */}
+                  </div>
                 )}
               </Box>
             </Box>
