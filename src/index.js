@@ -22,10 +22,12 @@ import Calendar from "./pages/calendar";
 import PatientInfo from "./pages/patientinfo/patientInfo";
 import PatientGenForm from "./pages/patientinfo/patientgenform";
 import PatientDetail from "./pages/patientinfo/patientdetail";
+import PatientEdit from "./pages/patientinfo/patientedit";
 
 import ReferralInfo from "./pages/referral/referralinfo";
 import ReferralForm from './pages/referral/referralform';
 import ReferralDetails from './pages/referral/referraldetails';
+import ReferralEdit from "./pages/referral/referraledit";
 
 import Inventory from "./pages/inventory";
 import TPList from "./pages/treatmentPlan/TPlist";
@@ -44,13 +46,16 @@ const router = createBrowserRouter(
       <Route path="/" element={ <Protected /> } >
         <Route path="/" element={ <Dashboard /> } />
         <Route path="/calendar" element={<Calendar />} />
+
         <Route path="/patientInfo" element={<PatientInfo />} />
         <Route path="/patientgenform" element={<PatientGenForm />} />
         <Route path="/patientInfo/:caseNumber" element={<PatientDetail />} />
+        <Route path="/patientedit/:patientId" element={<PatientEdit/>} />
           
         <Route path="/referralinfo" element={<ReferralInfo />} />
         <Route path="/referralform" element={<ReferralForm/>} />
         <Route path="/referralinfo/:referralId" element={<ReferralDetails/>} />
+        <Route path="/referraledit/:referralId" element={<ReferralEdit/>} />
 
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/symptoms" element={<Symptoms />} />
