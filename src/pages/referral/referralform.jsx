@@ -555,6 +555,7 @@ const ReferralForm = () => {
                     <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
 
 
+                    {/* Action Taken Section */}
                     <Typography variant="h5" gutterBottom sx={{ color: colors.greenAccent[500], fontWeight: 'bold' }}>
                     Action Taken
                     </Typography> 
