@@ -10,11 +10,13 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  TextareaAutosize,
   Button,
+  Dialog,
+  DialogContent,
+  Grid,
 } from '@mui/material';
 import { useTheme } from '@mui/material';
-import { Box, Dialog, DialogContent } from '@mui/material';
+import { Box } from '@mui/material';
 import { GridToolbar, DataGrid } from '@mui/x-data-grid';
 import { tokens } from '../theme'; // Import your theme tokens from your theme file
 import Header from '../components/Header';
@@ -28,6 +30,9 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 import { mockDataContacts } from '../data/mockData';
+import { Timestamp } from 'firebase/firestore';
+import { format } from 'date-fns';
+
 
 const Contacts = () => {
   const theme = useTheme();
@@ -36,15 +41,14 @@ const Contacts = () => {
   const [isAddFormOpen, setAddFormOpen] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
     birthday: '',
     gender: '',
     relationship: '',
     contact: '',
     email: '',
-    init: '',
-    ff: '',
-    remarks: '',
   });
 
   const [tableData, setTableData] = useState([]);
@@ -78,14 +82,14 @@ const Contacts = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-  
+
     // Check if it's an edit or add operation
     if (formData.id) {
       // If `id` exists in formData, it means we are editing an existing record
       try {
         // Update the document in the database
         await updateDoc(doc(db, 'contactTracing', formData.id), formData);
-  
+
         // Update the local table data
         setTableData((prevData) => {
           const updatedData = prevData.map((row) =>
@@ -93,7 +97,7 @@ const Contacts = () => {
           );
           return updatedData;
         });
-  
+
         console.log(`Row with ID ${formData.id} updated in the database`);
       } catch (error) {
         console.error('Error updating document: ', error);
@@ -102,45 +106,43 @@ const Contacts = () => {
       // If `id` doesn't exist in formData, it means we are adding a new record
       // Create a new data object with the form values
       const newData = {
-        name: formData.name,
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
         birthday: formData.birthday,
         gender: formData.gender,
         relationship: formData.relationship,
         contact: formData.contact,
         email: formData.email,
-        init: formData.init,
-        ff: formData.ff,
-        remarks: formData.remarks,
       };
-  
+
       // Save the data to Firebase
       try {
         const contactsCollection = collection(db, 'contactTracing');
         const docRef = await addDoc(contactsCollection, newData);
-  
+
         // Update the local table data
         setTableData([...tableData, { id: docRef.id, ...newData }]);
-  
+
         console.log(`Row with ID ${docRef.id} added to the database`);
       } catch (error) {
         console.error('Error adding document: ', error);
       }
     }
-  
+
     // Close the form
     setAddFormOpen(false);
-  
+
     // Clear the form data
     setFormData({
-      name: '',
+      firstName: '',
+      middleName: '',
+      lastName: '',
       birthday: '',
       gender: '',
       relationship: '',
       contact: '',
       email: '',
-      init: '',
-      ff: '',
-      remarks: '',
     });
   };
 
@@ -150,18 +152,26 @@ const Contacts = () => {
   
     // Check if the row exists
     if (selectedRow) {
+      // Convert birthday to Firestore Timestamp, handle null case
+      const formattedBirthday = selectedRow.birthday
+        ? new Date(selectedRow.birthday.seconds * 1000).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          })
+        : null;
+  
       // Update the form data with the selected row's values and set the ID
       setFormData({
         id: selectedRow.id, // Set the ID in formData
-        name: selectedRow.name,
-        birthday: new Date(selectedRow.birthday),
+        firstName: selectedRow.firstName,
+        middleName: selectedRow.middleName,
+        lastName: selectedRow.lastName,
+        birthday: formattedBirthday,
         gender: selectedRow.gender,
         relationship: selectedRow.relationship,
         contact: selectedRow.contact,
         email: selectedRow.email,
-        init: new Date(selectedRow.init),
-        ff: new Date(selectedRow.ff),
-        remarks: selectedRow.remarks,
       });
   
       // Open the dialog for editing
@@ -176,7 +186,7 @@ const Contacts = () => {
 
   const handleDeleteClick = async (id) => {
     // Display a confirmation dialog
-    const confirmDeletion = window.confirm("Are you sure you want to delete this row?");
+    const confirmDeletion = window.confirm("Are you sure you want to delete this contact?");
   
     if (confirmDeletion) {
       // Delete the data from the database
@@ -201,6 +211,11 @@ const Contacts = () => {
       field: 'name',
       headerName: 'Name',
       flex: 1,
+      valueGetter: (params) => {
+        // Concatenate first, middle, and last names
+        const { firstName, middleName, lastName } = params.row;
+        return `${firstName} ${middleName} ${lastName}`;
+      },
     },
     {
       field: 'birthday',
@@ -234,31 +249,6 @@ const Contacts = () => {
       flex: 1,
     },
     {
-      field: 'init',
-      headerName: 'Initial Screening',
-      type: 'date',
-      flex: 0.5,
-      valueGetter: (params) => {
-        // Convert the date string to a Date object
-        return new Date(params.row.init);
-      },
-    },
-    {
-      field: 'ff',
-      headerName: 'FF-up',
-      type: 'date',
-      flex: 0.5,
-      valueGetter: (params) => {
-        // Convert the date string to a Date object
-        return new Date(params.row.ff);
-      },
-    },
-    {
-      field: 'remarks',
-      headerName: 'Remarks(TB/TPT Case No.)',
-      flex: 0.5,
-    },
-    {
       field: 'action',
       headerName: 'Action',
       flex: 1,
@@ -288,7 +278,7 @@ const Contacts = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Container component="div" maxWidth="lg">
-        <Header
+      <Header
           title="Contact Tracing"
           subtitle="List of Contacts for Future Reference"
         />
@@ -330,148 +320,162 @@ const Contacts = () => {
               onClick={handleAddClick}
               style={{ marginRight: '8px' }} // Add margin to the right
             >
-              Add Data
+              Add Close Contact
             </Button>
 
             <DataGrid rows={tableData} columns={columns} components={{ Toolbar: GridToolbar }} />
           </Box>
         </Box>
-
+        
         <Dialog open={isAddFormOpen} onClose={() => setAddFormOpen(false)}>
           <DialogContent>
             <div className="container mt-5">
-              <h1>Contact Tracing Form - Pediatric TB</h1>
+            <div style={{ textAlign: 'center' }}>
+              <h1> Pediatric TB - Contact Tracing Form</h1>
+              </div>
               <form onSubmit={handleSubmit}>
+                {/* Name Fields */}
                 <div className="form-row">
-                  <div className="form-group col-md-6">
-                    <label htmlFor="name">Name:</label>
-                    <TextField
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleFormChange}
-                      required
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
-                  <div className="form-group col-md-6">
-                    <label htmlFor="birthday">Date Of Birth:</label>
-                    <TextField
-                      type="date"
-                      id="birthday"
-                      name="birthday"
-                      value={formData.birthday}
-                      onChange={handleFormChange}
-                      required
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
+                  <Typography variant="subtitle1">Full Name:</Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={4}>
+                      <TextField
+                        type="text"
+                        id="firstName"
+                        name="firstName"
+                        label="First Name"
+                        variant="outlined"
+                        margin="dense"
+                        fullWidth
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={4}>
+                      <TextField
+                        type="text"
+                        id="middleName"
+                        name="middleName"
+                        label="Middle Name"
+                        variant="outlined"
+                        margin="dense"
+                        fullWidth
+                        value={formData.middleName}
+                        onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={4}>
+                      <TextField
+                        type="text"
+                        id="lastName"
+                        name="lastName"
+                        label="Last Name"
+                        variant="outlined"
+                        margin="dense"
+                        fullWidth
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                        required
+                      />
+                    </Grid>
+                  </Grid>
                 </div>
+                {/* Date of Birth, Gender, and Relationship to Patient Fields */}
                 <div className="form-row">
-                  <div className="form-group col-md-1">
-                    <label htmlFor="gender">Gender:</label>
-                    <Select
-                      id="gender"
-                      name="gender"
-                      value={formData.gender}
-                      onChange={handleFormChange}
-                      required
-                      fullWidth
-                      margin="normal"
-                    >
-                      <MenuItem value="">Choose...</MenuItem>
-                      <MenuItem value="Male">Male</MenuItem>
-                      <MenuItem value="Female">Female</MenuItem>
-                      <MenuItem value="Other">Other</MenuItem>
-                    </Select>
-                  </div>
-                  <div className="form-group col-md-3">
-                    <label htmlFor="relationship">Relationship to Patient:</label>
-                    <TextField
-                      type="text"
-                      id="relationship"
-                      name="relationship"
-                      value={formData.relationship}
-                      onChange={handleFormChange}
-                      required
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
-                  <div className="form-group col-md-4">
-                    <label htmlFor="contact">Contact Number:</label>
-                    <TextField
-                      type="text"
-                      id="contact"
-                      name="contact"
-                      value={formData.contact}
-                      onChange={handleFormChange}
-                      required
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
-                  <div className="form-group col-md-4">
-                    <label htmlFor="email">Email Address:</label>
-                    <TextField
-                      type="text"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleFormChange}
-                      required
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
+                  <Grid container spacing={2}>
+                    <Grid item xs={4}>
+                    <Typography variant="subtitle12">Birthdate:</Typography>
+                      <TextField
+                        type="date"
+                        id="birthday"
+                        name="birthday"
+                        variant="outlined"
+                        margin="dense"
+                        fullWidth
+                        value={formData.birthday}
+                        onChange={handleFormChange}
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={4}>
+                    <Typography variant="subtitle3">Gender:</Typography>
+                      <FormControl variant="outlined" fullWidth margin="dense">
+                        <InputLabel id="gender-label"></InputLabel>
+                        <Select
+                          labelId="gender-label"
+                          id="gender"
+                          name="gender"
+                          value={formData.gender}
+                          onChange={handleFormChange}
+                          required
+                        >
+                          <MenuItem value="">Choose...</MenuItem>
+                          <MenuItem value="Male">Male</MenuItem>
+                          <MenuItem value="Female">Female</MenuItem>
+                          <MenuItem value="Other">Other</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={4}>
+                    <Typography variant="subtitle4">Relationship to Patient:</Typography>
+                      <TextField
+                        type="text"
+                        id="relationship"
+                        name="relationship"
+                        label="Relationship to Patient"
+                        variant="outlined"
+                        margin="dense"
+                        fullWidth
+                        value={formData.relationship}
+                        onChange={handleFormChange}
+                        required
+                      />
+                    </Grid>
+                  </Grid>
                 </div>
-                <div className="form-row">
-                  <div className="form-group col-md-6">
-                    <label htmlFor="init">Initial Screening:</label>
-                    <TextField
-                      type="date"
-                      id="init"
-                      name="init"
-                      value={formData.init}
-                      onChange={handleFormChange}
-                      required
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
-                  <div className="form-group col-md-6">
-                    <label htmlFor="ff">FF-up:</label>
-                    <TextField
-                      type="date"
-                      id="ff"
-                      name="ff"
-                      value={formData.ff}
-                      onChange={handleFormChange}
-                      required
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
+                {/* Contact Number and Email Address Fields */}
+                <div className="form-row" style={{ marginTop: '20px' }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                    <Typography variant="subtitle1=5">Contact Number:</Typography>
+                      <TextField
+                        type="text"
+                        id="contact"
+                        name="contact"
+                        label="Contact Number"
+                        variant="outlined"
+                        margin="dense"
+                        fullWidth
+                        value={formData.contact}
+                        onChange={handleFormChange}
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                    <Typography variant="subtitle6">Email Address:</Typography>
+                      <TextField
+                        type="text"
+                        id="email"
+                        name="email"
+                        label="Email Address"
+                        variant="outlined"
+                        margin="dense"
+                        fullWidth
+                        value={formData.email}
+                        onChange={handleFormChange}
+                        required
+                      />
+                    </Grid>
+                  </Grid>
                 </div>
-                <div className="form-group mt-3">
-                  <label htmlFor="remarks">Remarks (TB/TPT Case No.)</label>
-                  <TextField
-                    id="remarks"
-                    name="remarks"
-                    value={formData.remarks}
-                    onChange={handleFormChange}
-                    required
-                    fullWidth
-                    margin="normal"
-                  />
-                </div>
-                <div className="d-flex justify-content-center align-items-center">
-                  <Button type="submit" variant="contained" color="secondary">
-                    Submit
-                  </Button>
+                <div className="d-flex justify-content-center align-items-center mt-3">
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '20px'}}>
+                    <Button type="submit" variant="contained" color="secondary">
+                      Submit
+                    </Button>
+                  </div>
                 </div>
               </form>
             </div>
