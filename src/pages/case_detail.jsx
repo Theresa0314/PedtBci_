@@ -14,13 +14,15 @@ import Header from "../components/Header";
 import { useParams } from "react-router-dom";
 import { DataGrid } from "@mui/x-data-grid";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase.config";
+import { db, doc, deleteDoc } from "../firebase.config";
 import { mockDataXrayTests } from "../data/mockData";
 import XrayGenForm from "./xraygenform";
 import MTBRIFGenForm from "./mtbrifgenform";
 import TSTGenForm from "./tstgenform";
 import IGRAGenForm from "./igragenform";
 import DSTGenForm from "./dstgenform";
+import DeleteIcon from '@mui/icons-material/Delete'
+import EditIcon from '@mui/icons-material/Edit'
 
 const Case_Detail = () => {
   const theme = useTheme();
@@ -51,6 +53,26 @@ const Case_Detail = () => {
     borderRadius: 2, // Optional: if you want rounded corners
   };
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "xray"));
+        let data = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        // Sort by dateAdded in ascending order
+        data.sort((a, b) => {
+          const dateA = new Date(a.dateAdded);
+          const dateB = new Date(b.dateAdded);
+          return dateA - dateB;
+        });
+        setXrayData(data);
+      } catch (error) {
+        console.error("Error fetching patient data: ", error);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
   const [open, setOpen] = useState(false);
 
   const handleOpenForm = () => {
@@ -62,6 +84,7 @@ const Case_Detail = () => {
   };
 
   const [xrayData, setXrayData] = useState([]);
+
   // Handle creation of new cases
   const handleAddNewXray = (newXray) => {
     setXrayData((currentXray) => {
@@ -75,9 +98,52 @@ const Case_Detail = () => {
     });
   };
 
+  // Delete Dialogs
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
+  const handleClickDelete = (id) => {
+    // Set the id to be deleted and open the dialog
+    setDeleteId(id);
+    setOpenDeleteDialog(true);
+  };
+  const handleCloseDeleteDialog = () => {
+    setOpenDeleteDialog(false);
+  };
+
+  const handleDelete = async () => {
+    handleCloseDeleteDialog();
+    // if (deleteId) {
+    //   try {
+    //     await deleteDoc(doc(db, "patientsinfo", deleteId));
+    //     setPatientsData(patientsData.filter((item) => item.id !== deleteId));
+    //   } catch (error) {
+    //     console.error("Error deleting patient: ", error);
+    //   }
+    // }
+  };
+  
+  
+  const handleEdit = (id) => {
+    // Navigate to the edit page or open an edit modal
+    // navigate(`/patientedit/${id}`);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch x-ray data
+        const queryXraySnapshot = await getDocs(collection(db, "xray"));
+        let dataXray = queryXraySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        // Sort by dateAdded in ascending order
+        dataXray.sort((a, b) => {
+          const dateA = new Date(a.dateAdded);
+          const dateB = new Date(b.dateAdded);
+          return dateA - dateB;
+        });
+        setXrayData(dataXray);
+
+        // Fetch case data
         const querySnapshot = await getDocs(collection(db, "cases"));
         let data = querySnapshot.docs.map((doc) => ({
           ...doc.data(),
@@ -89,7 +155,7 @@ const Case_Detail = () => {
           (caseData) => caseData.id === caseId.caseNumber
         );
 
-        //Assume timestamp is an object
+        // Assume timestamp is an object
         const startDate = caseData.startDate.toDate();
         const endDate = caseData.endDate.toDate();
 
@@ -101,10 +167,10 @@ const Case_Detail = () => {
         setStartDate(formattedStartDate);
         setEndDate(formattedEndDate);
 
-        //Set Case Data
+        // Set Case Data
         setCaseData(caseData);
       } catch (error) {
-        console.error("Error fetching patient data: ", error);
+        console.error("Error fetching data: ", error);
       }
     };
 
@@ -112,7 +178,8 @@ const Case_Detail = () => {
     if (caseId) {
       fetchData();
     }
-  }, [caseId]); // Dependency should be caseId, not casesData
+  }, [caseId]);
+ // Dependency should be caseId, not casesData
 
   // Conditionally render the component based on data availability
   if (!caseData) {
@@ -130,7 +197,14 @@ const Case_Detail = () => {
 
   const columns = [
     {
-      field: "location",
+      field: "referenceNumber",
+      headerName: "Reference #",
+      headerAlign: "left",
+      align: "left",
+      width: 120,
+    },
+    {
+      field: "testLocation",
       headerName: "Test Location",
       headerAlign: "left",
       flex: 1,
@@ -141,15 +215,14 @@ const Case_Detail = () => {
       type: "date",
       headerAlign: "left",
       align: "left",
+      // Add a custom formatter if necessary to format the date
+      valueFormatter: (params) => {
+        const valueFormatted = new Date(params.value).toLocaleDateString('en-US', { timeZone: 'Asia/Manila' });
+        return valueFormatted;
+      },
     },
     {
-      field: "referenceNumber",
-      headerName: "Reference #",
-      headerAlign: "left",
-      align: "left",
-    },
-    {
-      field: "result",
+      field: "testResult",
       headerName: "Result",
       flex: 1,
     },
@@ -158,6 +231,33 @@ const Case_Detail = () => {
       headerName: "Validity",
       flex: 1,
     },
+    {
+      field: 'action',
+      headerName: 'Action',
+      sortable: false,
+      renderCell: (params) => (
+        <Box display="flex" justifyContent="center">
+          <Button
+            startIcon={<EditIcon />}
+            onClick={() => handleEdit(params.id)}
+            variant="contained"
+            color="secondary"
+            style={{ marginRight: 8 }}
+          >
+            Edit
+          </Button>
+          <Button
+            startIcon={<DeleteIcon />}
+            onClick={() => handleClickDelete(params.id)}
+            variant="contained"
+            color="error"
+          >
+            Delete
+          </Button>
+        </Box>
+      ),
+      width: 200
+    }, 
   ];
 
   const dstColumns = [
@@ -527,7 +627,7 @@ const Case_Detail = () => {
                         },
                       }}
                     >
-                      <DataGrid rows={mockDataXrayTests} columns={columns} />
+                      <DataGrid rows={xrayData} columns={columns} />
                     </Box>
                   </div>
                 ) : (

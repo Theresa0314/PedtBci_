@@ -9,13 +9,7 @@ import {
   MenuItem,
   Typography,
   Button,
-  RadioGroup,
-  FormControlLabel,
-  FormHelperText,
-  Radio,
   Container,
-  Divider,
-  Checkbox,
   useTheme,
   Input,
 } from "@mui/material";
@@ -34,22 +28,19 @@ const result = ["With signs of TB", "No signs", "Undetermined"];
 
 const XrayGenForm = ({ handleUpdateXrays, caseNumber }) => {
   // State hooks for xray information
-  //   const [caseNumber, setCaseNumber] = useState("");
   const [xrayCaseNumber, setXrayCaseNumber] = useState("");
   const [testDate, setTestDate] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
   const [testLocation, setTestLocation] = useState("");
   const [testResult, setTestResult] = useState("");
-  const [validity, setValidity] = useState("");
   const [file, setFile] = useState(null);
   const [downloadURL, setDownloadURL] = useState(""); 
-
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const navigate = useNavigate();
 
   const handleCancel = () => {
-    navigate("/patient_info");
+    navigate(0);
   };
 
   // Set the caseNumber in the component's state
@@ -58,63 +49,53 @@ const XrayGenForm = ({ handleUpdateXrays, caseNumber }) => {
     console.log("caseNumber: " + caseNumber);
   }, [caseNumber]);
 
-  useEffect(() => {
-    const uploadFile = async () => {
-      if (file) {
-        try {
-          const storageRef = ref(storage, `xray-files/${file.name}`);
-          await uploadBytes(storageRef, file);
-
-          // Get the download URL of the uploaded file
-          const url = await getDownloadURL(storageRef);
-
-          // Set the download URL in the state
-          setDownloadURL(url);
-          console.log("File uploaded. Download URL:", url);
-        } catch (error) {
-          console.error("Error uploading file:", error);
-        }
-      }
-    };
-
-    uploadFile();
-  }, [file]);
-
   const handleSubmit = async (event) => {
     event.preventDefault();
-
-    // Generate a unique reference number
-    const referenceNumber =
-      "XR-" +
-      Date.now().toString(36) +
-      Math.random().toString(36).substr(2, 5).toUpperCase();
-
-    // Get the current date and time in Philippine time
-    const dateAdded = new Date().toLocaleString("en-US", {
-      timeZone: "Asia/Manila",
-    });
-
-    const xrayData = {
-      caseNumber,
-      referenceNumber,
-      testDate,
-      testLocation,
-      testResult,
-      fileURL: downloadURL
-    };
+  
     try {
+      // Upload file
+      if (file) {
+        const storageRef = ref(storage, `xray-files/${file.name}`);
+        await uploadBytes(storageRef, file);
+  
+        // Get the download URL of the uploaded file
+        const url = await getDownloadURL(storageRef);
+  
+        // Set the download URL in the state
+        setDownloadURL(url);
+        console.log("File uploaded. Download URL:", url);
+      }
+  
+      // Generate a unique reference number
+      const referenceNumber =
+        "XR-" +
+        Date.now().toString(36) +
+        Math.random().toString(36).substr(2, 5).toUpperCase();
+  
+      const xrayData = {
+        caseNumber,
+        referenceNumber,
+        testDate,
+        testLocation,
+        testResult,
+        fileName: file.name,
+        fileURL: downloadURL,
+      };
+  
+      // Add xray data to Firestore
       const docRef = await addDoc(collection(db, "xray"), xrayData);
       console.log("Document written with ID: ", docRef.id);
-
+  
+      // Update xrays if handleUpdateXrays is provided
       if (handleUpdateXrays) {
         const newXray = { ...xrayData, id: docRef.id };
         handleUpdateXrays(newXray);
-      } 
-
+      }
+  
       // Navigate back to the patient_info page
-      navigate("/patient_info");
-    } catch (e) {
-      console.error("Error adding document: ", e);
+      navigate(0);
+    } catch (error) {
+      console.error("Error handling submit: ", error);
     }
   };
 
@@ -214,19 +195,19 @@ const XrayGenForm = ({ handleUpdateXrays, caseNumber }) => {
             </FormControl>
           </Grid>
           <Grid item xs={12}>
-            <InputLabel htmlFor="validity" sx={{ color: colors.white }}>
+            <InputLabel htmlFor="fileName" sx={{ color: colors.white }}>
               Upload Xray File Attachment
             </InputLabel>
             <Input
               required
               fullWidth
-              id="validity"
+              id="fileName"
               type="file"
-              inputProps={{ accept: ".pdf, .doc, .docx, .jpg, .jpeg, .png" }} // Specify accepted file types
+              inputProps={{ accept: ".jpg, .jpeg, .png" }} // Specify accepted file types
               onChange={handleFileChange}
               sx={{ display: "none" }} // Hide the default input style
             />
-            <label htmlFor="validity">
+            <label htmlFor="fileName">
               <Button
                 style={{ color: "white", width: "100%" }}
                 sx={{
