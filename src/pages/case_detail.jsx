@@ -21,8 +21,8 @@ import MTBRIFGenForm from "./mtbrifgenform";
 import TSTGenForm from "./tstgenform";
 import IGRAGenForm from "./igragenform";
 import DSTGenForm from "./dstgenform";
-import DeleteIcon from '@mui/icons-material/Delete'
-import EditIcon from '@mui/icons-material/Edit'
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 
 const Case_Detail = () => {
   const theme = useTheme();
@@ -57,7 +57,10 @@ const Case_Detail = () => {
     const fetchData = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "xray"));
-        let data = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        let data = querySnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
         // Sort by dateAdded in ascending order
         data.sort((a, b) => {
           const dateA = new Date(a.dateAdded);
@@ -69,7 +72,7 @@ const Case_Detail = () => {
         console.error("Error fetching patient data: ", error);
       }
     };
-    
+
     fetchData();
   }, []);
 
@@ -84,8 +87,12 @@ const Case_Detail = () => {
   };
 
   const [xrayData, setXrayData] = useState([]);
+  const [mtbrifData, setMTBRIFData] = useState([]);
+  const [tstData, setTSTData] = useState([]);
+  const [igraData, setIGRAData] = useState([]);
+  const [dstData, setDSTData] = useState([]);
 
-  // Handle creation of new cases
+  // Handle creation of new tests
   const handleAddNewXray = (newXray) => {
     setXrayData((currentXray) => {
       const updatedXrays = [...currentXray, newXray];
@@ -95,6 +102,54 @@ const Case_Detail = () => {
         return dateA - dateB; // Ascending order
       });
       return updatedXrays;
+    });
+  };
+
+  const handleAddNewMTBRIF = (newMTBRIF) => {
+    setMTBRIFData((currentMTBRIF) => {
+      const updatedMTBRIF = [...currentMTBRIF, newMTBRIF];
+      updatedMTBRIF.sort((a, b) => {
+        const dateA = new Date(a.dateAdded);
+        const dateB = new Date(b.dateAdded);
+        return dateA - dateB; // Ascending order
+      });
+      return updatedMTBRIF;
+    });
+  };
+
+  const handleAddNewTST = (newTST) => {
+    setTSTData((currentTST) => {
+      const updatedTST = [...currentTST, newTST];
+      updatedTST.sort((a, b) => {
+        const dateA = new Date(a.dateAdded);
+        const dateB = new Date(b.dateAdded);
+        return dateA - dateB; // Ascending order
+      });
+      return updatedTST;
+    });
+  };
+
+  const handleAddNewIGRA = (newIGRA) => {
+    setIGRAData((currentIGRA) => {
+      const updatedIGRA = [...currentIGRA, newIGRA];
+      updatedIGRA.sort((a, b) => {
+        const dateA = new Date(a.dateAdded);
+        const dateB = new Date(b.dateAdded);
+        return dateA - dateB; // Ascending order
+      });
+      return updatedIGRA;
+    });
+  };
+
+  const handleAddNewDST = (newDST) => {
+    setDSTData((currentDST) => {
+      const updatedDST = [...currentDST, newDST];
+      updatedDST.sort((a, b) => {
+        const dateA = new Date(a.dateAdded);
+        const dateB = new Date(b.dateAdded);
+        return dateA - dateB; // Ascending order
+      });
+      return updatedDST;
     });
   };
 
@@ -122,8 +177,7 @@ const Case_Detail = () => {
     //   }
     // }
   };
-  
-  
+
   const handleEdit = (id) => {
     // Navigate to the edit page or open an edit modal
     // navigate(`/patientedit/${id}`);
@@ -134,7 +188,10 @@ const Case_Detail = () => {
       try {
         // Fetch x-ray data
         const queryXraySnapshot = await getDocs(collection(db, "xray"));
-        let dataXray = queryXraySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        let dataXray = queryXraySnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
         // Sort by dateAdded in ascending order
         dataXray.sort((a, b) => {
           const dateA = new Date(a.dateAdded);
@@ -142,6 +199,62 @@ const Case_Detail = () => {
           return dateA - dateB;
         });
         setXrayData(dataXray);
+
+        // Fetch mtb/rif data
+        const queryMTBRIFSnapshot = await getDocs(collection(db, "mtbrif"));
+        let dataMTBRIF = queryMTBRIFSnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+        // Sort by dateAdded in ascending order
+        dataMTBRIF.sort((a, b) => {
+          const dateA = new Date(a.dateAdded);
+          const dateB = new Date(b.dateAdded);
+          return dateA - dateB;
+        });
+        setMTBRIFData(dataMTBRIF);
+
+        // Fetch tst data
+        const queryTSTSnapshot = await getDocs(collection(db, "tst"));
+        let dataTST = queryTSTSnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+        // Sort by dateAdded in ascending order
+        dataTST.sort((a, b) => {
+          const dateA = new Date(a.dateAdded);
+          const dateB = new Date(b.dateAdded);
+          return dateA - dateB;
+        });
+        setTSTData(dataTST);
+
+        // Fetch igra data
+        const queryIGRASnapshot = await getDocs(collection(db, "igra"));
+        let dataIGRA = queryIGRASnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+        // Sort by dateAdded in ascending order
+        dataIGRA.sort((a, b) => {
+          const dateA = new Date(a.dateAdded);
+          const dateB = new Date(b.dateAdded);
+          return dateA - dateB;
+        });
+        setIGRAData(dataIGRA);
+
+        // Fetch dst data
+        const queryDSTSnapshot = await getDocs(collection(db, "dst"));
+        let dataDST = queryDSTSnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+        // Sort by dateAdded in ascending order
+        dataDST.sort((a, b) => {
+          const dateA = new Date(a.dateAdded);
+          const dateB = new Date(b.dateAdded);
+          return dateA - dateB;
+        });
+        setDSTData(dataDST);
 
         // Fetch case data
         const querySnapshot = await getDocs(collection(db, "cases"));
@@ -179,7 +292,7 @@ const Case_Detail = () => {
       fetchData();
     }
   }, [caseId]);
- // Dependency should be caseId, not casesData
+  // Dependency should be caseId, not casesData
 
   // Conditionally render the component based on data availability
   if (!caseData) {
@@ -199,42 +312,48 @@ const Case_Detail = () => {
     {
       field: "referenceNumber",
       headerName: "Reference #",
-      headerAlign: "left",
+      headerAlign: "center",
       align: "left",
       width: 120,
     },
     {
       field: "testLocation",
       headerName: "Test Location",
-      headerAlign: "left",
+      headerAlign: "center",
       flex: 1,
     },
     {
       field: "testDate",
       headerName: "Date Tested",
       type: "date",
-      headerAlign: "left",
+      headerAlign: "center",
       align: "left",
       // Add a custom formatter if necessary to format the date
       valueFormatter: (params) => {
-        const valueFormatted = new Date(params.value).toLocaleDateString('en-US', { timeZone: 'Asia/Manila' });
+        const valueFormatted = new Date(params.value).toLocaleDateString(
+          "en-US",
+          { timeZone: "Asia/Manila" }
+        );
         return valueFormatted;
       },
     },
     {
       field: "testResult",
       headerName: "Result",
+      headerAlign: "center",
       flex: 1,
     },
     {
       field: "validity",
       headerName: "Validity",
+      headerAlign: "center",
       flex: 1,
     },
     {
-      field: 'action',
-      headerName: 'Action',
+      field: "action",
+      headerName: "Action",
       sortable: false,
+      headerAlign: "center",
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
           <Button
@@ -256,8 +375,8 @@ const Case_Detail = () => {
           </Button>
         </Box>
       ),
-      width: 200
-    }, 
+      width: 200,
+    },
   ];
 
   const dstColumns = [
@@ -593,7 +712,7 @@ const Case_Detail = () => {
                       >
                         <XrayGenForm
                           handleCloseForm={handleCloseForm}
-                          handleUpdatePatients={handleAddNewXray}
+                          handleUpdateXrays={handleAddNewXray}
                           caseNumber={caseData.caseNumber}
                         />
                       </Modal>
@@ -675,7 +794,8 @@ const Case_Detail = () => {
                         >
                           <MTBRIFGenForm
                             handleCloseForm={handleCloseForm}
-                            handleUpdatePatients={handleAddNewXray}
+                            handleUpdateMTBRIF={handleAddNewMTBRIF}
+                            caseNumber={caseData.caseNumber}
                           />
                         </Modal>
                       </div>
@@ -708,7 +828,7 @@ const Case_Detail = () => {
                           },
                         }}
                       >
-                        <DataGrid rows={mockDataXrayTests} columns={columns} />
+                        <DataGrid rows={mtbrifData} columns={columns} />
                       </Box>
                     </div>
                   )
@@ -757,7 +877,8 @@ const Case_Detail = () => {
                       >
                         <TSTGenForm
                           handleCloseForm={handleCloseForm}
-                          handleUpdatePatients={handleAddNewXray}
+                          handleUpdateTST={handleAddNewTST}
+                          caseNumber={caseData.caseNumber}
                         />
                       </Modal>
                     </div>
@@ -790,7 +911,7 @@ const Case_Detail = () => {
                         },
                       }}
                     >
-                      <DataGrid rows={mockDataXrayTests} columns={columns} />
+                      <DataGrid rows={tstData} columns={columns} />
                     </Box>
                   </div>
                 ) : (
@@ -838,7 +959,8 @@ const Case_Detail = () => {
                         >
                           <IGRAGenForm
                             handleCloseForm={handleCloseForm}
-                            handleUpdatePatients={handleAddNewXray}
+                            handleUpdateIGRA={handleAddNewIGRA}
+                            caseNumber={caseData.caseNumber}
                           />
                         </Modal>
                       </div>
@@ -871,7 +993,7 @@ const Case_Detail = () => {
                           },
                         }}
                       >
-                        <DataGrid rows={mockDataXrayTests} columns={columns} />
+                        <DataGrid rows={igraData} columns={columns} />
                       </Box>
                     </div>
                   )
@@ -928,7 +1050,8 @@ const Case_Detail = () => {
                         >
                           <DSTGenForm
                             handleCloseForm={handleCloseForm}
-                            handleUpdatePatients={handleAddNewXray}
+                            handleUpdateDST={handleAddNewDST}
+                            caseNumber={caseData.caseNumber}
                           />
                         </div>
                       </Modal>
@@ -965,7 +1088,7 @@ const Case_Detail = () => {
                         },
                       }}
                     >
-                      <DataGrid rows={mockDataXrayTests} columns={dstColumns} />
+                      <DataGrid rows={dstData} columns={dstColumns} />
                     </Box>
 
                     {/*  */}

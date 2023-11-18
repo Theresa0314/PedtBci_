@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Grid,
@@ -9,19 +9,14 @@ import {
   MenuItem,
   Typography,
   Button,
-  RadioGroup,
-  FormControlLabel,
-  FormHelperText,
-  Radio,
   Container,
-  Divider,
-  Checkbox,
   useTheme,
   Input,
 } from "@mui/material";
 import { tokens } from "../theme";
-import { db } from "../firebase.config";
+import { db , storage} from "../firebase.config";
 import { collection, addDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Sample data for dropdowns
 const location = [
@@ -34,41 +29,84 @@ const result = [
   "Negative",
 ];
 
-const MTBRIFGenForm = () => {
-  // State hooks for mtb/rif information
+const MTBRIFGenForm = ({ handleUpdateMTBRIF, caseNumber }) => {
+  // State hooks for MTB/RIF information
+  const [mtbrifCaseNumber, setMTBRIFCaseNumber] = useState("");
   const [testDate, setTestDate] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
   const [testLocation, setTestLocation] = useState("");
   const [testResult, setTestResult] = useState("");
-
+  const [file, setFile] = useState(null);
+  const [downloadURL, setDownloadURL] = useState(""); 
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const navigate = useNavigate();
 
   const handleCancel = () => {
-    navigate("/patient_info");
+    navigate(0);
   };
 
-  const handleSubmit = () => {
-    console.log("Hello");
+  // Set the caseNumber in the component's state
+  useEffect(() => {
+    setMTBRIFCaseNumber(caseNumber);
+    console.log("caseNumber: " + caseNumber);
+  }, [caseNumber]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+  
+    try {
+      // Upload file
+      if (file) {
+        const storageRef = ref(storage, `mtbrif-files/${file.name}`);
+        await uploadBytes(storageRef, file);
+  
+        // Get the download URL of the uploaded file
+        const url = await getDownloadURL(storageRef);
+        console.log("URL: " + url);
+  
+        // Set the download URL in the state
+        setDownloadURL(url);
+        console.log("File uploaded. Download URL:", url);
+      }
+  
+      // Generate a unique reference number
+      // const referenceNumber =
+      //   "MR-" +
+      //   Date.now().toString(36) +
+      //   Math.random().toString(36).substr(2, 5).toUpperCase();
+  
+      const mtbrifData = {
+        caseNumber,
+        referenceNumber,
+        testDate,
+        testLocation,
+        testResult,
+        fileName: file.name,
+        fileURL: downloadURL,
+      };
+  
+      // Add MTB/RIF data to Firestore
+      const docRef = await addDoc(collection(db, "mtbrif"), mtbrifData);
+      console.log("Document written with ID: ", docRef.id);
+  
+      // Update MTB/RIF if handleUpdateMTBRIF is provided
+      if (handleUpdateMTBRIF) {
+        const newMTBRIF = { ...mtbrifData, id: docRef.id };
+        handleUpdateMTBRIF(newMTBRIF);
+      }
+  
+      // Navigate back to the patient_info page
+      navigate(0);
+    } catch (error) {
+      console.error("Error handling submit: ", error);
+    }
   };
 
   const handleFileChange = (e) => {
     // Handle file upload logic here
-    // You can use e.target.files to access the selected file(s)
-  };
-
-  const style = {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: "100%", // Use a percentage to make it responsive
-    maxWidth: 1000, // You can also set a maxWidth
-    bgcolor: "background.paper",
-    boxShadow: 20,
-    p: 4,
-    borderRadius: 2, // Optional: if you want rounded corners
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
   };
 
   return (
@@ -161,19 +199,19 @@ const MTBRIFGenForm = () => {
             </FormControl>
           </Grid>
           <Grid item xs={12}>
-            <InputLabel htmlFor="validity" sx={{ color: colors.white }}>
+            <InputLabel htmlFor="fileName" sx={{ color: colors.white }}>
               Upload MTB/RIF File Attachment
             </InputLabel>
             <Input
               required
               fullWidth
-              id="validity"
+              id="fileName"
               type="file"
-              inputProps={{ accept: ".pdf, .doc, .docx, .jpg, .jpeg, .png" }} // Specify accepted file types
+              inputProps={{ accept: ".jpg, .jpeg, .png" }} // Specify accepted file types
               onChange={handleFileChange}
               sx={{ display: "none" }} // Hide the default input style
             />
-            <label htmlFor="validity">
+            <label htmlFor="fileName">
               <Button
                 style={{ color: "white", width: "100%" }}
                 sx={{
