@@ -22,41 +22,43 @@ const Signup = () => {
   const navigate = useNavigate();
 
 
-  // New function to add user to Firestore
-  const addUserToFirestore = async (userId, email, role) => {
-    try {
-      await setDoc(doc(db, 'users', userId), {
-        email,
-        role,
-      });
-    } catch (error) {
-      console.error('Error adding user to Firestore: ', error);
-      throw error;
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (password !== cpassword) {
-      alert('Passwords do not match');
-      return;
-    }
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      // Default role to 'Patient'
-      const defaultRole = 'Patient';
-      // Add user to Firestore with default 'Patient' role
-      await addUserToFirestore(user.uid, email, defaultRole);
-      localStorage.setItem('token', user.accessToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      navigate("/");
-      alert('User created successfully with Patient role!');
-    } catch (error) {
-      console.error(error);
-      alert(error.message);
-    }
+// Function to add user information to Firestore
+const addUserToFirestore = async (userId, email, fullName, role = 'Patient') => {
+  try {
+    const currentDate = new Date(); 
+    await setDoc(doc(db, 'users', userId), {
+      email,
+      fullName,
+      role,
+      dateAdded: currentDate, 
+    });
+  } catch (error) {
+    console.error('Error adding user to Firestore: ', error);
+    throw error;
   }
+};
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (password !== cpassword) {
+    alert('Passwords do not match');
+    return;
+  }
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    // Add user to Firestore with email, fullName, and the default 'Patient' role
+    await addUserToFirestore(user.uid, email, fullName); 
+    localStorage.setItem('token', user.accessToken);
+    localStorage.setItem('user', JSON.stringify(user));
+    navigate("/");
+    alert('User created successfully with Patient role!');
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
+};
+
 
   return (
 <Container 
