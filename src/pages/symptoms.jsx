@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
+  TableContainer,
+  Paper,
+  Table,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@mui/material';
+import {
   createTheme,
   ThemeProvider,
   CssBaseline,
@@ -12,6 +20,7 @@ import {
   Box,
   Dialog,
   DialogContent,
+  Divider,
 } from '@mui/material';
 import { useTheme } from '@mui/material';
 import { GridToolbar, DataGrid } from '@mui/x-data-grid';
@@ -56,26 +65,18 @@ const SymptomsReview = () => {
     const symptomsCollection = collection(db, 'symptoms');
     const symptomsSnapshot = await getDocs(symptomsCollection);
     const data = [];
+    // Convert the snapshot to an array and iterate through it using forEach
     symptomsSnapshot.forEach((doc) => {
-      data.push({ id: doc.id, ...doc.data() });
-    });
-    setTableData(data);
+    data.push(doc.data());
+  });
+
+  // Generate sequential IDs for the data
+    const formattedData = data.map((item, index) => ({ id: index + 1, ...item }));
+    setTableData(formattedData);
   };
 
   const handleAddClick = () => {
     setAddFormOpen(true);
-  };
-
-  const handleFormChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    // Adjustments for different field types
-    const fieldValue = type === 'checkbox' ? checked : value;
-
-    setFormData({
-      ...formData,
-      [name]: fieldValue,
-    });
   };
 
   const handleSubmit = async (event) => {
@@ -107,15 +108,13 @@ const SymptomsReview = () => {
         symptomsReviewDate: formData.symptomsReviewDate,
         symptoms: formData.symptoms,
         gender: formData.gender,
-        symptoms: formData.symptoms,
-        otherSymptoms: formData.totherSymptoms,
+        otherSymptoms: formData.otherSymptoms,
         immunizationStatus: formData.immunizationStatus,
         familyHistory: formData.familyHistory,
-        family: formData. family,
-        immunizationStatus: formData.immunizationStatus,
+        family: formData.family,
         closeContactWithTB: formData.closeContactWithTB,
       };
-
+      
       // Save the data to Firebase
       try {
         const symptomsCollection = collection(db, 'symptoms');
@@ -193,6 +192,18 @@ const SymptomsReview = () => {
     }
   };
 
+const [selectedRowDetails, setSelectedRowDetails] = useState(null); // State to hold the selected row details
+const [viewDetailsOpen, setViewDetailsOpen] = useState(false); // State to control the details modal
+
+// Function to handle the view details button click
+const handleViewClick = (id) => {
+  const selectedRow = tableData.find((row) => row.id === id);
+  if (selectedRow) {
+    setSelectedRowDetails(selectedRow);
+    setViewDetailsOpen(true);
+  }
+};
+
   const columns = [
     { field: 'id', headerName: 'ID', flex: 1 },
     {
@@ -205,7 +216,7 @@ const SymptomsReview = () => {
           <Button
             variant="contained"
             color="secondary"
-            onClick={() => handleEditClick(params.row.id)}
+            onClick={() => handleViewClick(params.row.id)}
           >
             View Details
           </Button>
@@ -311,6 +322,98 @@ const SymptomsReview = () => {
           </DialogContent>
         </Dialog>
       </Container>
+
+      <Dialog
+  open={viewDetailsOpen}
+  onClose={() => setViewDetailsOpen(false)}
+  maxWidth="md"
+  fullWidth
+>
+  <DialogContent>
+    {selectedRowDetails && (
+      <div style={{ padding: '20px', width: '500px' }}>
+        <Typography variant="h6" gutterBottom>
+          Symptoms Details
+        </Typography>
+        <Divider style={{ marginBottom: '15px' }} />
+        <TableContainer component={Paper}>
+          <Table aria-label="symptoms table">
+            <TableBody>
+              <TableRow>
+                <TableCell>
+                  <strong>Symptoms Review Date:</strong>
+                </TableCell>
+                <TableCell>
+                  {selectedRowDetails.symptomsReviewDate}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <strong>Symptoms:</strong>
+                </TableCell>
+                <TableCell>
+                  <ul>
+                    {Object.entries(selectedRowDetails.symptoms)
+                      .filter(([symptom, isPresent]) => isPresent)
+                      .map(([symptom]) => (
+                        <li key={symptom}>{symptom.replace(/([a-z])([A-Z])/g, '$1 $2')}</li>
+                      ))}
+                  </ul>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <strong>Other Symptoms/Remarks:</strong>
+                </TableCell>
+                <TableCell>
+                  {selectedRowDetails.otherSymptoms}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <strong>Immunization Status:</strong>
+                </TableCell>
+                <TableCell>
+                  {selectedRowDetails.immunizationStatus?.status === 'No Immunization'
+                    ? 'No Immunization'
+                    : selectedRowDetails.immunizationStatus?.status}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+              <TableCell>
+                <strong>Family History:</strong>
+              </TableCell>
+              <TableCell>
+                {selectedRowDetails.familyHistory?.hasFamilyHistory ? (
+                selectedRowDetails.familyHistory.family ? (
+                `Yes - ${selectedRowDetails.familyHistory.family}`
+                 ) : (
+                'Yes - N/A'
+                 )
+                ) : (
+                'No'
+                )}
+          </TableCell>
+
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <strong>Close Contact with TB:</strong>
+                </TableCell>
+                <TableCell>
+                  {selectedRowDetails.closeContactWithTB ? 'Yes' : 'No'}
+                </TableCell>
+              </TableRow>
+              {/* Add other fields as needed */}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
+    )}
+  </DialogContent>
+</Dialog>
+
+
     </ThemeProvider>
   );
 };

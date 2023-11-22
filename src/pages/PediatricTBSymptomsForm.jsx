@@ -114,8 +114,8 @@ const PediatricTBSymptomsForm = () => {
         immunizationStatus,
         familyHistory,
         familyHistory: {
-          family: familyHistory.hasFamilyHistory ? familyHistory.family : '',
-        },
+          hasFamilyHistory: familyHistory.hasFamilyHistory,
+          family: familyHistory.hasFamilyHistory ? familyHistory.family : ''},
         closeContactWithTB,
       };
   
@@ -235,7 +235,7 @@ const PediatricTBSymptomsForm = () => {
                 control={
                   <Checkbox
                     checked={immunizationStatus.noImmunization}
-                    onChange={() => setImmunizationStatus({ noImmunization: !immunizationStatus.noImmunization, status: '', monthRange: '' })}
+                    onChange={() => setImmunizationStatus({ noImmunization: !immunizationStatus.noImmunization, status: 'No Immunization', monthRange: '' })}
                     color="primary"
                   />
                 }
@@ -248,27 +248,31 @@ const PediatricTBSymptomsForm = () => {
           <FormControl component="fieldset">
             <Typography variant="subtitle1">Does your family have a history of TB?</Typography>
             <FormGroup row>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={familyHistory.hasFamilyHistory}
-                    onChange={() => setFamilyHistory({ hasFamilyHistory: !familyHistory.hasFamilyHistory, family: '' })}
-                    color="primary"
-                  />
-                }
-                label="Yes"
+            <FormControlLabel
+              control={
+              <Checkbox
+                checked={familyHistory.hasFamilyHistory}
+                onChange={() => setFamilyHistory({ hasFamilyHistory: !familyHistory.hasFamilyHistory, family: familyHistory.family || '' })}
+                color="primary"
               />
+              }
+               label="Yes"
+            />
               {familyHistory.hasFamilyHistory && (
                 <div>
                 <Typography variant="subtitle1">Indicate the Family Member/s or Relative/s with TB History:</Typography>
                 <TextField
-                    fullWidth
-                    label="Family Member/s or Relative/s"
-                    variant="outlined"
-                    value={familyHistory.family}
-                     onChange={(e) => setFamilyHistory({ ...familyHistory, family: e.target.value })}
-                    margin="normal"
-                    required
+                  fullWidth
+                  label="Family Member/s or Relative/s"
+                  variant="outlined"
+                  value={familyHistory.family}
+                  onChange={(e) => setFamilyHistory((prev) => ({
+                  ...prev,
+                  family: e.target.value,
+                }))}
+                  margin="normal"
+                  required={familyHistory.hasFamilyHistory} // Make this required only if family history is indicated
+                  disabled={!familyHistory.hasFamilyHistory} // Disable input if family history is not indicated
                 />
                 </div>
 )}
