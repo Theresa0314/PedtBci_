@@ -132,7 +132,7 @@ const UserList = () => {
       <Box sx={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center', // Align items vertically
+        alignItems: 'center', 
         p: 2,
       }}>
         <TextField 
@@ -207,7 +207,7 @@ const UserList = () => {
               color: colors.grey[100], 
               borderColor: colors.grey[700],
               '&:hover': {
-                borderColor: colors.grey[500], // Assuming you want to change on hover
+                borderColor: colors.grey[500], 
                 backgroundColor: 'transparent',
               }
             }}
@@ -221,7 +221,7 @@ const UserList = () => {
               backgroundColor: colors.greenAccent[600], 
               color: colors.grey[100],
               '&:hover': {
-                backgroundColor: colors.greenAccent[700], // Darken the button when hovered
+                backgroundColor: colors.greenAccent[700], 
               }
             }}
           >
