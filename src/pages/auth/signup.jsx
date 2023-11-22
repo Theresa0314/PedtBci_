@@ -23,7 +23,7 @@ const Signup = () => {
 
 
 // Function to add user information to Firestore
-const addUserToFirestore = async (userId, email, fullName, role = 'Parents') => {
+const addUserToFirestore = async (userId, email, fullName, role = 'Parent') => {
   try {
     const currentDate = new Date(); 
     await setDoc(doc(db, 'users', userId), {
