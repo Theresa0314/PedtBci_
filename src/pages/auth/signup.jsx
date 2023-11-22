@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { auth } from '../../firebase.config';
+import { auth, db } from '../../firebase.config';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { Link, useNavigate } from 'react-router-dom';
 
 import * as yup from "yup";
@@ -17,24 +18,43 @@ const Signup = () => {
   const [password, setPassword] = useState('');
   const [cpassword, setcPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState('');
-  // Sample data for dropdowns
-  const roles = ["Doctor", "Lab Aide", "MedTech", "Nurse", "Parent"];
 
   const navigate = useNavigate();
 
+
+  // New function to add user to Firestore
+  const addUserToFirestore = async (userId, email, role) => {
+    try {
+      await setDoc(doc(db, 'users', userId), {
+        email,
+        role,
+      });
+    } catch (error) {
+      console.error('Error adding user to Firestore: ', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (password !== cpassword) {
+      alert('Passwords do not match');
+      return;
+    }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log(userCredential);
       const user = userCredential.user;
+      // Default role to 'Patient'
+      const defaultRole = 'Patient';
+      // Add user to Firestore with default 'Patient' role
+      await addUserToFirestore(user.uid, email, defaultRole);
       localStorage.setItem('token', user.accessToken);
       localStorage.setItem('user', JSON.stringify(user));
       navigate("/");
-      alert('User created successfully!');
+      alert('User created successfully with Patient role!');
     } catch (error) {
       console.error(error);
+      alert(error.message);
     }
   }
 
@@ -84,25 +104,6 @@ const Signup = () => {
               />
             </Grid>
 
-            <Grid item xs={6}>
-              {/* role */}
-                <FormControl fullWidth required margin="dense">
-                    <InputLabel id="role-label">User Role</InputLabel>
-                    <Select
-                    variant="filled"
-                    required
-                    label="role-label"
-                    name="role"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    >
-                    <MenuItem value="" ></MenuItem>
-                    {roles.map((option) => (
-                        <MenuItem key={option} value={option}>{option}</MenuItem>
-                    ))}
-                    </Select>
-                </FormControl>
-              </Grid>
               <Grid item xs={6}>
               {/* password */}
               <TextField
