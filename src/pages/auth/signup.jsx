@@ -23,7 +23,7 @@ const Signup = () => {
 
 
 // Function to add user information to Firestore
-const addUserToFirestore = async (userId, email, fullName, role = 'Patient') => {
+const addUserToFirestore = async (userId, email, fullName, role = 'Parents') => {
   try {
     const currentDate = new Date(); 
     await setDoc(doc(db, 'users', userId), {
@@ -47,12 +47,11 @@ const handleSubmit = async (e) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    // Add user to Firestore with email, fullName, and the default 'Patient' role
     await addUserToFirestore(user.uid, email, fullName); 
     localStorage.setItem('token', user.accessToken);
     localStorage.setItem('user', JSON.stringify(user));
     navigate("/");
-    alert('User created successfully with Patient role!');
+    alert('User created successfully!');
   } catch (error) {
     console.error(error);
     alert(error.message);

@@ -9,6 +9,7 @@ import { tokens } from "../../theme";
 
 // Import Icons
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import FormatListNumberedOutlinedIcon from '@mui/icons-material/FormatListNumberedOutlined';
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -117,13 +118,20 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
+              <Item
+              title="User List"
+              to="/userlist"
+              icon={<FormatListNumberedOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
 
             <Typography
               variant="h6"
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Patients
+              Data
             </Typography>
             <Item
               title="General Information"

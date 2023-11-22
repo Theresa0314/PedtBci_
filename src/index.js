@@ -13,6 +13,7 @@ import Login from "./pages/auth/login";
 import Signup from "./pages/auth/signup";
 
 import Dashboard from "./pages/dashboard";
+import UserList from "./pages/users/userlist";
 
 import Symptoms from "./pages/symptoms";
 import Contacts from "./pages/contacts";
@@ -50,6 +51,7 @@ const router = createBrowserRouter(
 
       <Route path="/" element={ <Protected /> } >
         <Route path="/" element={ <Dashboard /> } />
+        <Route path="/userlist" element={< UserList/>} />
         <Route path="/calendar" element={<Calendar />} />
 
         <Route path="/patientInfo" element={<PatientInfo />} />
