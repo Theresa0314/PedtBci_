@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Button, TextField, InputAdornment, 
+  Box, Button, TextField, InputAdornment, CircularProgress,
   Dialog, DialogTitle, DialogContent, DialogActions,
   MenuItem, Select, FormControl, InputLabel,
   useTheme
@@ -8,40 +8,66 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
-import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
 import moment from 'moment';
-import { db } from '../../firebase.config';
+import { db, auth } from '../../firebase.config';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
 
 const UserList = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const [currentUser, loading, error] = useAuthState(auth);
 
   const [users, setUsers] = useState([]);
   const [searchText, setSearchText] = useState('');
-
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [selectedUserRole, setSelectedUserRole] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
-   // Dropdown choices for roles
-   const roleOptions = [
+  // Dropdown choices for roles
+  const roleOptions = [
     'Doctor', 'Nurse', 'Medical Technologist', 'Lab Aide', 'Parent'
   ];
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "users"));
-        let data = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-        setUsers(data);
-      } catch (error) {
-        console.error("Error fetching users: ", error);
-      }
-    };
-    fetchData();
-  }, []);
+    if (loading) {
+      // Maybe trigger a loading state
+      return;
+    }
+    if (error) {
+      // Maybe show an error message
+      return;
+    }
+    if (currentUser) {
+      const userRef = doc(db, 'users', currentUser.uid);
+      getDoc(userRef).then((docSnap) => {
+        if (docSnap.exists() && docSnap.data().role === 'Admin') {
+          setIsAdmin(true);
+          // Now fetch the users as admin is verified
+          fetchUsers();
+        } else {
+          setIsAdmin(false);
+        }
+      });
+    }
+  }, [currentUser, loading, error]);
+
+  const fetchUsers = async () => {
+    const querySnapshot = await getDocs(collection(db, "users"));
+    const usersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setUsers(usersData);
+  };
+
+  if (loading) {
+    return <CircularProgress />;
+  }
+
+  if (!isAdmin) {
+    return <Box>Not authorized to view this page</Box>;
+  }
 
   const handleSearchChange = (event) => {
     const value = event.target.value;
