@@ -24,6 +24,12 @@ const Dashboard = () => {
   const [inventory, setInventory]= useState([]);
   const [patients, setPatients]= useState([]);
 
+  const [mtbrif, setMTBRIF]= useState([]);
+  const [xray, setXray]= useState([]);
+  const [tst, setTST]= useState([]);
+  const [igra, setIGRA]= useState([]);
+  const [dst, setDST]= useState([]);
+
   useEffect(() => {
     // Load data from Firebase when the component mounts
     loadData();
@@ -60,6 +66,27 @@ const Dashboard = () => {
     const patientsRef = await getDocs(collection(db, "referralform"));
     let patientsData = patientsRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
     setPatients(patientsData);
+    //MTB/RIF tests
+    const mtbrifRef = await getDocs(collection(db, "mtbrif"));
+    let mtbrifData = mtbrifRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setMTBRIF(mtbrifData);
+// ROW 3
+    //XRay tests
+    const xrayRef = await getDocs(collection(db, "xray"));
+    let xrayData = xrayRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setXray(xrayData);
+    //TST tests
+    const tstRef = await getDocs(collection(db, "tst"));
+    let tstData = tstRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setTST(tstData);
+    //IGRA tests
+    const igraRef = await getDocs(collection(db, "igra"));
+    let igraData = igraRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setIGRA(igraData);
+    //DST tests
+    const dstRef = await getDocs(collection(db, "dst"));
+    let dstData = dstRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setDST(dstData);
   }
   
   const downloadPDF = () => {
@@ -162,7 +189,7 @@ const Dashboard = () => {
 
         {/* ROW 2 */}
         <Box
-          gridColumn="span 4"
+          gridColumn="span 3"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
         >
@@ -170,7 +197,6 @@ const Dashboard = () => {
             mt="25px"
             display="flex "
           >
-          <Box>
           <Typography
             variant="h3"
             fontWeight="600"
@@ -179,13 +205,7 @@ const Dashboard = () => {
           >
           Treatment Progress of Patients
           </Typography>
-          <Box  sx={{ padding: "0px 30px" }} color={colors.greenAccent[500]}>
-          <h3>Start: {sTreatmentCount}</h3>
-          <h3>Ongoing: {oTreatmentCount}</h3>
-          <h3>End: {eTreatmentCount}</h3>
-          </Box>
-          </Box>
-          <Box height="250px" m="-20px 0 0 0" marginLeft="30px">
+          <Box height="250px" m="-20px 0 0 0">
           <Doughnut
               data={{
                 labels: ['Start', 'Ongoing', 'End'],
@@ -207,7 +227,7 @@ const Dashboard = () => {
         </Box>
 
         <Box
-          gridColumn="span 4"
+          gridColumn="span 3"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
         >
@@ -245,13 +265,14 @@ const Dashboard = () => {
            />
           </Box>
         </Box>
+
         <Box
-          gridColumn="span 4"
+          gridColumn="span 3"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
           overflow="auto"
         >
-          <Box
+        <Box
             display="flex"
             justifyContent="space-between"
             alignItems="center"
@@ -262,16 +283,16 @@ const Dashboard = () => {
             <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
               Recently Referred Patients
             </Typography>
-          </Box>
-          {patients.map((doc, i) => (
-            <Box
+            </Box>
+            {patients.map((doc, i) => (
+              <Box
               key={`${doc.id}-${i}`}
               display="flex"
               justifyContent="space-between"
               alignItems="center"
               borderBottom={`4px solid ${colors.primary[500]}`}
               p="15px"
-            >
+              >
               <Box>
                 <Typography
                   color={colors.greenAccent[500]}
@@ -299,6 +320,280 @@ const Dashboard = () => {
             </Box>
           ))}
         </Box>
+        {/* MTBRIF */}
+        <Box
+          gridColumn="span 3"
+          gridRow="span 2"
+          backgroundColor={colors.primary[400]}
+          overflow="auto"
+        >
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            borderBottom={`4px solid ${colors.primary[500]}`}
+            colors={colors.grey[100]}
+            p="15px"
+          >
+            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
+              Recently Added MTB/RIF Tests
+            </Typography>
+          </Box>
+          {mtbrif.map((doc, i) => (
+            <Box
+              key={`${doc.id}-${i}`}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              borderBottom={`4px solid ${colors.primary[500]}`}
+              p="15px"
+            >
+              <Box>
+                <Typography
+                  color={colors.greenAccent[500]}
+                  variant="h5"
+                  fontWeight="600"
+                >
+                  {doc.caseNumber}
+                </Typography>
+                <Typography color={colors.grey[100]}>
+                  {doc.referenceNumber}
+                </Typography>
+              </Box>
+              <Box 
+              color={colors.grey[100]}>
+                {/* {doc.testDate} */}
+                </Box>
+              <Box
+                backgroundColor={colors.greenAccent[500]}
+                p="5px 10px"
+                borderRadius="4px"
+              >
+                {doc.testResult}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+        
+        {/* ROW 3 */}
+        <Box
+          gridColumn="span 3"
+          gridRow="span 2"
+          backgroundColor={colors.primary[400]}
+          overflow="auto"
+        >
+          {/* Xray */}
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            borderBottom={`4px solid ${colors.primary[500]}`}
+            colors={colors.grey[100]}
+            p="15px"
+          >
+            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
+              Recently Added Xray Tests
+            </Typography>
+            </Box>
+            {xray.map((doc, i) => (
+              <Box
+              key={`${doc.id}-${i}`}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              borderBottom={`4px solid ${colors.primary[500]}`}
+              p="15px"
+              >
+                <Box>
+                <Typography
+                  color={colors.greenAccent[500]}
+                  variant="h5"
+                  fontWeight="600"
+                >
+                  {doc.caseNumber}
+                </Typography>
+                <Typography color={colors.grey[100]}>
+                  {doc.referenceNumber}
+                </Typography>
+              </Box>
+              <Box 
+              color={colors.grey[100]}>
+                {/* {doc.testDate} */}
+                </Box>
+              <Box
+                backgroundColor={colors.greenAccent[500]}
+                p="5px 10px"
+                borderRadius="4px"
+              >
+                {doc.testResult}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+        {/* TST */}
+        <Box
+          gridColumn="span 3"
+          gridRow="span 2"
+          backgroundColor={colors.primary[400]}
+          overflow="auto"
+        >
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            borderBottom={`4px solid ${colors.primary[500]}`}
+            colors={colors.grey[100]}
+            p="15px"
+          >
+            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
+              Recently Added TST Tests
+            </Typography>
+            </Box>
+            {tst.map((doc, i) => (
+              <Box
+              key={`${doc.id}-${i}`}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              borderBottom={`4px solid ${colors.primary[500]}`}
+              p="15px"
+              >
+                <Box>
+                <Typography
+                  color={colors.greenAccent[500]}
+                  variant="h5"
+                  fontWeight="600"
+                >
+                  {doc.caseNumber}
+                </Typography>
+                <Typography color={colors.grey[100]}>
+                  {doc.referenceNumber}
+                </Typography>
+              </Box>
+              <Box 
+              color={colors.grey[100]}>
+                {/* {doc.testDate} */}
+                </Box>
+              <Box
+                backgroundColor={colors.greenAccent[500]}
+                p="5px 10px"
+                borderRadius="4px"
+              >
+                {doc.testResult}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+        
+        <Box
+          gridColumn="span 3"
+          gridRow="span 2"
+          backgroundColor={colors.primary[400]}
+          overflow="auto"
+        >
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            borderBottom={`4px solid ${colors.primary[500]}`}
+            colors={colors.grey[100]}
+            p="15px"
+          >
+            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
+              Recently Added IGRA Tests
+            </Typography>
+            </Box>
+            {igra.map((doc, i) => (
+              <Box
+              key={`${doc.id}-${i}`}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              borderBottom={`4px solid ${colors.primary[500]}`}
+              p="15px"
+              >
+                <Box>
+                <Typography
+                  color={colors.greenAccent[500]}
+                  variant="h5"
+                  fontWeight="600"
+                >
+                  {doc.caseNumber}
+                </Typography>
+                <Typography color={colors.grey[100]}>
+                  {doc.referenceNumber}
+                </Typography>
+              </Box>
+              <Box 
+              color={colors.grey[100]}>
+                {/* {doc.testDate} */}
+                </Box>
+              <Box
+                backgroundColor={colors.greenAccent[500]}
+                p="5px 10px"
+                borderRadius="4px"
+              >
+                {doc.testResult}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+
+        <Box
+          gridColumn="span 3"
+          gridRow="span 2"
+          backgroundColor={colors.primary[400]}
+          overflow="auto"
+        >
+           
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            borderBottom={`4px solid ${colors.primary[500]}`}
+            colors={colors.grey[100]}
+            p="15px"
+          >
+          <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
+              Recently Added DST Tests
+            </Typography>
+            </Box>
+            {dst.map((doc, i) => (
+              <Box
+              key={`${doc.id}-${i}`}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              borderBottom={`4px solid ${colors.primary[500]}`}
+              p="15px"
+              >
+                <Box>
+                <Typography
+                  color={colors.greenAccent[500]}
+                  variant="h5"
+                  fontWeight="600"
+                >
+                  {doc.caseNumber}
+                </Typography>
+                <Typography color={colors.grey[100]}>
+                  {doc.referenceNumber}
+                </Typography>
+              </Box>
+              <Box 
+              color={colors.grey[100]}>
+                {doc.testDate}
+                </Box>
+              <Box
+                backgroundColor={colors.greenAccent[500]}
+                p="5px 10px"
+                borderRadius="4px"
+              >
+                {doc.testResult}
+              </Box>
+            </Box>
+            ))}
+        </Box>
+
       </Box>
     </Box>
   );
