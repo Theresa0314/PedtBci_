@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { auth } from '../../firebase.config';
+import React, { useState, useEffect } from 'react';
+import {db, auth } from '../../firebase.config';
+import { doc, getDoc } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
 import { signOut } from 'firebase/auth';
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
@@ -47,8 +48,7 @@ const Sidebar = () => {
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
-
-  const user = JSON.parse(localStorage.getItem('user'));
+  
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -61,6 +61,25 @@ const Sidebar = () => {
       console.error(error);
     }
   }
+
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (auth.currentUser) {
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      getDoc(userRef).then((docSnap) => {
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+          setIsAdmin(userData.role === 'Admin');
+        } else {
+          console.error("User document not found");
+        }
+      }).catch((error) => {
+        console.error("Error fetching user role:", error);
+      });
+    }
+  }, []);
+  
 
   return (
     <Box
@@ -118,13 +137,15 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
-              <Item
-              title="User List"
-              to="/userlist"
-              icon={<FormatListNumberedOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
+            {isAdmin && (
+                <Item
+                  title="User List"
+                  to="/userlist"
+                  icon={<FormatListNumberedOutlinedIcon />}
+                  selected={selected}
+                  setSelected={setSelected}
+                />
+              )}
 
             <Typography
               variant="h6"

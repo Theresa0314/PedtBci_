@@ -12,12 +12,15 @@ import { collection, getDocs, doc, updateDoc, getDoc } from "firebase/firestore"
 import moment from 'moment';
 import { db, auth } from '../../firebase.config';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { signOut } from 'firebase/auth'; 
+import { useNavigate } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
 
 const UserList = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const navigate = useNavigate();
   const [currentUser, loading, error] = useAuthState(auth);
 
   const [users, setUsers] = useState([]);
@@ -34,11 +37,10 @@ const UserList = () => {
 
   useEffect(() => {
     if (loading) {
-      // Maybe trigger a loading state
       return;
     }
     if (error) {
-      // Maybe show an error message
+      console.error("Error loading user:", error);
       return;
     }
     if (currentUser) {
@@ -46,14 +48,22 @@ const UserList = () => {
       getDoc(userRef).then((docSnap) => {
         if (docSnap.exists() && docSnap.data().role === 'Admin') {
           setIsAdmin(true);
-          // Now fetch the users as admin is verified
+          // Fetch the users as admin is verified
           fetchUsers();
         } else {
-          setIsAdmin(false);
+          // If not admin or if the document does not exist, sign out and redirect to login
+          signOut(auth).then(() => {
+            navigate('/login');
+          }).catch((error) => {
+            console.error('Logout failed', error);
+          });
         }
       });
+    } else if (!loading) {
+      // If there is no current user and it's not loading, redirect to login
+      navigate('/login');
     }
-  }, [currentUser, loading, error]);
+  }, [currentUser, loading, navigate, error]);
 
   const fetchUsers = async () => {
     const querySnapshot = await getDocs(collection(db, "users"));
