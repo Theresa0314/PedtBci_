@@ -7,6 +7,7 @@ import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
+import { usePatientInfo } from '../../PatientInfoContext';
 
 // Import Icons
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
@@ -48,6 +49,15 @@ const Sidebar = () => {
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
+
+  const { patientInfoId } = usePatientInfo();
+  // Define a dynamic route for the "General Information" based on the user role
+  const getGeneralInfoRoute = () => {
+    if (userRole === 'Parent' && patientInfoId) {
+      return `/patientinfo/${patientInfoId}`; // If the user is a 'Parent', use the specific patient info ID
+    }
+    return '/patientinfo'; // For all other roles, use the general patient info route
+  };
   
   const navigate = useNavigate();
 
@@ -62,23 +72,38 @@ const Sidebar = () => {
     }
   }
 
-  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Determine if the current user is allowed to see the item based on their role
+  const canView = (title) => {
+    switch (userRole) {
+      case 'Admin':
+        return true; // Admin can view all items
+      case 'Parent':
+        return title === "Calendar" || title === "General Information"; // Parent can only view these items
+      default:
+        return title !== "User List"; // All other roles can view everything except "User List"
+    }
+  };
+
+  const [userRole, setUserRole] = useState('');
 
   useEffect(() => {
-    if (auth.currentUser) {
-      const userRef = doc(db, 'users', auth.currentUser.uid);
-      getDoc(userRef).then((docSnap) => {
+    // Fetch the user role when the component mounts or auth.currentUser changes
+    const fetchUserRole = async () => {
+      if (auth.currentUser) {
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        const docSnap = await getDoc(userRef);
         if (docSnap.exists()) {
           const userData = docSnap.data();
-          setIsAdmin(userData.role === 'Admin');
+          setUserRole(userData.role); // Set the user role
         } else {
           console.error("User document not found");
         }
-      }).catch((error) => {
-        console.error("Error fetching user role:", error);
-      });
-    }
-  }, []);
+      }
+    };
+
+    fetchUserRole();
+  }, [auth.currentUser]);
   
 
   return (
@@ -130,6 +155,7 @@ const Sidebar = () => {
           </MenuItem>
 
           <Box paddingLeft={isCollapsed ? undefined : "10%"}>
+          {canView('Dashboard') && (
             <Item
               title="Dashboard"
               to="/"
@@ -137,14 +163,10 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
-            <Item
-              title="Parent View"
-              to="/parentview"
-              icon={<HomeOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            {isAdmin && (
+            )}
+
+            {/* Admin specific items */}
+            {canView('User List') && (
                 <Item
                   title="User List"
                   to="/userlist"
@@ -161,13 +183,18 @@ const Sidebar = () => {
             >
               Data
             </Typography>
-            <Item
-              title="General Information"
-              to="/patientInfo"
-              icon={<PeopleOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
+
+            {canView('General Information') && (
+              <Item
+                title="General Information"
+                to={getGeneralInfoRoute()} // Use the dynamic route function here
+                icon={<PeopleOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+            )}
+            
+          {canView('Referrals') && (
             <Item
               title="Referrals"
               to="/referralinfo"
@@ -175,6 +202,9 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
+            )}
+
+          {canView('Contact Tracing') && (
             <Item
               title="Contact Tracing"
               to="/contacts"
@@ -182,6 +212,9 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
+            )}
+
+        {canView('Symptoms') && (
             <Item
               title="Symptoms"
               to="/symptoms"
@@ -189,13 +222,10 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
-                         <Item
-              title="Treatment Plan"
-              to="/TPList"
-              icon={<NoteAddIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
+            )}
+
+
+            {canView('Clinical Inventory') && (
               <Item
               title="Clinical Inventory"
               to="/inventory"
@@ -203,6 +233,7 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
+            )}
 
             <Typography
               variant="h6"
