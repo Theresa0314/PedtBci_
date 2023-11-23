@@ -5,9 +5,10 @@ import { Box, Typography, useTheme, Button, TextField, InputAdornment,
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
-import { Link, useNavigate } from 'react-router-dom';
-import { collection, getDocs,  deleteDoc, doc } from "firebase/firestore";
-import { db } from '../../firebase.config';
+import { useNavigate } from 'react-router-dom';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { collection, getDocs, getDoc, deleteDoc, doc } from "firebase/firestore";
+import { db, auth } from '../../firebase.config';
 import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -24,6 +25,9 @@ const PatientInfo = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
+  const [currentUser, loading] = useAuthState(auth);
+  const [userRole, setUserRole] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   
   const handleAddNewPatient = () => {
@@ -83,6 +87,7 @@ const PatientInfo = () => {
       : patientsData;
 
       useEffect(() => {
+        // This useEffect is for fetching patient data
         const fetchData = async () => {
           try {
             const querySnapshot = await getDocs(collection(db, "patientsinfo"));
@@ -98,10 +103,24 @@ const PatientInfo = () => {
             console.error("Error fetching patient data: ", error);
           }
         };
-        
         fetchData();
-      }, []);
+      }, []); 
+      
+      useEffect(() => {
+        if (currentUser && !loading) {
+          const userRef = doc(db, 'users', currentUser.uid);
+          getDoc(userRef).then((docSnap) => {
+            if (docSnap.exists()) {
+              setUserRole(docSnap.data().role); // Set the user role in state
+            }
+          });
+        }
+      }, [currentUser, loading]);
 
+      // Function to determine if the user can edit or delete
+      const canEditOrDelete = () => {
+        return ['Lab Aide', 'Admin'].includes(userRole);
+      };
   const columns = [
     {
       field: 'caseNumber',
@@ -140,7 +159,6 @@ const PatientInfo = () => {
     {
       field: 'action',
       headerName: 'Action',
-      sortable: false,
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
           <Button
@@ -152,23 +170,27 @@ const PatientInfo = () => {
           >
             View
           </Button>
-          <Button
-            startIcon={<EditIcon />}
-            onClick={() => handleEdit(params.id)}
-            variant="contained"
-            color="secondary"
-            style={{ marginRight: 8 }}
-          >
-            Edit
-          </Button>
-          <Button
-            startIcon={<DeleteIcon />}
-            onClick={() => handleClickDelete(params.id)}
-            variant="contained"
-            color="error"
-          >
-            Delete
-          </Button>
+          {canEditOrDelete(userRole) && (
+            <>
+              <Button
+                startIcon={<EditIcon />}
+                onClick={() => handleEdit(params.id)}
+                variant="contained"
+                color="secondary"
+                style={{ marginRight: 8 }}
+              >
+                Edit
+              </Button>
+              <Button
+                startIcon={<DeleteIcon />}
+                onClick={() => handleClickDelete(params.id)}
+                variant="contained"
+                color="error"
+              >
+                Delete
+              </Button>
+            </>
+          )}
         </Box>
       ),
       width: 300,
@@ -207,10 +229,11 @@ const PatientInfo = () => {
           variant="contained"
           onClick={handleAddNewPatient}
           style={{ 
-            backgroundColor: colors.greenAccent[600],
+            backgroundColor: canEditOrDelete(userRole) ? colors.greenAccent[600] : 'gray',
             color: colors.grey[100],
             height: '50px',
           }}
+          disabled={!canEditOrDelete(userRole)}
         >
           Add New Patient
         </Button>

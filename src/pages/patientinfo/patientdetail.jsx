@@ -41,25 +41,9 @@ const PatientDetail = () => {
     setOpen(true);
   };
 
-  const handleCloseForm = () => {
-    setOpen(false);
-  };
-
   // Function to handle the search input change
   const handleSearchChange = (event) => {
     setSearchText(event.target.value);
-  };
-
-  const handleUpdatePatients = (newPatient) => {
-    setPatientsData((currentPatients) => {
-      const updatedPatients = [...currentPatients, newPatient];
-      updatedPatients.sort((a, b) => {
-        const dateA = new Date(a.dateAdded);
-        const dateB = new Date(b.dateAdded);
-        return dateA - dateB; // Ascending order
-      });
-      return updatedPatients;
-    });
   };
 
   const handleTabChange = (event, newValue) => {
