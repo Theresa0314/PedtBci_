@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, Container, Divider, Checkbox, useTheme,
-  OutlinedInput, ListItemText
-} from '@mui/material';
+    Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, Container, Divider, Checkbox, useTheme,
+    OutlinedInput, ListItemText
+  } from '@mui/material';
 import { tokens } from "../../theme";
+import { useParams, useNavigate } from 'react-router-dom';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase.config';
-import { collection, addDoc } from 'firebase/firestore';
 
 // Sample data for dropdowns
 const outcomes = ["Cured/Treatment Completed", "Treatment Failed", "Died", "Lost to Follow up", "Not Evaluated"];
@@ -14,7 +15,7 @@ const regimens = ["I. 2HRZE/4HR", "Ia. 2HRZE/10HR", "II. 2HRZES/1HRZE/5HRE", "II
 const durations = ["6 months", "8 months", "12 months"]; //duration of treatment
 const drugs = ["[H] Isonlazid", "[R] Rifampicin", "[Z] Pyrazinamide", "[E] Ethambutol", "[S] Streptomycin "];
 
-const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
+const TPEdit = () => {
     // State hooks
     const [fullName, setFullName] = useState('');
     const [status, setStatus] = useState('');
@@ -34,74 +35,101 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
     
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
+    const { treatmentId } = useParams();
+    const navigate = useNavigate();
 
-    //Multiple menu item select
-    const ITEM_HEIGHT = 48;
-    const ITEM_PADDING_TOP = 8;
-    const MenuProps = {
-        PaperProps: {
-          style: {
-            maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-            width: 250,
-          },
-        },
-      };
-    
-    //handle drug change
-    const handleDrugChange = (event: SelectChangeEvent<typeof drug>) => {
-        const {
-          target: { value },
-        } = event;
-        setDrug(
-          // On autofill we get a stringified value.
-          typeof value === 'string' ? value.split(',') : value,
-        );
-      };
+        //Multiple menu item select
+        const ITEM_HEIGHT = 48;
+        const ITEM_PADDING_TOP = 8;
+        const MenuProps = {
+            PaperProps: {
+              style: {
+                maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+                width: 250,
+              },
+            },
+          };
+        
+        //handle drug change
+        const handleDrugChange = (event: SelectChangeEvent<typeof drug>) => {
+            const {
+              target: { value },
+            } = event;
+            setDrug(
+              // On autofill we get a stringified value.
+              typeof value === 'string' ? value.split(',') : value,
+            );
+          };
 
+    // This useEffect hook fetches the patient data from Firebase
+    useEffect(() => {
+        const fetchTreatmentData = async () => {
+            const docRef = doc(db, "treatmentPlan", treatmentId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                setFullName(data.fullName);
+                setStatus(data.status);
+                setSdateTP(data.sdateTP);
+                setEdateTP(data.edateTP)
+                setSdateMed(data.sdateMed)
+                setEdateMed(data.edateMed)
+                setDosage(data.dosage)
+                setFrequency(data.frequency)
+                setDuration(data.duration)
+                setRegimen(data.regimen)
+                setDrug(data.drug)
+                setOtherDrug(data.otherDrug)
+                setNotes(data.notes)
+                setOutcome(data.outcome)
+                setFollowUpSched(data.followUpSched)
+            } else {
+                console.log("No such document!");
+                navigate("/TPList"); 
+            }
+        };
+
+        fetchTreatmentData();
+    }, [treatmentId, navigate]);
+
+    // Function to handle form submission
     const handleSubmit = async (event) => {
         event.preventDefault();
-      
-        // Generate a unique case number
-        const caseNumber = 'CN-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
-      
-        // Get the current date and time in Philippine time
-        const dateAdded = new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' });
-      
-        const TPData = {
-          fullName,
-          status,
-          sdateTP,
-          edateTP,
-          sdateMed,
-          edateMed,
-          dosage,
-          frequency,
-          duration,
-          regimen,
-          drug,
-          otherDrug,
-          notes,
-          outcome,
-          followUpSched,
-          caseNumber, // Add the generated case number
-          dateAdded  // Add the generated date added
-        };
-      
-        try {
-            const docRef = await addDoc(collection(db, "treatmentPlan"), TPData);
-            console.log("Document written with ID: ", docRef.id);
-        
-            const newTP = { ...TPData, id: docRef.id };
-            handleUpdateTP(newTP); // Update the Treatment Plan list in the parent component
-            
-            handleCloseForm(); // Close the form after submission
-          } catch (e) {
-            console.error("Error adding document: ", e);
-          }
+        const treatmentData = {
+            fullName,
+            status,
+            sdateTP,
+            edateTP,
+            sdateMed,
+            edateMed,
+            dosage,
+            frequency,
+            duration,
+            regimen,
+            drug,
+            otherDrug,
+            notes,
+            outcome,
+            followUpSched
         };
 
+        try {
+            const docRef = doc(db, "treatmentPlan", treatmentId);
+            await updateDoc(docRef, treatmentData);
+            console.log("Document updated with ID: ", docRef.id);
+            navigate("/TPList"); 
+        } catch (e) {
+            console.error("Error updating document: ", e);
+        }
+    };
+
+    const handleCancel = () => {
+        navigate("/TPList");
+    };
+
     return (
-        <Container component="main" maxWidth="md" sx={{
+<Container component="main" maxWidth="md" sx={{
             backgroundColor: colors.blueAccent[800], 
             padding: theme.spacing(6), 
             borderRadius: theme.shape.borderRadius
@@ -376,7 +404,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                     <Button type="submit" variant="contained" sx={{ backgroundColor: colors.greenAccent[600], color: colors.grey[100], mr: 1 }}>
                         Save Information
                     </Button>
-                    <Button variant="outlined" onClick={handleCloseForm} sx={{ color: colors.grey[100], borderColor: colors.grey[700] }}>
+                    <Button variant="outlined" onClick={handleCancel} sx={{ color: colors.grey[100], borderColor: colors.grey[700] }}>
                         Cancel
                     </Button>
                 </Grid>
@@ -385,4 +413,4 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
     );
 };
 
-export default TPForm;
+export default TPEdit;
