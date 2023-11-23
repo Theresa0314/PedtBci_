@@ -5,7 +5,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { Link, useNavigate } from 'react-router-dom';
 
 import * as yup from "yup";
-import {Button, TextField, Grid, Container, FormControl, InputLabel, Select, MenuItem, useTheme } from "@mui/material";
+import {Button, TextField, Grid, Container, useTheme } from "@mui/material";
 import { Formik, ErrorMessage  } from "formik";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
@@ -23,7 +23,7 @@ const Signup = () => {
 
 
 // Function to add user information to Firestore
-const addUserToFirestore = async (userId, email, fullName, role = 'Parent') => {
+const addUserToFirestore = async (userId, email, fullName, role = 'No Role') => {
   try {
     const currentDate = new Date(); 
     await setDoc(doc(db, 'users', userId), {

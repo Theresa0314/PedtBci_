@@ -1,128 +1,195 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../../firebase.config';
-import { doc, getDoc } from "firebase/firestore";
-import { Box, Typography, CircularProgress, Paper, Grid, Container, useTheme,  Card, CardContent, Divider, Tab, Tabs } from '@mui/material';
+import { doc, getDoc } from 'firebase/firestore';
+import {
+  Box, Typography, CircularProgress, 
+ Grid, Container, useTheme, Card, CardContent, Divider, Button
+} from '@mui/material';
 import Header from '../../components/Header';
 import { tokens } from '../../theme';
 
 const TPDetail = () => {
-  const { caseNumber } = useParams();
-  const [patientData, setPatientData] = useState(null);
-  const [loading, setLoading] = useState('true');
-  const [currentTab, setCurrentTab] = useState(0);
+  const { treatmentPlanId } = useParams(); // make sure this matches your route param
+  const [treatmentPlan, setTreatmentPlan] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
-  const handleTabChange = (event, newValue) => {
-    setCurrentTab(newValue);
-  };
+  const navigate = useNavigate();
+  const goBack = () => navigate(-1);
+
 
   useEffect(() => {
-    const fetchPatientData = async () => {
-      const docRef = doc(db, "treatmentPlan", caseNumber);
-      const docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        setPatientData(docSnap.data());
-      } else {
-        console.log("No such document!");
+    const fetchTreatmentPlan = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const docRef = doc(db, "treatmentPlan", treatmentPlanId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setTreatmentPlan(docSnap.data());
+        } else {
+          setError("No such treatment plan!");
+        }
+      } catch (err) {
+        console.error("Error fetching treatment plan: ", err);
+        setError("Error fetching treatment plan.");
       }
       setLoading(false);
     };
 
-    fetchPatientData();
-  }, [caseNumber]);
+    if (treatmentPlanId) {
+      fetchTreatmentPlan();
+    }
+  }, [treatmentPlanId]);
+
+  const formatDate = (date) => {
+    return date ? new Date(date).toLocaleDateString() : 'N/A';
+  };
 
   if (loading) {
     return (
-      <Box
-        display="flex"
-        flexDirection="column"
-        justifyContent="flex-start"
-        alignItems="flex-start" 
-        height="100vh"
-        pl={1} 
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
       </Box>
     );
   }
-  
 
+  if (error) {
+    return (
+      <Box padding={3} bgcolor="background.default" color="text.primary">
+        <Header title="Treatment Plan Details" />
+        <Typography variant="h6" sx={{ color: colors.redAccent[500] }}>{error}</Typography>
+      </Box>
+    );
+  }
 
   return (
-
     <Box padding={3} bgcolor="background.default" color="text.primary">
-    <Header title="Treatment Plan" subtitle="PedTB Patient Treatment Plan" />
-     <Tabs
-          value={currentTab}
-          onChange={handleTabChange}
-          indicatorColor="secondary"
-          textColor="inherit"
-          fixed
-        >
-        <Tab label="Patient Profile" />
-      </Tabs>
-      {currentTab === 0 && patientData && (
+      <Header title="Treatment Plan Details" />
 
-        <Container
-        component={Paper}
-        elevation={3}
-        sx={{
-        padding: theme.spacing(3),
-        marginTop: theme.spacing(3),
-        marginLeft: theme.spacing(1),
-        backgroundColor: colors.primary[400],
-        maxWidth: 'none', 
-        }}
-        >  
-    {/* Personal Information */}
-        <Card raised sx={{ marginBottom: theme.spacing(4), backgroundColor: colors.primary[400] }}>
-        <CardContent>
-        <Typography variant="h6" gutterBottom component="div" sx={{ fontWeight: 'bold', color: colors.greenAccent[500], fontSize: '1.25rem' }}>
-          Treatment Plan Personal Information
+      {treatmentPlan ? (
+        <Container sx={{ padding: theme.spacing(3), marginTop: theme.spacing(3) }}>
+          
+    {/* Start of TP Information */}
+    <Card sx={{ marginBottom: theme.spacing(4), backgroundColor: colors.primary[400], padding: theme.spacing(2) }}>
+      <CardContent>
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: colors.greenAccent[500] }}>
+          Start of TP Information
         </Typography>
         <Divider sx={{ marginBottom: theme.spacing(2), bgcolor: colors.grey[500] }} />
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Full Name:</strong> {patientData.fullName}</Typography>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Status:</strong> {patientData.status}</Typography>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>TP Start Date:</strong> {new Date(patientData.sdateTP).toLocaleDateString()}</Typography>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Regimen:</strong> {patientData.regimen}</Typography>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Treatment Duration:</strong> {patientData.duration}</Typography>
+        
+        {/* First Column */}
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Treatment Regimen:</strong> {treatmentPlan.regimen || 'N/A'}
+            </Typography>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Specify/Other Medicine:</strong> {treatmentPlan.otherDrug || 'N/A'}
+            </Typography>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Dosage:</strong> {treatmentPlan.dosage || 'N/A'}
+            </Typography>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Date Medication Started:</strong> {formatDate(treatmentPlan.sdateMed)}
+            </Typography>
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Medicine/s:</strong> {patientData.drug}</Typography>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Other Medicine/s:</strong> {patientData.otherDrug}</Typography>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Dosage:</strong> {patientData.dosage}</Typography>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Frequency:</strong> {patientData.frequency}</Typography>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Medication Start Date:</strong> {new Date(patientData.sdateMed).toLocaleDateString()}</Typography>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Notes:</strong> {patientData.notes}</Typography>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Follow Up Schedule Date:</strong> {new Date(patientData.followUpSched).toLocaleDateString()}</Typography>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-          <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>TP Completed Date:</strong> {new Date(patientData.edateTP).toLocaleDateString()}</Typography>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}><strong>Treatment Outcome:</strong> {patientData.outcome}</Typography>
+
+          {/* Second Column */}
+          <Grid item xs={12} md={6}>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Duration of Treatment:</strong> {treatmentPlan.duration || 'N/A'}
+            </Typography>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Medicine / Type of Drug Intake:</strong> {treatmentPlan.drug || 'N/A'}
+            </Typography>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Frequency:</strong> {treatmentPlan.frequency || 'N/A'}
+            </Typography>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Date Medication Ended:</strong> {formatDate(treatmentPlan.edateMed)}
+            </Typography>
           </Grid>
         </Grid>
-        </CardContent>
-        </Card>
+      </CardContent>
+    </Card>
 
-            </Container>
-             )}
-            {currentTab === 1 && (
-            <Box m={3}>
-            </Box>
 
-           )}
-       {!patientData && currentTab === 0 && (
-        <Typography variant="h6" sx={{ color: colors.redAccent[500] }}>No patient information available.</Typography>
-      )}
-    </Box>
+    {/* Patient Progress TP Information */}
+    <Card sx={{ marginBottom: theme.spacing(4), backgroundColor: colors.primary[400], padding: theme.spacing(2) }}>
+      <CardContent>
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: colors.greenAccent[500] }}>
+          Patient Progress TP Information
+        </Typography>
+        <Divider sx={{ marginBottom: theme.spacing(2), bgcolor: colors.grey[500] }} />
+
+        <Grid container spacing={3}>
+          {/* First Column */}
+          <Grid item xs={12} md={6}>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Follow Up Schedule Date:</strong> {formatDate(treatmentPlan.followUpSched)}
+            </Typography>
+          </Grid>
+
+          {/* Second Column */}
+          <Grid item xs={12} md={6}>
+          <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Notes:</strong> {treatmentPlan.notes || 'N/A'}
+            </Typography>
+          </Grid>
+        </Grid>
+      </CardContent>
+    </Card>
+
+
+    {/* End of Treatment Plan Information */}
+    <Card sx={{ marginBottom: theme.spacing(4), backgroundColor: colors.primary[400], padding: theme.spacing(2) }}>
+      <CardContent>
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: colors.greenAccent[500] }}>
+          End of Treatment Plan Information
+        </Typography>
+        <Divider sx={{ marginBottom: theme.spacing(2), bgcolor: colors.grey[500] }} />
+
+        <Grid container spacing={3}>
+          {/* Completion Date of Treatment Plan */}
+          <Grid item xs={12} md={6}>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Completion Date of Treatment Plan:</strong> {formatDate(treatmentPlan.edateTP)}
+            </Typography>
+          </Grid>
+
+          {/* Treatment Outcome */}
+          <Grid item xs={12} md={6}>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Treatment Outcome:</strong> {treatmentPlan.outcome || 'N/A'}
+            </Typography>
+          </Grid>
+        </Grid>
+      </CardContent>
+    </Card>
+      {/* Back Button */}
+      <Grid container spacing={2} justifyContent="center">
+        <Grid item>
+        <Button 
+          variant="contained" 
+          onClick={goBack} 
+          sx={{ backgroundColor: colors.greenAccent[600], color: colors.grey[100], mr: 1 }}
+        >
+          Back
+        </Button>
+        </Grid>
+   </Grid>
+    </Container>
+  ) : (
+    <Typography variant="h6" sx={{ color: colors.redAccent[500] }}>No treatment plan details available.</Typography>
+  )}
+</Box>
+
   );
 };
 

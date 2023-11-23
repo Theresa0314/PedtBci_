@@ -1,41 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, Container, Divider, Checkbox, useTheme,
-  OutlinedInput, ListItemText
+  Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, Container, useTheme,
+  OutlinedInput, ListItemText, Checkbox, Divider
 } from '@mui/material';
 import { tokens } from "../../theme";
 import { db } from '../../firebase.config';
-import { collection, addDoc } from 'firebase/firestore';
+import { doc, collection, getDoc, addDoc } from 'firebase/firestore';
 
 // Sample data for dropdowns
-const outcomes = ["Cured/Treatment Completed", "Treatment Failed", "Died", "Lost to Follow up", "Not Evaluated"];
 const statuses = ["Start", "Ongoing", "End"];
 const regimens = ["I. 2HRZE/4HR", "Ia. 2HRZE/10HR", "II. 2HRZES/1HRZE/5HRE", "IIa. 2HRZES/1HRZE/9HRE"];
 const durations = ["6 months", "8 months", "12 months"]; //duration of treatment
-const drugs = ["[H] Isonlazid", "[R] Rifampicin", "[Z] Pyrazinamide", "[E] Ethambutol", "[S] Streptomycin "];
+const drugs = ["[H] Isoniazid", "[R] Rifampicin", "[Z] Pyrazinamide", "[E] Ethambutol", "[S] Streptomycin"];
+const outcomes = ["Cured/Treatment Completed", "Treatment Failed", "Died", "Lost to Follow up", "Not Evaluated"];
 
-const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
-    // State hooks
-    const [fullName, setFullName] = useState('');
-    const [status, setStatus] = useState('');
-    const [sdateTP, setSdateTP] = useState('');
-    const [edateTP, setEdateTP] = useState('');
-    const [sdateMed, setSdateMed] = useState('');
-    const [edateMed, setEdateMed] = useState('');
-    const [dosage, setDosage] = useState('');
-    const [frequency, setFrequency] = useState('');
-    const [duration, setDuration] = useState('');
-    const [regimen, setRegimen] = useState('');
-    const [drug, setDrug] = React.useState([]);; 
-    const [otherDrug, setOtherDrug] = useState('');
-    const [notes, setNotes] = useState('');
-    const [outcome, setOutcome] = useState('');
-    const [followUpSched, setFollowUpSched] = useState('');
-    
+const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
+   // State hooks for form data
+   const [status, setStatus] = useState('');
+   const [regimen, setRegimen] = useState('');
+   const [duration, setDuration] = useState('');
+   const [drug, setDrug] = useState([]);
+   const [otherDrug, setOtherDrug] = useState('');
+   const [dosage, setDosage] = useState('');
+   const [frequency, setFrequency] = useState('');
+   const [sdateMed, setSdateMed] = useState('');
+   const [edateMed, setEdateMed] = useState('');
+   const [followUpSched, setFollowUpSched] = useState('');
+   const [notes, setNotes] = useState('');
+   const [edateTP, setEdateTP] = useState('');
+   const [outcome, setOutcome] = useState('');
+
+  // New state hook for startDate
+  const [startDate, setStartDate] = useState('');
+
+   // Fetch case start date when the component mounts or when caseId changes
+   useEffect(() => {
+    const fetchStartDate = async () => {
+      // Fetch the start date from the database using the caseId
+      // Example using Firestore:
+      const docRef = doc(db, 'cases', caseId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        setStartDate(docSnap.data().startDate); // Assuming startDate is a field in your case document
+      } else {
+        console.log('No such case!');
+      }
+    };
+
+    fetchStartDate();
+  }, [caseId]);
+
+
+
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
 
-    //Multiple menu item select
+    // Multiple menu item select props
     const ITEM_HEIGHT = 48;
     const ITEM_PADDING_TOP = 8;
     const MenuProps = {
@@ -45,32 +66,25 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
             width: 250,
           },
         },
-      };
-    
-    //handle drug change
-    const handleDrugChange = (event: SelectChangeEvent<typeof drug>) => {
+    };
+
+    // Handle drug change
+    const handleDrugChange = (event) => {
         const {
           target: { value },
         } = event;
         setDrug(
-          // On autofill we get a stringified value.
           typeof value === 'string' ? value.split(',') : value,
         );
-      };
+    };
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-      
-        // Generate a unique case number
-        const caseNumber = 'CN-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
-      
-        // Get the current date and time in Philippine time
-        const dateAdded = new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' });
-      
         const TPData = {
-          fullName,
+          caseId, // Directly used from props
+          caseNumber, // Directly used from props
+          startDate,
           status,
-          sdateTP,
           edateTP,
           sdateMed,
           edateMed,
@@ -83,17 +97,12 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
           notes,
           outcome,
           followUpSched,
-          caseNumber, // Add the generated case number
-          dateAdded  // Add the generated date added
         };
       
         try {
             const docRef = await addDoc(collection(db, "treatmentPlan"), TPData);
-            console.log("Document written with ID: ", docRef.id);
-        
             const newTP = { ...TPData, id: docRef.id };
-            handleUpdateTP(newTP); // Update the Treatment Plan list in the parent component
-            
+            handleUpdateTP(newTP); // Call the function to update the treatment plan list
             handleCloseForm(); // Close the form after submission
           } catch (e) {
             console.error("Error adding document: ", e);
@@ -106,29 +115,12 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
             padding: theme.spacing(6), 
             borderRadius: theme.shape.borderRadius
         }}>
-            <Typography variant="h2" gutterBottom sx={{ color: colors.white, fontWeight: 'bold' }}>
-                Treatment Plan Information
-            </Typography>
-
             <form onSubmit={handleSubmit}>
                 {/* Start Section */}
                 <Typography variant="h5" gutterBottom sx={{ color: colors.greenAccent[500], fontWeight: 'bold' }}>
                     Start of TP Information
                 </Typography>
                 <Grid container spacing={3}>
-                <Grid item xs={6}>
-                    <TextField
-                        required
-                        fullWidth
-                        id="fullName"
-                        label="Full Name"
-                        name="fullName"
-                        variant="outlined"
-                        margin="dense"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                    />
-                </Grid>
                 <Grid item xs={6}>
                 <FormControl fullWidth required margin="dense">
                     <InputLabel id="status-label">Status</InputLabel>
@@ -147,21 +139,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                     </Select>
                 </FormControl>
                 </Grid>
-                <Grid item xs={3}>
-                    <TextField
-                        required
-                        fullWidth
-                        id="sdateTP"
-                        label="Start Date of Treatment Plan"
-                        name="sdateTP"
-                        type="date"
-                        InputLabelProps={{ shrink: true }}
-                        variant="outlined"
-                        margin="dense"
-                        value={sdateTP}
-                        onChange={(e) => setSdateTP(e.target.value)}
-                    />
-                </Grid>
+
                 <Grid item xs={3}>
                 <FormControl fullWidth required margin="dense">
                     <InputLabel id="regimen-label">Treatment Regimen</InputLabel>
@@ -180,6 +158,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                     </Select>
                 </FormControl>
                 </Grid>
+
                 <Grid item xs={3}>
                 <FormControl fullWidth required margin="dense">
                     <InputLabel id="duration-label">Duration of Treatment</InputLabel>
@@ -198,6 +177,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                     </Select>
                 </FormControl>
                 </Grid>
+
                 <Grid item xs={6}>
                 <FormControl fullWidth margin="dense">
                     <InputLabel id="drug-label">Medicine / Type of Drug Intake</InputLabel>
@@ -223,6 +203,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                     </Select >
                 </FormControl>
                 </Grid>
+
                 <Grid item xs={6}>
                 <TextField
                         fullWidth
@@ -235,6 +216,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                         onChange={(e) => setOtherDrug(e.target.value)}
                     />
                 </Grid>  
+
                 <Grid item xs={3}>
                 <TextField
                         required
@@ -248,6 +230,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                         onChange={(e) => setDosage(e.target.value)}
                     />
                 </Grid>
+
                 <Grid item xs={3}>
                 <TextField
                         required
@@ -261,6 +244,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                         onChange={(e) => setFrequency(e.target.value)}
                     />
                 </Grid>
+
                 <Grid item xs={3}>
                 <TextField
                         required
@@ -276,6 +260,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                         onChange={(e) => setSdateMed(e.target.value)}
                     />
                 </Grid>
+                
                 <Grid item xs={3}>
                 <TextField
                         required
@@ -371,14 +356,18 @@ const TPForm = ({ handleCloseForm, handleUpdateTP }) => {
                 </Grid>
 
             <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
-
-                <Grid container justifyContent="center" sx={{ mt: 4 }}>
+                {/* Submit and Cancel Buttons */}
+                <Grid container spacing={2} justifyContent="center">
+                    <Grid item>
                     <Button type="submit" variant="contained" sx={{ backgroundColor: colors.greenAccent[600], color: colors.grey[100], mr: 1 }}>
-                        Save Information
-                    </Button>
-                    <Button variant="outlined" onClick={handleCloseForm} sx={{ color: colors.grey[100], borderColor: colors.grey[700] }}>
-                        Cancel
-                    </Button>
+                            Save
+                        </Button>
+                    </Grid>
+                    <Grid item>
+                        <Button onClick={handleCloseForm} variant="outlined" sx={{ color: colors.grey[100], borderColor: colors.grey[700] }}>
+                            Cancel
+                        </Button>
+                    </Grid>
                 </Grid>
             </form>
         </Container>

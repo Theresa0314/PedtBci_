@@ -24,6 +24,7 @@ import PatientInfo from "./pages/patientinfo/patientInfo";
 import PatientGenForm from "./pages/patientinfo/patientgenform";
 import PatientDetail from "./pages/patientinfo/patientdetail";
 import PatientEdit from "./pages/patientinfo/patientedit";
+import CaseDetail from "./pages/patientinfo/casedetail";
 
 import ReferralInfo from "./pages/referral/referralinfo";
 import ReferralForm from './pages/referral/referralform';
@@ -31,7 +32,7 @@ import ReferralDetails from './pages/referral/referraldetails';
 import ReferralEdit from "./pages/referral/referraledit";
 
 import Inventory from "./pages/inventory";
-import TPList from "./pages/treatmentPlan/TPlist";
+
 import TPForm from "./pages/treatmentPlan/TPform";
 import TPDetail from "./pages/treatmentPlan/TPdetail";
 import TPEdit from "./pages/treatmentPlan/TPedit";
@@ -58,7 +59,12 @@ const router = createBrowserRouter(
         <Route path="/patientgenform" element={<PatientGenForm />} />
         <Route path="/patientInfo/:caseNumber" element={<PatientDetail />} />
         <Route path="/patientedit/:patientId" element={<PatientEdit/>} />
-          
+
+        <Route path="/case/:caseId" element={<CaseDetail />} />
+        <Route path="/treatmentPlan/:treatmentPlanId" element={<TPDetail />} />
+        <Route path="/treatmentPlan/edit/:treatmentPlanId" element={<TPEdit />} />
+        <Route path="/TPform" element={<TPForm />} />
+  
         <Route path="/referralinfo" element={<ReferralInfo />} />
         <Route path="/referralform" element={<ReferralForm/>} />
         <Route path="/referralinfo/:referralId" element={<ReferralDetails/>} />
@@ -68,10 +74,6 @@ const router = createBrowserRouter(
         <Route path="/symptoms" element={<Symptoms />} />
         <Route path="/inventory" element={<Inventory />} />
 
-        <Route path="/TPlist" element={<TPList />} />
-        <Route path="/TPform" element={<TPForm />} />
-        <Route path="/TPlist/:caseNumber" element={<TPDetail />} />
-        <Route path="/TPedit/:treatmentId" element={<TPEdit/>} />
 
       </Route>
       <Route path="/" element={<Protected />}>

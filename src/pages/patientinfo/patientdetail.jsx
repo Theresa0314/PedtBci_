@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { db } from '../../firebase.config';
-import { doc, collection, getDoc, getDocs } from "firebase/firestore";
+import PageviewIcon from '@mui/icons-material/Pageview';
+import { doc, collection, getDoc, getDocs, addDoc } from "firebase/firestore";
 import {
   Box,
   Typography,
@@ -32,13 +33,34 @@ const PatientDetail = () => {
   const [patientsData, setPatientsData] = useState([]);
   const [searchText, setSearchText] = useState("");
 
+  const [isAddCaseDisabled, setIsAddCaseDisabled] = useState(false);
+
+  const navigate = useNavigate();
+
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
-  const [setOpen] = useState(false);
+  // Function to directly add a new case
+  const handleAddNewCaseDirectly = async () => {
+    const newCaseData = {
+      status: 'Ongoing', // Default status for new cases
+      startDate: new Date().toISOString().slice(0, 10), // Start date as today
+      endDate: '', // End date is initially blank
+      caseStatus: 'Open', // Default case status
+      caseNumber: patientData.caseNumber, // Use the same caseNumber as the patient
+      fullName: patientData.fullName,
+    };
 
-  const handleAddNewPatient = () => {
-    setOpen(true);
+    try {
+      const docRef = await addDoc(collection(db, "cases"), newCaseData);
+      // Add the new case to the local state to update the table
+      setPatientsData(prevData => [
+        ...prevData,
+        { ...newCaseData, id: docRef.id, dateAdded: new Date().toISOString() }, // Add new case to the state
+      ]);
+    } catch (error) {
+      console.error("Error adding new case: ", error);
+    }
   };
 
   // Function to handle the search input change
@@ -110,77 +132,54 @@ const PatientDetail = () => {
     }
   }, [patientData]);
 
-  const columns = [
-    {
-      field: "caseNumber",
-      headerName: "Case Number",
-      flex: 1,
-    },
-    {
-      field: "fullName", // This should match the field name in your Firestore documents for the patient's full name
-      headerName: "Full Name",
-      flex: 1,
-    },
-    {
-      field: "caseStatus",
-      headerName: "Case Status",
-      flex: 1,
-      renderCell: (params) => (
-        <Typography
-          style={{
-            color: params.value === "Closed" ? "lightcoral" : "lightgreen",
-          }}
-        >
-          {params.value}
-        </Typography>
-      ),
-    },
-    {
-      field: "dateAdded",
-      headerName: "Date Added",
-      flex: 1,
-      // Add a custom formatter if necessary to format the date
-      valueFormatter: (params) => {
-        const valueFormatted = new Date(params.value).toLocaleDateString(
-          "en-US",
-          { timeZone: "Asia/Manila" }
-        );
+  useEffect(() => {
+    const openCaseExists = patientsData.some(caseInfo => caseInfo.caseStatus === 'Open');
+    setIsAddCaseDisabled(openCaseExists);
+  }, [patientsData]);
+  
 
-        return valueFormatted;
-      },
+  const columns = [
+    { field: 'caseNumber', headerName: 'Case Number', flex: 1 },
+    { field: 'fullName', headerName: 'Full Name', flex: 1 },
+    { field: 'status', headerName: 'Status', flex: 1 },
+    { 
+      field: 'startDate', 
+      headerName: 'Start Date', 
+      flex: 1,
+      valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString("en-US") : ""
     },
+    { 
+      field: 'endDate', 
+      headerName: 'End Date', 
+      flex: 1,
+      valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString("en-US") : ""
+    },
+    { field: 'caseStatus', headerName: 'Case Status', flex: 1 },
     {
-      field: "action",
-      headerName: "Action",
+      field: 'action',
+      headerName: 'Action',
+      sortable: false,
       flex: 1,
       renderCell: (params) => (
-        <Box display="flex" justifyContent="center">
-          <Link
-            to={{
-              pathname: `/patient_info/${caseNumber}/case/${params.id}`,
-              state: { patientData: params.row }, // Pass the patientData as state
-            }}
-            style={{ textDecoration: "none" }}
-          >
-            <Button
-              variant="contained"
-              style={{
-                backgroundColor: colors.greenAccent[600],
-                color: colors.grey[100],
-              }}
-            >
-              More Details
-            </Button>
-          </Link>
-        </Box>
-      ),
-    },
+        <Button
+          variant="contained"
+          color="primary"
+          style={{ marginRight: 8 }}
+          startIcon={<PageviewIcon />}
+          onClick={() => navigate(`/case/${params.id}`)}
+        >
+          View
+        </Button>
+      )
+    }
   ];
+  
   columns.forEach((column) => {
     if (column.field === "caseStatus") {
       column.sortable = true;
     }
   });
+  
 
   if (loading) {
     return (
@@ -460,7 +459,7 @@ const PatientDetail = () => {
             sx={{
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "center", // Align items vertically
+              alignItems: "center", 
               pl: 2,
               pb: 2,
             }}
@@ -485,26 +484,27 @@ const PatientDetail = () => {
             />
             <Button
               variant="contained"
-              onClick={handleAddNewPatient}
+              onClick={handleAddNewCaseDirectly}
+              disabled={isAddCaseDisabled} 
               style={{
-                backgroundColor: colors.greenAccent[600],
+                backgroundColor: isAddCaseDisabled ? 'grey' : colors.greenAccent[600], 
                 color: colors.grey[100],
                 width: "125px",
-                height: "50px", // Adjust based on your theme's input height
+                height: "50px",
                 marginLeft: theme.spacing(2),
               }}
             >
-              Add New Case
+              Add A New Case
             </Button>
           </Box>
           <Box
             sx={{
-              height: 650, // Adjust based on your layout
+              height: 650, 
               width: "100%",
               "& .MuiDataGrid-root": {
                 border: `1px solid ${colors.primary[700]}`,
                 color: colors.grey[100],
-                backgroundColor: colors.primary[400], // Background color for the DataGrid
+                backgroundColor: colors.primary[400], 
               },
               "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: colors.blueAccent[700],
@@ -527,7 +527,7 @@ const PatientDetail = () => {
             }}
           >
             <DataGrid
-              rows={filteredRows} // Use filteredRows here
+              rows={filteredRows} 
               columns={columns}
               pageSize={10}
               rowsPerPageOptions={[5, 10, 20]}

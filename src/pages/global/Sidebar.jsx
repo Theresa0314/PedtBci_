@@ -137,6 +137,13 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
+            <Item
+              title="Parent View"
+              to="/parentview"
+              icon={<HomeOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
             {isAdmin && (
                 <Item
                   title="User List"
