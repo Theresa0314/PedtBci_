@@ -169,6 +169,7 @@ const viewDetails = (id) => {
           field: 'action',
           headerName: 'Action',
           sortable: false,
+          flex: 1, 
           // Hide edit/delete actions based on user role
            hide: isAddTPDisabled,
           renderCell: (params) => (
