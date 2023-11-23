@@ -27,7 +27,6 @@ const PatientInfo = () => {
 
   const [currentUser, loading] = useAuthState(auth);
   const [userRole, setUserRole] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
 
   
   const handleAddNewPatient = () => {
@@ -117,10 +116,9 @@ const PatientInfo = () => {
         }
       }, [currentUser, loading]);
 
-      // Function to determine if the user can edit or delete
-      const canEditOrDelete = () => {
-        return ['Lab Aide', 'Admin'].includes(userRole);
-      };
+      const canEditOrDelete = ['Lab Aide', 'Admin'].includes(userRole);
+      const canViewDetails = ['Doctor', 'Lab Aide', 'Admin'].includes(userRole);
+      const canAddNewPatient = ['Lab Aide', 'Admin'].includes(userRole);
   const columns = [
     {
       field: 'caseNumber',
@@ -161,6 +159,7 @@ const PatientInfo = () => {
       headerName: 'Action',
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
+          {canViewDetails && (
           <Button
             startIcon={<PageviewIcon />}
             onClick={() => handleViewDetails(params.id)}
@@ -170,8 +169,9 @@ const PatientInfo = () => {
           >
             View
           </Button>
-          {canEditOrDelete(userRole) && (
-            <>
+            )}
+            {canEditOrDelete && (
+            <>   
               <Button
                 startIcon={<EditIcon />}
                 onClick={() => handleEdit(params.id)}
@@ -225,18 +225,19 @@ const PatientInfo = () => {
             ),
           }}
         />
-        <Button
-          variant="contained"
-          onClick={handleAddNewPatient}
-          style={{ 
-            backgroundColor: canEditOrDelete(userRole) ? colors.greenAccent[600] : 'gray',
-            color: colors.grey[100],
-            height: '50px',
-          }}
-          disabled={!canEditOrDelete(userRole)}
-        >
-          Add New Patient
-        </Button>
+          <Button
+            variant="contained"
+            onClick={canAddNewPatient? handleAddNewPatient : null}
+            style={{ 
+              backgroundColor: canAddNewPatient? colors.greenAccent[600] : 'gray',
+              color: colors.grey[100],
+              height: '50px',
+            }}
+            disabled={!canAddNewPatient}
+          >
+            Add New Patient
+          </Button>
+
       </Box>
       <Box 
       sx={{

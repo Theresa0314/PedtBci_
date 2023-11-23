@@ -5,8 +5,9 @@ import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import TPForm from "./TPform"; 
 import { useNavigate } from 'react-router-dom';
-import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
-import { db } from '../../firebase.config';
+import { collection, getDocs, getDoc, deleteDoc, doc } from "firebase/firestore";
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { db, auth } from '../../firebase.config';
 import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -19,6 +20,9 @@ const TPList = () => {
   const colors = tokens(theme.palette.mode);
   const navigate = useNavigate(); 
   
+  const [currentUser, loading] = useAuthState(auth);
+  const [userRole, setUserRole] = useState('');
+
   const style = {
     position: 'absolute',
     top: '50%',
@@ -34,7 +38,7 @@ const TPList = () => {
   
   const [open, setOpen] = useState(false);
 
-  const handleAddNewPatient = () => {
+  const handleAddNewTP = () => {
     setOpen(true);
   };
 
@@ -70,6 +74,7 @@ const TPList = () => {
       // Navigate to the edit page or open an edit modal
       navigate(`/TPedit/${id}`);
     };
+
 
     const handleUpdateTP = (newPatient) => {
       setPatientsData((currentPatients) => {
@@ -110,6 +115,21 @@ const TPList = () => {
         
         fetchData();
       }, []);
+
+      useEffect(() => {
+        if (currentUser && !loading) {
+          const userRef = doc(db, 'users', currentUser.uid);
+          getDoc(userRef).then((docSnap) => {
+            if (docSnap.exists()) {
+              setUserRole(docSnap.data().role); 
+            }
+          });
+        }
+      }, [currentUser, loading]);
+    
+        const canEditOrDelete = ['Lab Aide', 'Admin'].includes(userRole);
+        const canViewDetails = ['Doctor', 'Lab Aide', 'Admin'].includes(userRole);
+        const canAddTP = ['Lab Aide', 'Admin'].includes(userRole);
 
 // table columns
   const columns = [
@@ -154,6 +174,7 @@ const TPList = () => {
       renderCell: (params) => (
           // view
           <Box display="flex" justifyContent="center">
+            {canViewDetails && (
             <Button
               className = "view"
               startIcon={<PageviewIcon />}
@@ -164,6 +185,9 @@ const TPList = () => {
             >
               View
             </Button>
+            )}
+            {canEditOrDelete && (
+            <>      
             <Button
             startIcon={<EditIcon />}
             onClick={() => handleEdit(params.id)}
@@ -181,6 +205,8 @@ const TPList = () => {
           >
             Delete
           </Button>
+          </>
+          )}
         </Box>
       ),
       width: 300,
@@ -215,18 +241,20 @@ const TPList = () => {
             ),
           }}
         />
-        <Button
-          variant="contained"
-          onClick={handleAddNewPatient}
-          style={{ 
-            backgroundColor: colors.greenAccent[600],
-            color: colors.grey[100],
-            height: '50px', // Adjust based on your theme's input height
-            marginLeft: theme.spacing(2)
-          }}
-        >
-          Add New Data
-        </Button>
+      <Button
+        variant="contained"
+        onClick={canAddTP? handleAddNewTP : null}
+        style={{ 
+          backgroundColor: canAddTP ? colors.greenAccent[600] : 'gray',
+          color: colors.grey[100],
+          height: '50px', // Adjust based on your theme's input height
+          marginLeft: theme.spacing(2)
+        }}
+        disabled={!canAddTP}
+      >
+        Add New Data
+      </Button>
+
       </Box>
 
  {/* Modal for the TPform */}

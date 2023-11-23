@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from '../../theme';
 import Header from "../../components/Header";
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Box, Typography, useTheme, Button, TextField, InputAdornment, 
-  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
 } from "@mui/material";
-import { db } from '../../firebase.config';
-import { collection, getDocs,  deleteDoc, doc  } from "firebase/firestore";
+import { collection, getDocs, getDoc, deleteDoc, doc } from "firebase/firestore";
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { db, auth } from '../../firebase.config';
 import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -16,8 +17,11 @@ import PageviewIcon from '@mui/icons-material/Pageview';
 const ReferralInfo = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [referrals, setReferrals] = useState([]);
+  const [currentUser, loading] = useAuthState(auth);
+  const [userRole, setUserRole] = useState('');
+
 
 
 
@@ -93,6 +97,20 @@ const ReferralInfo = () => {
     fetchData();
   }, []);
   
+  useEffect(() => {
+    if (currentUser && !loading) {
+      const userRef = doc(db, 'users', currentUser.uid);
+      getDoc(userRef).then((docSnap) => {
+        if (docSnap.exists()) {
+          setUserRole(docSnap.data().role); 
+        }
+      });
+    }
+  }, [currentUser, loading]);
+
+    const canEditOrDelete = ['Lab Aide', 'Admin'].includes(userRole);
+    const canViewDetails = ['Doctor', 'Lab Aide', 'Admin'].includes(userRole);
+    const canAddReferral = ['Lab Aide', 'Admin'].includes(userRole);
 
   const columns = [
     {
@@ -148,32 +166,38 @@ const ReferralInfo = () => {
       flex: 1,
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
-          <Button
-            startIcon={<PageviewIcon />}
-            onClick={() => handleViewDetails(params.id)}
-            variant="contained"
-            color="primary"
-            style={{ marginRight: 8 }}
-          >
-            View
-          </Button>
-          <Button
-            startIcon={<EditIcon />}
-            onClick={() => handleEdit(params.id)}
-            variant="contained"
-            color="secondary"
-            style={{ marginRight: 8 }}
-          >
-            Edit
-          </Button>
-          <Button
-            startIcon={<DeleteIcon />}
-            onClick={() => handleClickDelete(params.id)}
-            variant="contained"
-            color="error"
-          >
-            Delete
-          </Button>
+          {canViewDetails && (
+            <Button
+              startIcon={<PageviewIcon />}
+              onClick={() => handleViewDetails(params.id)}
+              variant="contained"
+              color="primary"
+              style={{ marginRight: 8 }}
+            >
+              View
+            </Button>
+          )}
+          {canEditOrDelete && (
+            <>
+              <Button
+                startIcon={<EditIcon />}
+                onClick={() => handleEdit(params.id)}
+                variant="contained"
+                color="secondary"
+                style={{ marginRight: 8 }}
+              >
+                Edit
+              </Button>
+              <Button
+                startIcon={<DeleteIcon />}
+                onClick={() => handleClickDelete(params.id)}
+                variant="contained"
+                color="error"
+              >
+                Delete
+              </Button>
+            </>
+          )}
         </Box>
       ),
       width: 300,
@@ -204,15 +228,17 @@ const ReferralInfo = () => {
           ),
         }}
       />
-      <Button
-        variant="contained"
-       onClick={handleAddNewReferral}
-        style={{ 
-          backgroundColor: colors.greenAccent[600],
-          color: colors.grey[100],
-          height: '50px',
-        }}
-      >
+        <Button
+          variant="contained"
+          onClick={canAddReferral ? handleAddNewReferral : null}
+          style={{ 
+            backgroundColor: canAddReferral ? colors.greenAccent[600] : 'gray',
+            color: colors.grey[100],
+            height: '50px', // Adjust based on your theme's input height
+            marginLeft: theme.spacing(2)
+          }}
+          disabled={!canAddReferral}
+            >
         Add New Referral 
       </Button>
     </Box>

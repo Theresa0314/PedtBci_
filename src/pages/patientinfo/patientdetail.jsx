@@ -35,7 +35,7 @@ const PatientDetail = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
-  const [open, setOpen] = useState(false);
+  const [setOpen] = useState(false);
 
   const handleAddNewPatient = () => {
     setOpen(true);
