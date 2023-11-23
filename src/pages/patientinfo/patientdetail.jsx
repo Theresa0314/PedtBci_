@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { db } from '../../firebase.config';
+import { db, auth } from '../../firebase.config';
 import PageviewIcon from '@mui/icons-material/Pageview';
 import { doc, collection, getDoc, getDocs, addDoc } from "firebase/firestore";
+import { useAuthState } from 'react-firebase-hooks/auth';
 import {
   Box,
   Typography,
@@ -33,7 +34,12 @@ const PatientDetail = () => {
   const [patientsData, setPatientsData] = useState([]);
   const [searchText, setSearchText] = useState("");
 
+
+  const [currentUser] = useAuthState(auth); // Use the hook to get the current user
+  const [userRole, setUserRole] = useState(''); // Define setUserRole to update user's role
   const [isAddCaseDisabled, setIsAddCaseDisabled] = useState(false);
+    // State to determine if the user is a parent
+    const [isParent, setIsParent] = useState(false);
 
   const navigate = useNavigate();
 
@@ -109,7 +115,6 @@ const PatientDetail = () => {
           id: doc.id,
         }));
 
-        // Filter data based on the fullName value (e.g., "Chuck Bass")
         const filteredData = data.filter(
           (patient) => patient.fullName === patientData.fullName
         );
@@ -132,11 +137,25 @@ const PatientDetail = () => {
     }
   }, [patientData]);
 
+  // Fetch the user's role
+  useEffect(() => {
+    if (currentUser) {
+      const userRef = doc(db, 'users', currentUser.uid);
+      getDoc(userRef).then((docSnap) => {
+        if (docSnap.exists()) {
+          const role = docSnap.data().role;
+          setUserRole(role);
+          setIsParent(role === 'Parent');
+        }
+      });
+    }
+  }, [currentUser]);
+
+  // Check if there's an open case and if the user is not a parent
   useEffect(() => {
     const openCaseExists = patientsData.some(caseInfo => caseInfo.caseStatus === 'Open');
     setIsAddCaseDisabled(openCaseExists);
   }, [patientsData]);
-  
 
   const columns = [
     { field: 'caseNumber', headerName: 'Case Number', flex: 1 },
@@ -469,11 +488,7 @@ const PatientDetail = () => {
               variant="outlined"
               value={searchText}
               onChange={handleSearchChange}
-              sx={{
-                width: "100%",
-                backgroundColor: colors.blueAccent[700],
-                marginLeft: theme.spacing(-2),
-              }}
+              sx={{ width: 550, backgroundColor: colors.blueAccent[700] , marginLeft: theme.spacing(-2) }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -482,20 +497,22 @@ const PatientDetail = () => {
                 ),
               }}
             />
-            <Button
-              variant="contained"
-              onClick={handleAddNewCaseDirectly}
-              disabled={isAddCaseDisabled} 
-              style={{
-                backgroundColor: isAddCaseDisabled ? 'grey' : colors.greenAccent[600], 
-                color: colors.grey[100],
-                width: "125px",
-                height: "50px",
-                marginLeft: theme.spacing(2),
-              }}
-            >
-              Add A New Case
-            </Button>
+            {!isParent && ( // This will only render the button if the user is not a Parent
+              <Button
+                variant="contained"
+                onClick={handleAddNewCaseDirectly}
+                disabled={isAddCaseDisabled}
+                style={{
+                  backgroundColor: isAddCaseDisabled ? 'grey' : colors.greenAccent[600], 
+                  color: colors.grey[100],
+                  width: "125px",
+                  height: "50px",
+                  marginLeft: theme.spacing(2),
+                }}
+              >
+                Add A New Case
+              </Button>
+            )}
           </Box>
           <Box
             sx={{

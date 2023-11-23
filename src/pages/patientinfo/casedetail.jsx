@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { db } from '../../firebase.config';
+import { db, auth } from '../../firebase.config';
 import { collection, query, where, getDocs, getDoc, deleteDoc, doc } from "firebase/firestore"; 
 import { Box, Typography, CircularProgress, Container, Paper, Tab, Grid, Tabs, 
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
@@ -26,6 +26,8 @@ const CaseDetail = () => {
 
  const [openTPForm, setOpenTPForm] = useState(false); 
 
+ const [userRole, setUserRole] = useState('');
+
   const handleOpenTPForm = () => setOpenTPForm(true); 
   const handleCloseTPForm = () => setOpenTPForm(false); 
 
@@ -38,7 +40,7 @@ const [searchText, setSearchText] = useState('');
 
 const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 const [deleteId, setDeleteId] = useState(null);
-
+const [isAddTPDisabled, setIsAddTPDisabled] = useState(false);
 
 const navigate = useNavigate();
 
@@ -120,6 +122,30 @@ const viewDetails = (id) => {
       }
     }, [caseId]);
 
+    useEffect(() => {
+      const fetchUserRole = async () => {
+        // Assuming you have the user's role saved in the database
+        if (auth.currentUser) {
+          const userRef = doc(db, 'users', auth.currentUser.uid);
+          const docSnap = await getDoc(userRef);
+          if (docSnap.exists()) {
+            setUserRole(docSnap.data().role);
+            // Disable "Add Treatment" button for certain roles
+            setIsAddTPDisabled(!canEditOrDelete(docSnap.data().role));
+          } else {
+            console.error("User document not found");
+          }
+        }
+      };
+  
+      fetchUserRole();
+    }, []);
+
+    // Define a utility function to check if the user can edit or delete
+    const canEditOrDelete = (role) => {
+      return ['Admin', 'Lab Aide'].includes(role);
+    };
+
      // Define columns for DataGrid
      const treatmentColumns = [
         { field: 'duration', headerName: 'Duration', flex: 1 },
@@ -143,6 +169,8 @@ const viewDetails = (id) => {
           field: 'action',
           headerName: 'Action',
           sortable: false,
+          // Hide edit/delete actions based on user role
+           hide: isAddTPDisabled,
           renderCell: (params) => (
             <Box display="flex" justifyContent="center">
               <Button
@@ -155,6 +183,9 @@ const viewDetails = (id) => {
               >
                 View
               </Button>
+              {/* Conditionally show edit and delete options */}
+              {canEditOrDelete(userRole) && (
+            <>
               <Button
                 startIcon={<EditIcon />}
                 onClick={() => navigate(`/treatmentPlan/edit/${params.id}`)}
@@ -167,18 +198,19 @@ const viewDetails = (id) => {
               </Button>
               <Button
                 startIcon={<DeleteIcon />}
-                onClick={() => handleClickOpenDeleteDialog(params.id)} 
+                onClick={() => handleClickOpenDeleteDialog(params.id)}
                 variant="contained"
                 color="error"
                 size="small"
               >
                 Delete
               </Button>
-            </Box>
-          ),
-          flex: 1,
-        },
-      ];
+            </>
+          )}
+        </Box>
+      ),
+    },
+  ].filter(Boolean);
 
   if (loading) {
     return (
@@ -288,19 +320,22 @@ const viewDetails = (id) => {
               ),
             }}
           />
+          {/* Conditionally render the "Add Treatment" button based on the user role */}
+          {!isAddTPDisabled && (
             <Button
-                variant="contained"
-                onClick={handleOpenTPForm}
-                style={{
+              variant="contained"
+              onClick={handleOpenTPForm}
+              style={{
                 backgroundColor: colors.greenAccent[600],
                 color: colors.grey[100],
                 width: "125px",
                 height: "50px",
                 marginLeft: theme.spacing(2),
-                }}
+              }}
             >
-                Add Treatment
+              Add Treatment
             </Button>
+          )}
             </Box>
              {/* Modal for adding new treatment */}
              <Modal

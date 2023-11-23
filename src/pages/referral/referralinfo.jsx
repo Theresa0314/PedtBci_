@@ -7,7 +7,6 @@ import { Box, Typography, useTheme, Button, TextField, InputAdornment,
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
 } from "@mui/material";
 import { collection, getDocs, getDoc, deleteDoc, doc } from "firebase/firestore";
-import { useAuthState } from 'react-firebase-hooks/auth';
 import { db, auth } from '../../firebase.config';
 import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -19,7 +18,6 @@ const ReferralInfo = () => {
   const colors = tokens(theme.palette.mode);
   const navigate = useNavigate();
   const [referrals, setReferrals] = useState([]);
-  const [currentUser, loading] = useAuthState(auth);
   const [userRole, setUserRole] = useState('');
 
 
@@ -97,20 +95,34 @@ const ReferralInfo = () => {
     fetchData();
   }, []);
   
-  useEffect(() => {
-    if (currentUser && !loading) {
-      const userRef = doc(db, 'users', currentUser.uid);
-      getDoc(userRef).then((docSnap) => {
-        if (docSnap.exists()) {
-          setUserRole(docSnap.data().role); 
+    // Fetch the user role from the database
+    useEffect(() => {
+      const fetchUserRole = async () => {
+        if (auth.currentUser) {
+          const userRef = doc(db, 'users', auth.currentUser.uid);
+          const docSnap = await getDoc(userRef);
+          if (docSnap.exists()) {
+            setUserRole(docSnap.data().role);
+          } else {
+            console.error("User document not found");
+          }
         }
-      });
-    }
-  }, [currentUser, loading]);
+      };
 
-    const canEditOrDelete = ['Lab Aide', 'Admin'].includes(userRole);
-    const canViewDetails = ['Doctor', 'Lab Aide', 'Admin'].includes(userRole);
-    const canAddReferral = ['Lab Aide', 'Admin'].includes(userRole);
+      fetchUserRole();
+    }, [auth.currentUser]);
+
+  // Define functions to check permissions
+  const canPerformActions = (action) => {
+    const rolesWithFullAccess = ['Lab Aide', 'Admin'];
+    const rolesWithViewOnlyAccess = ['Doctor', 'Nurse'];
+
+    if (action === 'view') {
+      return rolesWithFullAccess.includes(userRole) || rolesWithViewOnlyAccess.includes(userRole);
+    }
+
+    return rolesWithFullAccess.includes(userRole); // For edit and delete
+  };
 
   const columns = [
     {
@@ -166,7 +178,6 @@ const ReferralInfo = () => {
       flex: 1,
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
-          {canViewDetails && (
             <Button
               startIcon={<PageviewIcon />}
               onClick={() => handleViewDetails(params.id)}
@@ -176,9 +187,8 @@ const ReferralInfo = () => {
             >
               View
             </Button>
-          )}
-          {canEditOrDelete && (
-            <>
+            {canPerformActions('edit') && (
+              <>
               <Button
                 startIcon={<EditIcon />}
                 onClick={() => handleEdit(params.id)}
@@ -188,6 +198,7 @@ const ReferralInfo = () => {
               >
                 Edit
               </Button>
+
               <Button
                 startIcon={<DeleteIcon />}
                 onClick={() => handleClickDelete(params.id)}
@@ -195,7 +206,7 @@ const ReferralInfo = () => {
                 color="error"
               >
                 Delete
-              </Button>
+                </Button>
             </>
           )}
         </Box>
@@ -228,19 +239,20 @@ const ReferralInfo = () => {
           ),
         }}
       />
-        <Button
-          variant="contained"
-          onClick={canAddReferral ? handleAddNewReferral : null}
-          style={{ 
-            backgroundColor: canAddReferral ? colors.greenAccent[600] : 'gray',
-            color: colors.grey[100],
-            height: '50px', // Adjust based on your theme's input height
-            marginLeft: theme.spacing(2)
-          }}
-          disabled={!canAddReferral}
-            >
-        Add New Referral 
-      </Button>
+        {canPerformActions('add') && (
+          <Button
+            variant="contained"
+            onClick={handleAddNewReferral}
+            style={{
+              backgroundColor: colors.greenAccent[600],
+              color: colors.grey[100],
+              height: '50px',
+              marginLeft: theme.spacing(2)
+            }}
+          >
+            Add New Referral
+          </Button>
+        )}
     </Box>
       <Box sx={{
         height: 400,

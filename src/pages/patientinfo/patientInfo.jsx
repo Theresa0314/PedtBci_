@@ -105,20 +105,35 @@ const PatientInfo = () => {
         fetchData();
       }, []); 
       
-      useEffect(() => {
-        if (currentUser && !loading) {
-          const userRef = doc(db, 'users', currentUser.uid);
-          getDoc(userRef).then((docSnap) => {
-            if (docSnap.exists()) {
-              setUserRole(docSnap.data().role); // Set the user role in state
-            }
-          });
+    // Fetch the user role from the database
+    useEffect(() => {
+      const fetchUserRole = async () => {
+        if (auth.currentUser) {
+          const userRef = doc(db, 'users', auth.currentUser.uid);
+          const docSnap = await getDoc(userRef);
+          if (docSnap.exists()) {
+            setUserRole(docSnap.data().role);
+          } else {
+            console.error("User document not found");
+          }
         }
-      }, [currentUser, loading]);
+      };
 
-      const canEditOrDelete = ['Lab Aide', 'Admin'].includes(userRole);
-      const canViewDetails = ['Doctor', 'Lab Aide', 'Admin'].includes(userRole);
-      const canAddNewPatient = ['Lab Aide', 'Admin'].includes(userRole);
+      fetchUserRole();
+    }, [auth.currentUser]);
+
+  // Define functions to check permissions
+  const canPerformActions = (action) => {
+    const rolesWithFullAccess = ['Lab Aide', 'Admin'];
+    const rolesWithViewOnlyAccess = ['Doctor', 'Nurse'];
+
+    if (action === 'view') {
+      return rolesWithFullAccess.includes(userRole) || rolesWithViewOnlyAccess.includes(userRole);
+    }
+
+    return rolesWithFullAccess.includes(userRole); // For edit and delete
+  };
+
   const columns = [
     {
       field: 'caseNumber',
@@ -159,7 +174,6 @@ const PatientInfo = () => {
       headerName: 'Action',
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
-          {canViewDetails && (
           <Button
             startIcon={<PageviewIcon />}
             onClick={() => handleViewDetails(params.id)}
@@ -169,9 +183,8 @@ const PatientInfo = () => {
           >
             View
           </Button>
-            )}
-            {canEditOrDelete && (
-            <>   
+          {canPerformActions('edit') && (
+              <>
               <Button
                 startIcon={<EditIcon />}
                 onClick={() => handleEdit(params.id)}
@@ -225,19 +238,21 @@ const PatientInfo = () => {
             ),
           }}
         />
+       {canPerformActions('add') && (
           <Button
             variant="contained"
-            onClick={canAddNewPatient? handleAddNewPatient : null}
-            style={{ 
-              backgroundColor: canAddNewPatient? colors.greenAccent[600] : 'gray',
+            onClick={handleAddNewPatient}
+            style={{
+              backgroundColor: colors.greenAccent[600],
               color: colors.grey[100],
               height: '50px',
+              marginLeft: theme.spacing(2)
             }}
-            disabled={!canAddNewPatient}
+
           >
             Add New Patient
           </Button>
-
+        )}
       </Box>
       <Box 
       sx={{
