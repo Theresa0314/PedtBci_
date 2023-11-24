@@ -1,4 +1,3 @@
-// LabTestTable.jsx
 import React from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { Box, useTheme } from '@mui/material';
@@ -7,9 +6,14 @@ import Button from '@mui/material/Button';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-const LabTestTable = ({ rows, onEdit, onDelete }) => {
+const LabTestTable = ({ rows, onEdit, onDelete, userRole  }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+
+  // return false for 'Parent' and 'Doctor' roles
+  const canEditOrDelete = (role) => {
+    return !['Parent', 'Doctor'].includes(role);
+  };
   
   // Define the columns inside the component so that it has access to onEdit and onDelete
   const columns = [
@@ -17,14 +21,17 @@ const LabTestTable = ({ rows, onEdit, onDelete }) => {
     { field: 'testLocation', headerName: 'Test Location', flex: 1 },
     { field: 'testDate', headerName: 'Date Tested', flex: 1 },
     { field: 'testResult', headerName: 'Result', flex: 1 },
-    {
+ /*  {
       field: 'action',
       headerName: 'Action',
       sortable: false,
       flex: 1,
+      // Only include this column if the user can edit or delete
+      hide: !canEditOrDelete(userRole),
       renderCell: (params) => (
-        <Box>
-         {/* <Button
+        <Box display="flex" justifyContent="center">
+          {/* Include Edit button if needed 
+           <Button
             startIcon={<EditIcon />}
             onClick={() => onEdit(params.id)}
             variant="contained"
@@ -33,7 +40,7 @@ const LabTestTable = ({ rows, onEdit, onDelete }) => {
             style={{ marginRight: 8 }}
           >
             Edit
-          </Button>*/}
+          </Button>
           <Button
             startIcon={<DeleteIcon />}
             onClick={() => onDelete(params.id)}
@@ -43,11 +50,12 @@ const LabTestTable = ({ rows, onEdit, onDelete }) => {
           >
             Delete
           </Button>
-        </Box>
+        </Box> 
       ),
-    },
+    },*/
   ];
 
+ 
   return (
     <Box
       sx={{

@@ -447,7 +447,7 @@ const viewDetails = (id) => {
 
     // Define a utility function to check if the user can edit or delete
     const canEditOrDelete = (role) => {
-      return ['Admin', 'Lab Aide'].includes(role);
+      return ['Admin', 'Lab Aide'].includes(role) && !['Parent', 'Doctor'].includes(role);
     };
 
      // Define columns for DataGrid
@@ -517,45 +517,48 @@ const viewDetails = (id) => {
     },
   ].filter(Boolean);
 
-  const dstColumns = [
-    { field: 'referenceNumber', headerName: 'Reference', flex: 1 },
-    { field: 'testLocation', headerName: 'Test Location', flex: 1 },
-    { field: 'testDate', headerName: 'Date Tested', flex: 1 },
-    { field: 'amikacin', headerName: 'Amikacin', flex: 1 },
-    { field: 'ethionamide', headerName: 'Ethionamide', flex: 1 },
-    { field: 'fluoroquinolones', headerName: 'Fluoroquinolones', flex: 1 },
-    { field: 'isoniazid', headerName: 'Isoniazid', flex: 1 },
-    {
-      field: 'action',
-      headerName: 'Action',
-      sortable: false,
-      flex: 1,
-      renderCell: (params) => (
-        <Box display="flex" justifyContent="center">
-      {/*}  <Button
-          startIcon={<EditIcon />}
-          onClick={() => navigate(`/dst/edit/${params.id}`)}
-          variant="contained"
-          color="secondary"
-          size="small"
-          style={{ marginRight: 8 }}
-        > 
-          Edit
-        </Button>*/}
-        <Button
-          startIcon={<DeleteIcon />}
-          onClick={() => handleDeleteDst(params.id)}
-          variant="contained"
-          color="error"
-          size="small"
-        >
-          Delete
-        </Button>
-      </Box>
-      ),
-    },
-  ];
-  
+
+    const dstcolumns = [
+      { field: 'referenceNumber', headerName: 'Reference', flex: 1 },
+      { field: 'testLocation', headerName: 'Test Location', flex: 1 },
+      { field: 'testDate', headerName: 'Date Tested', flex: 1 },
+      { field: 'amikacin', headerName: 'Amikacin', flex: 1 },
+      { field: 'ethionamide', headerName: 'Ethionamide', flex: 1 },
+      { field: 'fluoroquinolones', headerName: 'Fluoroquinolones', flex: 1 },
+      { field: 'isoniazid', headerName: 'Isoniazid', flex: 1 },
+      // ... other fields
+    /*  {
+        field: 'action',
+        headerName: 'Action',
+        sortable: false,
+        flex: 1,
+        renderCell: (params) => (
+          <Box display="flex" justifyContent="center">
+            { <Button
+              startIcon={<EditIcon />}
+              onClick={() => navigate(`/dst/edit/${params.id}`)}
+              variant="contained"
+              color="secondary"
+              size="small"
+              style={{ marginRight: 8 }}
+            >
+              Edit
+            </Button> }
+            <Button
+              startIcon={<DeleteIcon />}
+              onClick={() => handleDeleteDst(params.id)}
+              variant="contained"
+              color="error"
+              size="small"
+            >
+              Delete
+            </Button>
+          </Box>
+        ),
+
+    }*/
+    
+    ];
   
   if (loading) {
     return (
@@ -677,18 +680,20 @@ const viewDetails = (id) => {
         <TabPanel value="xray">
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h4">Xray Tests</Typography>
-            <Button
-              variant="contained"
-              onClick={handleOpenXrayForm}
-              style={{
-                backgroundColor: colors.greenAccent[600],
-                color: colors.grey[100],
-                height: '50px',
-                marginLeft: theme.spacing(2),
-              }}
-            >
-              Add New Xray
-            </Button>
+            {canEditOrDelete(userRole) && (
+              <Button
+                variant="contained"
+                onClick={handleOpenXrayForm}
+                style={{
+                  backgroundColor: colors.greenAccent[600],
+                  color: colors.grey[100],
+                  height: '50px',
+                  marginLeft: theme.spacing(2),
+                }}s
+              >
+                Add New Xray
+              </Button>
+            )}
           </Box>
           {/* Modal for adding new Xray */}
           <Modal
@@ -718,6 +723,7 @@ const viewDetails = (id) => {
        <TabPanel value="mtbrif">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h4">MTBRIF Tests</Typography>
+          {canEditOrDelete(userRole) && (
           <Button 
             variant="contained" 
             onClick={handleOpenMTBRIFForm}
@@ -730,6 +736,7 @@ const viewDetails = (id) => {
           >
             Add New MTBRIF
           </Button>
+          )}
         </Box>
         {/* Modal for adding new MTBRIF */}
         <Modal
@@ -759,6 +766,7 @@ const viewDetails = (id) => {
     <TabPanel value="tst">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h4">TST Tests</Typography>
+          {canEditOrDelete(userRole) && (
           <Button 
             variant="contained" 
             onClick={handleOpenTSTForm}
@@ -771,6 +779,7 @@ const viewDetails = (id) => {
           >
             Add New TST
           </Button>
+          )}
         </Box>
         {/* Modal for adding new TST */}
         <Modal
@@ -799,6 +808,7 @@ const viewDetails = (id) => {
        <TabPanel value="igra">
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h4">IGRA Tests</Typography>
+            {canEditOrDelete(userRole) && (
             <Button
               variant="contained"
               onClick={handleOpenIGRAForm}
@@ -811,6 +821,7 @@ const viewDetails = (id) => {
             >
               Add New IGRA
             </Button>
+            )}
           </Box>
           {/* Modal for adding new IGRA */}
           <Modal
@@ -839,6 +850,7 @@ const viewDetails = (id) => {
        <TabPanel value="dst">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h4">DST Tests</Typography>
+          {canEditOrDelete(userRole) && (
           <Button
             variant="contained"
             onClick={handleOpenDSTForm}
@@ -851,6 +863,7 @@ const viewDetails = (id) => {
           >
             Add New DST
           </Button>
+          )}
         </Box>
         {/* Modal for adding new DST */}
         <Modal
@@ -900,10 +913,9 @@ const viewDetails = (id) => {
           >
             <DataGrid
             rows={dstTests}
-            columns={dstColumns}
+            columns={dstcolumns}
             pageSize={5}
             rowsPerPageOptions={[5, 10, 20]}
-            onRowClick={(params) => handleDeleteDst(params.id)}
             />
           </Box>
 
