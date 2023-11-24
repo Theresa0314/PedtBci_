@@ -33,7 +33,6 @@ import { mockDataContacts } from '../data/mockData';
 import { Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 
-
 const Contacts = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);

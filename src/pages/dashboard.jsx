@@ -1,20 +1,110 @@
-import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
+import { Box, Button, Typography, useTheme } from "@mui/material";
 import { tokens } from "../theme";
-import { mockTransactions } from "../data/mockData";
+import { Chart } from "chart.js/auto"
+import { Bar, Doughnut } from "react-chartjs-2";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import EmailIcon from "@mui/icons-material/Email";
-import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import TrafficIcon from "@mui/icons-material/Traffic";
 import Header from "../components/Header";
-import LineChart from "../components/LineChart";
-import BarChart from "../components/BarChart";
 import StatBox from "../components/StatBox";
-import ProgressCircle from "../components/ProgressCircle";
+import { db } from '../firebase.config';
+import { collection, getDocs, getCountFromServer, query, where } from 'firebase/firestore';
+import { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const pdfRef = useRef();
+
+  const [patientCount, setPatientCount]= useState(null);
+  const [sTreatmentCount, setsTreatmentCount]= useState(null); //start Treatment
+  const [oTreatmentCount, setoTreatmentCount]= useState(null); //ongoing Treatment
+  const [eTreatmentCount, seteTreatmentCount]= useState(null); //end Treatment
+  const [treatment, setTreatment]= useState([]);
+  const [inventory, setInventory]= useState([]);
+  const [patients, setPatients]= useState([]);
+
+  const [mtbrif, setMTBRIF]= useState([]);
+  const [xray, setXray]= useState([]);
+  const [tst, setTST]= useState([]);
+  const [igra, setIGRA]= useState([]);
+  const [dst, setDST]= useState([]);
+
+  useEffect(() => {
+    // Load data from Firebase when the component mounts
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+// ROW 1
+    //# of patients
+    const patientRef = await getCountFromServer(query(collection(db, "treatmentPlan")));
+    const patientCounter = patientRef.data().count;
+    setPatientCount(patientCounter);
+    //# of started treatment
+    const sTreatmentRef = await getDocs(query(collection(db, "treatmentPlan"), where("status", "==", "Start")));
+    const sTreatmentCounter = sTreatmentRef.size
+    setsTreatmentCount(sTreatmentCounter);
+    //# of ongoing treatment
+    const oTreatmentRef = await getDocs(query(collection(db, "treatmentPlan"), where("status", "==", "Ongoing")));
+    const oTreatmentCounter = oTreatmentRef.size
+    setoTreatmentCount(oTreatmentCounter);
+    //# of end treatment
+    const eTreatmentRef = await getDocs(query(collection(db, "treatmentPlan"), where("status", "==", "End")));
+    const eTreatmentCounter = eTreatmentRef.size
+    seteTreatmentCount(eTreatmentCounter);
+// ROW 2
+    //treatment progress
+    const treatmentRef = await getDocs(collection(db, "treatmentPlan"));
+    let treatmentData = treatmentRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setPatients(treatmentData);
+    //inventory
+    const inventoryRef = await getDocs(collection(db, "inventory"));
+    let inventoryData = inventoryRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setInventory(inventoryData);
+    //referred patients
+    const patientsRef = await getDocs(collection(db, "referralform"));
+    let patientsData = patientsRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setPatients(patientsData);
+    //MTB/RIF tests
+    const mtbrifRef = await getDocs(collection(db, "mtbrif"));
+    let mtbrifData = mtbrifRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setMTBRIF(mtbrifData);
+// ROW 3
+    //XRay tests
+    const xrayRef = await getDocs(collection(db, "xray"));
+    let xrayData = xrayRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setXray(xrayData);
+    //TST tests
+    const tstRef = await getDocs(collection(db, "tst"));
+    let tstData = tstRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setTST(tstData);
+    //IGRA tests
+    const igraRef = await getDocs(collection(db, "igra"));
+    let igraData = igraRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setIGRA(igraData);
+    //DST tests
+    const dstRef = await getDocs(collection(db, "dst"));
+    let dstData = dstRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    setDST(dstData);
+  }
+  
+  const downloadPDF = () => {
+    const input = pdfRef.current;
+    html2canvas(input).then((canvas) =>{
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4', true);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 30;
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      pdf.save('invoice.pdf');
+    });
+  }
 
   return (
     <Box m="20px">
@@ -24,6 +114,7 @@ const Dashboard = () => {
 
         <Box>
           <Button
+            onClick={downloadPDF}
             sx={{
               backgroundColor: colors.blueAccent[700],
               color: colors.grey[100],
@@ -40,6 +131,7 @@ const Dashboard = () => {
 
       {/* GRID & CHARTS */}
       <Box
+        ref={pdfRef}
         display="grid"
         gridTemplateColumns="repeat(12, 1fr)"
         gridAutoRows="140px"
@@ -54,15 +146,8 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="12,361"
-            subtitle="Emails Sent"
-            progress="0.75"
-            increase="+14%"
-            icon={
-              <EmailIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
+            title= {patientCount}
+            subtitle="Number of Patients"
           />
         </Box>
         <Box
@@ -73,15 +158,8 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="431,225"
-            subtitle="Sales Obtained"
-            progress="0.50"
-            increase="+21%"
-            icon={
-              <PointOfSaleIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
+            title={sTreatmentCount}
+            subtitle="Started Treatment"
           />
         </Box>
         <Box
@@ -92,15 +170,8 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="32,441"
-            subtitle="New Clients"
-            progress="0.30"
-            increase="+5%"
-            icon={
-              <PersonAddIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
+            title={oTreatmentCount}
+            subtitle="Ongoing Treatment"
           />
         </Box>
         <Box
@@ -111,21 +182,52 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="1,325,134"
-            subtitle="Traffic Received"
-            progress="0.80"
-            increase="+43%"
-            icon={
-              <TrafficIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
+            title={eTreatmentCount}
+            subtitle="Ended Treatment"
           />
         </Box>
 
         {/* ROW 2 */}
         <Box
-          gridColumn="span 8"
+          gridColumn="span 3"
+          gridRow="span 2"
+          backgroundColor={colors.primary[400]}
+        >
+          <Box
+            mt="25px"
+            display="flex "
+          >
+          <Typography
+            variant="h3"
+            fontWeight="600"
+            sx={{ padding: "0px 0px 0px 30px" }}
+            marginBottom="20px"
+          >
+          Treatment Progress of Patients
+          </Typography>
+          <Box height="250px" m="-20px 0 0 0">
+          <Doughnut
+              data={{
+                labels: ['Start', 'Ongoing', 'End'],
+                datasets: [
+                  {
+                    label: "Count",
+                    data: [sTreatmentCount,oTreatmentCount,eTreatmentCount],
+                    backgroundColor: [
+                      'rgb(255, 99, 132)',
+                      'rgb(54, 162, 235)',
+                      'rgb(255, 205, 86)'
+                    ],
+                    hoverOffset: 4
+                  }]
+              }}
+           />
+          </Box>
+          </Box>
+        </Box>
+
+        <Box
+          gridColumn="span 3"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
         >
@@ -138,34 +240,89 @@ const Dashboard = () => {
           >
             <Box>
               <Typography
-                variant="h5"
-                fontWeight="600"
-                color={colors.grey[100]}
+            variant="h3"
+            fontWeight="600"
+            marginBottom="25px"
               >
-                Revenue Generated
+                Clinical Inventory
               </Typography>
-              <Typography
-                variant="h3"
-                fontWeight="bold"
-                color={colors.greenAccent[500]}
-              >
-                $59,342.32
-              </Typography>
-            </Box>
-            <Box>
-              <IconButton>
-                <DownloadOutlinedIcon
-                  sx={{ fontSize: "26px", color: colors.greenAccent[500] }}
-                />
-              </IconButton>
             </Box>
           </Box>
-          <Box height="250px" m="-20px 0 0 0">
-            <LineChart isDashboard={true} />
+          <Box height="250px" m="-20px 0 0 0" marginLeft="30px">
+           <Bar
+              data={{
+                labels: inventory.map((doc) => doc.name),
+                datasets: [
+                  {
+                    label: "Quantity",
+                    data: inventory.map((doc) => doc.quantity),
+                    backgroundColor: ['rgb(208, 162, 247)', 'aqua', 'pink', 'lightgreen', 'lightblue', 'gold'],
+                    borderColor: ['white'],
+                    borderWidth: 2,
+                    
+                  }]
+              }}
+           />
           </Box>
         </Box>
+
         <Box
-          gridColumn="span 4"
+          gridColumn="span 3"
+          gridRow="span 2"
+          backgroundColor={colors.primary[400]}
+          overflow="auto"
+        >
+        <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            borderBottom={`4px solid ${colors.primary[500]}`}
+            colors={colors.grey[100]}
+            p="15px"
+          >
+            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
+              Recently Referred Patients
+            </Typography>
+            </Box>
+            {patients.map((doc, i) => (
+              <Box
+              key={`${doc.id}-${i}`}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              borderBottom={`4px solid ${colors.primary[500]}`}
+              p="15px"
+              >
+              <Box>
+                <Typography
+                  color={colors.greenAccent[500]}
+                  variant="h5"
+                  fontWeight="600"
+                >
+                  {doc.caseNumber}
+                </Typography>
+                <Typography color={colors.grey[100]}>
+                  {doc.dotsStaffName}
+                </Typography>
+              </Box>
+              {/* date referred */}
+              <Box 
+              color={colors.grey[100]}>
+                {doc.receivingFacilityDateReceived}
+                </Box>
+              <Box
+                backgroundColor={colors.greenAccent[500]}
+                p="5px 10px"
+                borderRadius="4px"
+              >
+                {doc.caseStatus}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+        {/* MTBRIF */}
+        <Box
+          gridColumn="span 3"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
           overflow="auto"
@@ -179,12 +336,12 @@ const Dashboard = () => {
             p="15px"
           >
             <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recent Transactions
+              Recently Added MTB/RIF Tests
             </Typography>
           </Box>
-          {mockTransactions.map((transaction, i) => (
+          {mtbrif.map((doc, i) => (
             <Box
-              key={`${transaction.txId}-${i}`}
+              key={`${doc.id}-${i}`}
               display="flex"
               justifyContent="space-between"
               alignItems="center"
@@ -197,67 +354,246 @@ const Dashboard = () => {
                   variant="h5"
                   fontWeight="600"
                 >
-                  {transaction.txId}
+                  {doc.caseNumber}
                 </Typography>
                 <Typography color={colors.grey[100]}>
-                  {transaction.user}
+                  {doc.referenceNumber}
                 </Typography>
               </Box>
-              <Box color={colors.grey[100]}>{transaction.date}</Box>
+              <Box 
+              color={colors.grey[100]}>
+                {/* {doc.testDate} */}
+                </Box>
               <Box
                 backgroundColor={colors.greenAccent[500]}
                 p="5px 10px"
                 borderRadius="4px"
               >
-                ${transaction.cost}
+                {doc.testResult}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+        
+        {/* ROW 3 */}
+        <Box
+          gridColumn="span 3"
+          gridRow="span 2"
+          backgroundColor={colors.primary[400]}
+          overflow="auto"
+        >
+          {/* Xray */}
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            borderBottom={`4px solid ${colors.primary[500]}`}
+            colors={colors.grey[100]}
+            p="15px"
+          >
+            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
+              Recently Added Xray Tests
+            </Typography>
+            </Box>
+            {xray.map((doc, i) => (
+              <Box
+              key={`${doc.id}-${i}`}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              borderBottom={`4px solid ${colors.primary[500]}`}
+              p="15px"
+              >
+                <Box>
+                <Typography
+                  color={colors.greenAccent[500]}
+                  variant="h5"
+                  fontWeight="600"
+                >
+                  {doc.caseNumber}
+                </Typography>
+                <Typography color={colors.grey[100]}>
+                  {doc.referenceNumber}
+                </Typography>
+              </Box>
+              <Box 
+              color={colors.grey[100]}>
+                {/* {doc.testDate} */}
+                </Box>
+              <Box
+                backgroundColor={colors.greenAccent[500]}
+                p="5px 10px"
+                borderRadius="4px"
+              >
+                {doc.testResult}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+        {/* TST */}
+        <Box
+          gridColumn="span 3"
+          gridRow="span 2"
+          backgroundColor={colors.primary[400]}
+          overflow="auto"
+        >
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            borderBottom={`4px solid ${colors.primary[500]}`}
+            colors={colors.grey[100]}
+            p="15px"
+          >
+            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
+              Recently Added TST Tests
+            </Typography>
+            </Box>
+            {tst.map((doc, i) => (
+              <Box
+              key={`${doc.id}-${i}`}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              borderBottom={`4px solid ${colors.primary[500]}`}
+              p="15px"
+              >
+                <Box>
+                <Typography
+                  color={colors.greenAccent[500]}
+                  variant="h5"
+                  fontWeight="600"
+                >
+                  {doc.caseNumber}
+                </Typography>
+                <Typography color={colors.grey[100]}>
+                  {doc.referenceNumber}
+                </Typography>
+              </Box>
+              <Box 
+              color={colors.grey[100]}>
+                {/* {doc.testDate} */}
+                </Box>
+              <Box
+                backgroundColor={colors.greenAccent[500]}
+                p="5px 10px"
+                borderRadius="4px"
+              >
+                {doc.testResult}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+        
+        <Box
+          gridColumn="span 3"
+          gridRow="span 2"
+          backgroundColor={colors.primary[400]}
+          overflow="auto"
+        >
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            borderBottom={`4px solid ${colors.primary[500]}`}
+            colors={colors.grey[100]}
+            p="15px"
+          >
+            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
+              Recently Added IGRA Tests
+            </Typography>
+            </Box>
+            {igra.map((doc, i) => (
+              <Box
+              key={`${doc.id}-${i}`}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              borderBottom={`4px solid ${colors.primary[500]}`}
+              p="15px"
+              >
+                <Box>
+                <Typography
+                  color={colors.greenAccent[500]}
+                  variant="h5"
+                  fontWeight="600"
+                >
+                  {doc.caseNumber}
+                </Typography>
+                <Typography color={colors.grey[100]}>
+                  {doc.referenceNumber}
+                </Typography>
+              </Box>
+              <Box 
+              color={colors.grey[100]}>
+                {/* {doc.testDate} */}
+                </Box>
+              <Box
+                backgroundColor={colors.greenAccent[500]}
+                p="5px 10px"
+                borderRadius="4px"
+              >
+                {doc.testResult}
               </Box>
             </Box>
           ))}
         </Box>
 
-        {/* ROW 3 */}
         <Box
-          gridColumn="span 6"
+          gridColumn="span 3"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
-          p="30px"
+          overflow="auto"
         >
-          <Typography variant="h5" fontWeight="600">
-            Campaign
-          </Typography>
+           
           <Box
             display="flex"
-            flexDirection="column"
+            justifyContent="space-between"
             alignItems="center"
-            mt="25px"
+            borderBottom={`4px solid ${colors.primary[500]}`}
+            colors={colors.grey[100]}
+            p="15px"
           >
-            <ProgressCircle size="125" />
-            <Typography
-              variant="h5"
-              color={colors.greenAccent[500]}
-              sx={{ mt: "15px" }}
-            >
-              $48,352 revenue generated
+          <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
+              Recently Added DST Tests
             </Typography>
-            <Typography>Includes extra misc expenditures and costs</Typography>
-          </Box>
+            </Box>
+            {dst.map((doc, i) => (
+              <Box
+              key={`${doc.id}-${i}`}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              borderBottom={`4px solid ${colors.primary[500]}`}
+              p="15px"
+              >
+                <Box>
+                <Typography
+                  color={colors.greenAccent[500]}
+                  variant="h5"
+                  fontWeight="600"
+                >
+                  {doc.caseNumber}
+                </Typography>
+                <Typography color={colors.grey[100]}>
+                  {doc.referenceNumber}
+                </Typography>
+              </Box>
+              <Box 
+              color={colors.grey[100]}>
+                {doc.testDate}
+                </Box>
+              <Box
+                backgroundColor={colors.greenAccent[500]}
+                p="5px 10px"
+                borderRadius="4px"
+              >
+                {doc.testResult}
+              </Box>
+            </Box>
+            ))}
         </Box>
-        <Box
-          gridColumn="span 6"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-        >
-          <Typography
-            variant="h5"
-            fontWeight="600"
-            sx={{ padding: "30px 30px 0 30px" }}
-          >
-            Sales Quantity
-          </Typography>
-          <Box height="250px" mt="-20px">
-            <BarChart isDashboard={true} />
-          </Box>
-        </Box>
+
       </Box>
     </Box>
   );

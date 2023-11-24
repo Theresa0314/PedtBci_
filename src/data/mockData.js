@@ -75,6 +75,33 @@ export const mockDataTeam = [
   },
 ];
 
+export const mockDataXrayTests = [
+  {
+    id: 1,
+    location: "Manila Medical Center",
+    testDate: new Date(2023, 2, 25),
+    referenceNumber: "XR-4213",
+    result: "Cleared",
+    validity: "Valid",
+  },
+  {
+    id: 2,
+    location: "Metropolitan Doctors",
+    testDate: new Date(2023, 5, 17),
+    referenceNumber: "XR-5436",
+    result: "Not Cleared",
+    validity: "Invalid",
+  },
+  {
+    id: 3,
+    location: "St. Lukes Medical Center",
+    testDate: new Date(2023, 6, 12),
+    referenceNumber: "XR-3451",
+    result: "Cleared",
+    validity: "Invalid",
+  },
+];
+
 export const mockDataContacts = [
   {
     id: 1,
@@ -1281,3 +1308,4 @@ export const mockGeographyData = [
     value: 171135,
   },
 ];
+

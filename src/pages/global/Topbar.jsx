@@ -8,6 +8,8 @@ import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 //import SearchIcon from "@mui/icons-material/Search";
+import Header from "../../components/Header";
+
 
 const Topbar = () => {
   const theme = useTheme();
@@ -16,6 +18,7 @@ const Topbar = () => {
 
   return (
     <Box display="flex" justifyContent="space-between" p={2}>
+      <Header title="PEDTB-CI"/>
       {/* SEARCH BAR */}
       <Box
         display="flex"

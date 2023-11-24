@@ -1,64 +1,96 @@
 import React, { useState } from 'react'
-import { auth } from '../../firebase.config';
+import { auth, db } from '../../firebase.config';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { Link, useNavigate } from 'react-router-dom';
 
-//import * as yup from "yup";
-import { Box, Button, TextField, Grid } from "@mui/material";
-import { Formik } from "formik";
-import useMediaQuery from "@mui/material/useMediaQuery";
+import * as yup from "yup";
+import {Button, TextField, Grid, Container, useTheme } from "@mui/material";
+import { Formik, ErrorMessage  } from "formik";
+import { tokens } from "../../theme";
 import Header from "../../components/Header";
 
 const Signup = () => {
-  const isNonMobile = useMediaQuery("(min-width:600px)");
-  
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [cpassword, setcPassword] = useState('');
+  const [fullName, setFullName] = useState('');
 
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log(userCredential);
-      const user = userCredential.user;
-      localStorage.setItem('token', user.accessToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      navigate("/");
-      alert('User created successfully!');
-    } catch (error) {
-      console.error(error);
-    }
+
+// Function to add user information to Firestore
+const addUserToFirestore = async (userId, email, fullName, role = 'No Role') => {
+  try {
+    const currentDate = new Date(); 
+    await setDoc(doc(db, 'users', userId), {
+      email,
+      fullName,
+      role,
+      dateAdded: currentDate, 
+    });
+  } catch (error) {
+    console.error('Error adding user to Firestore: ', error);
+    throw error;
   }
+};
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (password !== cpassword) {
+    alert('Passwords do not match');
+    return;
+  }
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    await addUserToFirestore(user.uid, email, fullName); 
+    localStorage.setItem('token', user.accessToken);
+    localStorage.setItem('user', JSON.stringify(user));
+    navigate("/");
+    alert('User created successfully!');
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
+};
+
 
   return (
-  <Grid
-    container
-    spacing={0}
-    direction="column"
-    alignItems="center"
-    justifyContent="center"
-    sx={{ minHeight: '100vh' }}
-  >
-      <Box m="20px">
-      <Header title="SIGN UP" subtitle="Register User" />
+<Container 
+  component="main" 
+  maxWidth="sm" sx={{
+  backgroundColor: colors.blueAccent[800], 
+  padding: theme.spacing(6), 
+  borderRadius: theme.shape.borderRadius
+}}><Header title="SIGN UP" subtitle="Register User" />
 
       <Formik
         onSubmit={handleSubmit}
-        // validationSchema={signupSchema}
+        validationSchema={validationSchema}
         className='signup-form'
       >
           <form onSubmit={handleSubmit}>
-            <Box
-              display="grid"
-              gap="30px"
-              gridTemplateColumns="repeat(4, minmax(0, 1fr))"
-              sx={{
-                "& > div": { gridColumn: isNonMobile ? undefined : "span 4" },
-              }}
-            >
+          <Grid container spacing={5} direction="column" >
+            <Grid item xs={6}>
+              {/* name */}
+              <TextField
+              required
+              fullWidth
+              id="fullName"
+              label="Full Name"
+              name="fullName"
+              variant="filled"
+              margin="dense"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              />
+            </Grid>
 
+            <Grid item xs={6}>
             {/* email */}
               <TextField
                 fullWidth
@@ -68,9 +100,12 @@ const Signup = () => {
                 name="email"
                 onChange={(e) => setEmail(e.target.value)}
                 value={email}
+                helperText={<ErrorMessage name="password" />}
                 sx={{ gridColumn: "span 4" }}
               />
+            </Grid>
 
+              <Grid item xs={6}>
               {/* password */}
               <TextField
                 fullWidth
@@ -78,51 +113,59 @@ const Signup = () => {
                 type="password"
                 label="Password"
                 name="password"
+                helperText={<ErrorMessage name="password" />}
                 onChange={(e) => setPassword(e.target.value)}
                 value={password}
                 sx={{ gridColumn: "span 4" }}/>
+              </Grid>
 
-              {/* <TextField
+              <Grid item xs={6}>
+              <TextField
                 fullWidth
                 variant="filled"
                 type="password"
                 label="Confirm Password"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                
+                onChange={(e) => setcPassword(e.target.value)}
+                id="cpassword"
                 name="cpassword"
-                error={!!touched.cpassword && !!errors.cpassword}
-                helperText={touched.cpassword && errors.cpassword}
-                sx={{ gridColumn: "span 4" }}/> */}
-            </Box>
+                helperText={<ErrorMessage name="cpassword" />}
+                sx={{ gridColumn: "span 4" }}/>
+              </Grid>
+            </Grid>
+
               {/* submit button */}
-            <Box display="flex" justifyContent="end" mt="20px">
+              <Grid container justifyContent="right" sx={{ mt: 4 }}>
               <Button type="submit" color="secondary" variant="contained">
                 SIGN UP
               </Button>
-            </Box>
+            </Grid>
           </form>
       </Formik>
-      <p className="forget">Already have an account? <Link to={"/login"}>{"Login"}</Link></p>
-    </Box>
-    </Grid>
-
+      <div style={{ width: '100%', marginTop: '5vh' }}>
+      <p className="forget" style={{ width: '100%', display: 'inline' }}>Already have an account?</p> 
+      <Link to={"/login"}>
+        <Button  color="secondary" style={{ display: 'inline' }}>
+            Login
+          </Button>
+      </Link>
+      </div>
+      </Container>
   );
 };
 
-// const signupSchema = yup.object().shape({
-//   email: yup.string().email("invalid email").required("required"),
-//   password: yup
-//   .string()
-//   .required("required")
-//   .matches(
-//     /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/,
-//     "Must Contain 8 Characters, One Uppercase, One Lowercase, One Number and One Special Case Character"
-//   ),
-//   cpassword: yup
-//   .string()
-//   .required("required")
-//   .oneOf([yup.ref("password"), null], "Passwords must match")
-// });
+const validationSchema = yup.object().shape({
+  email: yup.string().email("Please enter a valid email").required("required"),
+  password: yup
+  .string()
+  .required("required")
+  .matches(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/,
+    "Must Contain 8 Characters, One Uppercase, One Lowercase, One Number and One Special Case Character"
+  ),
+  cpassword: yup
+  .string()
+  .required("required")
+  .oneOf([yup.ref("password"), null], "Passwords must match")
+});
 
 export default Signup;
