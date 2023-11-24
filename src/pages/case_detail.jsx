@@ -343,13 +343,14 @@ const Case_Detail = () => {
       field: "referenceNumber",
       headerName: "Reference #",
       headerAlign: "center",
-      align: "left",
+      align: "center",
       width: 120,
     },
     {
       field: "testLocation",
       headerName: "Test Location",
       headerAlign: "center",
+      align: "center",
       flex: 1,
     },
     {
@@ -357,7 +358,7 @@ const Case_Detail = () => {
       headerName: "Date Tested",
       type: "date",
       headerAlign: "center",
-      align: "left",
+      align: "center",
       // Add a custom formatter if necessary to format the date
       valueFormatter: (params) => {
         const valueFormatted = new Date(params.value).toLocaleDateString(
@@ -371,12 +372,14 @@ const Case_Detail = () => {
       field: "testResult",
       headerName: "Result",
       headerAlign: "center",
+      align: "center",
       flex: 1,
     },
     {
       field: "validity",
       headerName: "Validity",
       headerAlign: "center",
+      align: "center",
       flex: 1,
     },
     {
@@ -384,6 +387,7 @@ const Case_Detail = () => {
       headerName: "Action",
       sortable: false,
       headerAlign: "center",
+      align: "center",
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
           <Button
@@ -545,7 +549,7 @@ const Case_Detail = () => {
         >
           <Tab label="Laboratory Test" />
           <Tab label="Diagnosis" />
-          <Tab label="Close Contracts" />
+          <Tab label="Close Contacts" />
           <Tab label="Assessment" />
           <Tab label="Treatments" />
           <Tab label="Similar Cases" />
@@ -1523,6 +1527,898 @@ const Case_Detail = () => {
               </Box>
             </Box>
           )
+        )}
+        {/* Close Contacts Tab */}
+        {currentTab === 2 && (<Box
+              component={Paper}
+              gridColumn="span 8"
+              gridRow="span 2"
+              backgroundColor={colors.primary[400]}
+              borderRadius="4px"
+            >
+              <Box mt="25px" p="30px">
+                <Box>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Case Reference Number:
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Patient Name:
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Case Status:
+                          </Typography>
+                        </Box>
+                      </div>
+                      <div style={{ marginLeft: "10px" }}>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {caseData.caseNumber}
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {caseData.fullName}
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {caseData.caseStatus}
+                          </Typography>
+                        </Box>
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Start Date:
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            End Date:
+                          </Typography>
+                        </Box>
+                      </div>
+                      <div style={{ marginLeft: "10px" }}>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {startDate}
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {endDate}
+                          </Typography>
+                        </Box>
+                      </div>
+                    </div>
+                  </div>
+                </Box>
+                <Divider
+                  variant="fullWidth"
+                  style={{
+                    backgroundColor: colors.greenAccent[600],
+                    color: colors.grey[100],
+                    height: "2px",
+                    marginTop: theme.spacing(3),
+                    marginBottom: theme.spacing(2),
+                  }}
+                />
+              </Box>
+            </Box>
+        )}
+        {/* Assessment Tab */}
+        {currentTab === 3 && (<Box
+              component={Paper}
+              gridColumn="span 8"
+              gridRow="span 2"
+              backgroundColor={colors.primary[400]}
+              borderRadius="4px"
+            >
+              <Box mt="25px" p="30px">
+                <Box>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Case Reference Number:
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Patient Name:
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Case Status:
+                          </Typography>
+                        </Box>
+                      </div>
+                      <div style={{ marginLeft: "10px" }}>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {caseData.caseNumber}
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {caseData.fullName}
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {caseData.caseStatus}
+                          </Typography>
+                        </Box>
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Start Date:
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            End Date:
+                          </Typography>
+                        </Box>
+                      </div>
+                      <div style={{ marginLeft: "10px" }}>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {startDate}
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {endDate}
+                          </Typography>
+                        </Box>
+                      </div>
+                    </div>
+                  </div>
+                </Box>
+                <Divider
+                  variant="fullWidth"
+                  style={{
+                    backgroundColor: colors.greenAccent[600],
+                    color: colors.grey[100],
+                    height: "2px",
+                    marginTop: theme.spacing(3),
+                    marginBottom: theme.spacing(2),
+                  }}
+                />
+              </Box>
+            </Box>
+        )}
+        {/* Treatments Tab */}
+        {currentTab === 4 && (<Box
+              component={Paper}
+              gridColumn="span 8"
+              gridRow="span 2"
+              backgroundColor={colors.primary[400]}
+              borderRadius="4px"
+            >
+              <Box mt="25px" p="30px">
+                <Box>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Case Reference Number:
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Patient Name:
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Case Status:
+                          </Typography>
+                        </Box>
+                      </div>
+                      <div style={{ marginLeft: "10px" }}>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {caseData.caseNumber}
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {caseData.fullName}
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {caseData.caseStatus}
+                          </Typography>
+                        </Box>
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Start Date:
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            End Date:
+                          </Typography>
+                        </Box>
+                      </div>
+                      <div style={{ marginLeft: "10px" }}>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {startDate}
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {endDate}
+                          </Typography>
+                        </Box>
+                      </div>
+                    </div>
+                  </div>
+                </Box>
+                <Divider
+                  variant="fullWidth"
+                  style={{
+                    backgroundColor: colors.greenAccent[600],
+                    color: colors.grey[100],
+                    height: "2px",
+                    marginTop: theme.spacing(3),
+                    marginBottom: theme.spacing(2),
+                  }}
+                />
+              </Box>
+            </Box>
+        )}
+        {/* Similar Cases Tab */}
+        {currentTab === 5 && (<Box
+              component={Paper}
+              gridColumn="span 8"
+              gridRow="span 2"
+              backgroundColor={colors.primary[400]}
+              borderRadius="4px"
+            >
+              <Box mt="25px" p="30px">
+                <Box>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Case Reference Number:
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Patient Name:
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Case Status:
+                          </Typography>
+                        </Box>
+                      </div>
+                      <div style={{ marginLeft: "10px" }}>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {caseData.caseNumber}
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {caseData.fullName}
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {caseData.caseStatus}
+                          </Typography>
+                        </Box>
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            Start Date:
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="bold"
+                            color={colors.grey[100]}
+                          >
+                            End Date:
+                          </Typography>
+                        </Box>
+                      </div>
+                      <div style={{ marginLeft: "10px" }}>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {startDate}
+                          </Typography>
+                        </Box>
+                        <Box
+                          p="10px"
+                          mb="5px"
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          backgroundColor={colors.primary[600]}
+                          borderRadius="4px"
+                        >
+                          <Typography
+                            variant="h5"
+                            fontWeight="600"
+                            color={colors.greenAccent[500]}
+                          >
+                            {endDate}
+                          </Typography>
+                        </Box>
+                      </div>
+                    </div>
+                  </div>
+                </Box>
+                <Divider
+                  variant="fullWidth"
+                  style={{
+                    backgroundColor: colors.greenAccent[600],
+                    color: colors.grey[100],
+                    height: "2px",
+                    marginTop: theme.spacing(3),
+                    marginBottom: theme.spacing(2),
+                  }}
+                />
+              </Box>
+            </Box>
         )}
       </div>
     </Box>
