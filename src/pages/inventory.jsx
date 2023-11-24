@@ -5,7 +5,7 @@ import { useTheme } from '@mui/material';
 import { GridToolbar, DataGrid } from '@mui/x-data-grid';
 import { tokens } from '../theme';
 import Header from '../components/Header';
-import { db } from '../firebase.config';
+import { db,auth } from '../firebase.config';
 import {
   collection,
   addDoc,
@@ -13,11 +13,32 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  getDoc,
 } from 'firebase/firestore';
 
 const Inventory = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+
+  const [userRole, setUserRole] = useState('');
+
+  useEffect(() => {
+    loadTableData();
+    fetchUserRole(); 
+  }, []);
+
+  // Fetch user role
+  const fetchUserRole = async () => {
+    const userId = auth.currentUser.uid;
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+      setUserRole(userSnap.data().role);
+    } else {
+      console.error('User role not found');
+    }
+  };
+
   
   const [isAddFormOpen, setAddFormOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -162,6 +183,11 @@ const Inventory = () => {
     }
   };
 
+    // Utility function to check if the user can add, edit or delete
+    const canModify = (role) => {
+      return ['Lab Aide', 'Medical Technologist', 'Admin'].includes(role);
+    };
+
   const columns = [
     {   
       field: 'id', 
@@ -204,24 +230,37 @@ const Inventory = () => {
       headerName: 'Action',
       flex: 1,
       sortable: false,
-      renderCell: (params) => (
-        <div>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => handleEditClick(params.row.id)}
-          >
-            Edit
-          </Button>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => handleDeleteClick(params.row.id)}
-          >
-            Delete
-          </Button>
-        </div>
-      ),
+      renderCell: (params) => {
+        // Conditionally render action buttons based on user role
+        return canModify(userRole) ? (
+          <div>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => handleEditClick(params.row.id)}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => handleDeleteClick(params.row.id)}
+            >
+              Delete
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <Button
+              variant="contained"
+              onClick={() => handleEditClick(params.row.id)}
+
+            >
+              View
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -231,7 +270,7 @@ const Inventory = () => {
       <Container component="div" maxWidth="lg">
       <Header title="Clinical Inventory" subtitle="Managing TB drug inventory data" />
 
-<Box m="40px 0 0 0" height="75vh">
+      <Box m="40px 0 0 0" height="75vh">
           <Box
             sx={{
               '& .MuiDataGrid-root': {
@@ -262,14 +301,17 @@ const Inventory = () => {
               },
             }}
           >
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={handleAddClick}
-              style={{ marginRight: '8px' }}
-            >
-              Add Data
-            </Button>
+          {/* Conditionally render the "Add Data" button based on user role */}
+          {canModify(userRole) && (
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleAddClick}
+            style={{ marginBottom: '8px' }}
+          >
+            Add Data
+          </Button>
+        )}
 
             <DataGrid rows={tableData} columns={columns} components={{ Toolbar: GridToolbar }} />
           </Box>
