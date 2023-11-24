@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, RadioGroup, FormControlLabel, FormHelperText, Radio, Container, Divider, Checkbox, useTheme, Input
 } from '@mui/material';
-import { tokens } from "../theme";
-import { db } from '../firebase.config';
+import { tokens } from "../../theme";
+import { db } from '../../firebase.config';
 import { collection, addDoc } from 'firebase/firestore';
 
 // Sample data for dropdowns

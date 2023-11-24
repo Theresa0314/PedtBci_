@@ -19,8 +19,8 @@ import {
   useTheme,
   Input,
 } from "@mui/material";
-import { tokens } from "../theme";
-import { db , storage} from "../firebase.config";
+import { tokens } from "../../theme";
+import { db , storage} from "../../firebase.config";
 import { collection, addDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 

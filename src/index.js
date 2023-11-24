@@ -42,8 +42,6 @@ import Patient_Info from "./pages/patientinfo/patientInfo";
 import { Bar, Pie, Line } from "react-chartjs-2";
 
 
-import Case_Detail from "./pages/case_detail";
-
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />}>
@@ -83,7 +81,7 @@ const router = createBrowserRouter(
       <Route path="/patient_info" element={<Patient_Info />} />
       <Route
         path="/patient_info/:caseNumber/case/:caseNumber" // Define route with dynamic parameters
-        element={<Case_Detail />}
+        element={<CaseDetail />}
       />
       <Route path="/contacts" element={<Contacts />} />
       <Route path="/symptoms" element={<Symptoms />} />

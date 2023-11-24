@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase.config';
 import { collection, query, where, getDocs, getDoc, deleteDoc, doc } from "firebase/firestore"; 
-import { Box, Typography, CircularProgress, Container, Paper, Tab, Grid, Tabs, 
+import { Box, Typography, CircularProgress,Paper, Tab, Grid, Tabs, 
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
        Modal,TextField, InputAdornment, useTheme } from '@mui/material';
+import { TabContext, TabList, TabPanel } from '@mui/lab'; 
 import { DataGrid } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
 import PageviewIcon from '@mui/icons-material/Pageview';
@@ -20,6 +21,7 @@ const CaseDetail = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [nestedTab, setNestedTab] = useState('xray');
   
  // State for treatment plan list
  const [treatmentPlans, setTreatmentPlans] = useState([]);
@@ -43,6 +45,11 @@ const [deleteId, setDeleteId] = useState(null);
 const [isAddTPDisabled, setIsAddTPDisabled] = useState(false);
 
 const navigate = useNavigate();
+
+// Add a handler for changing nested tabs
+const handleNestedTabChange = (event, newValue) => {
+  setNestedTab(newValue);
+};
 
 const handleSearchChange = (event) => {
   setSearchText(event.target.value);
@@ -297,9 +304,54 @@ const viewDetails = (id) => {
       </Tabs>
 
       {currentTab === 0 && (
-         <  Box m="20px">
-           {/* Your Laboratory Tes tab content here */}
-        </Box>
+   <Box m="20px">
+   <TabContext value={nestedTab}>
+     <Box sx={{ borderBottom: 1, borderColor: 'divider', justifyContent: 'center', display: 'flex' }}>
+       <TabList 
+         onChange={handleNestedTabChange} 
+         aria-label="lab test tabs" 
+         variant="scrollable" 
+         scrollButtons="auto"
+         allowScrollButtonsMobile
+         sx={{
+          '.MuiTabs-flexContainer': {
+            justifyContent: 'center', // This centers the tabs
+          },
+          '.MuiTab-root': {
+            color: colors.grey[500], // Color of unselected tabs
+            '&.Mui-selected': {
+              color: '#fff', // Color of the selected tab
+            },
+          },
+          '.MuiTabs-indicator': {
+            backgroundColor: colors.greenAccent[600], // Color of the indicator
+          },
+        }}
+       >
+         <Tab label="Xray Tests" value="xray" />
+         <Tab label="MTB/RIF Tests" value="mtbrif" />
+         <Tab label="TST Tests" value="tst" />
+         <Tab label="IGRA Tests" value="igra" />
+         <Tab label="DST Tests" value="dst" />
+       </TabList>
+     </Box>
+     <TabPanel value="xray">
+       {/* Xray tests content */}
+     </TabPanel>
+     <TabPanel value="mtbrif">
+       {/* MTB/RIF tests content */}
+     </TabPanel>
+     <TabPanel value="tst">
+       {/* TST tests content */}
+     </TabPanel>
+     <TabPanel value="igra">
+       {/* IGRA tests content */}
+     </TabPanel>
+     <TabPanel value="dst">
+       {/* DST tests content */}
+     </TabPanel>
+   </TabContext>
+ </Box>
       )}
 
       {currentTab === 1 && (
