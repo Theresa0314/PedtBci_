@@ -15,6 +15,12 @@ import SearchIcon from '@mui/icons-material/Search';
 import Header from '../../components/Header';
 import { tokens } from '../../theme';
 import TPForm from '../treatmentPlan/TPform';
+import XrayGenForm from '../laboratorytest/xraygenform';
+import MTBRIFGenForm from '../laboratorytest/mtbrifgenform';
+import TSTGenForm from '../laboratorytest/tstgenform';
+import IGRAGenForm from '../laboratorytest/igragenform';
+import DSTGenForm from '../laboratorytest/dstgenform';
+
 
 const CaseDetail = () => {
   const { caseId } = useParams(); 
@@ -30,8 +36,14 @@ const CaseDetail = () => {
 
  const [userRole, setUserRole] = useState('');
 
-  const handleOpenTPForm = () => setOpenTPForm(true); 
-  const handleCloseTPForm = () => setOpenTPForm(false); 
+   // Add a state to control the visibility of XrayGenForm
+   const [showXrayForm, setShowXrayForm] = useState(false);
+
+  const handleOpenTPForm = () => 
+  setOpenTPForm(true); 
+
+  const handleCloseTPForm = () => 
+  setOpenTPForm(false); 
 
 
   const theme = useTheme();
@@ -64,6 +76,94 @@ const handleUpdateTP = (newTP) => {
   setTreatmentPlans([...treatmentPlans, newTP]);
 };
 
+const [xrays, setXrays] = useState([]);
+
+// Function to update the list of x-rays
+const handleUpdateXrays = (newXray) => {
+  // Use the spread operator to include the new x-ray in the existing list
+  setXrays(currentXrays => [...currentXrays, newXray]);
+};
+
+  // Add a function to open the XrayGenForm
+  const handleOpenXrayForm = () => {
+    setShowXrayForm(true);
+  };
+
+  // Add a function to close the XrayGenForm
+  const handleCloseXrayForm = () => {
+    setShowXrayForm(false);
+  };
+
+
+// Add a state to control the visibility of MTBRIFGenForm
+const [showMTBRIFForm, setShowMTBRIFForm] = useState(false);
+const [mtbrifs, setMtbrifs] = useState([]);
+
+// Add a function to open the MTBRIFGenForm
+const handleOpenMTBRIFForm = () => {
+  setShowMTBRIFForm(true);
+};
+
+// Add a function to close the MTBRIFGenForm
+const handleCloseMTBRIFForm = () => {
+  setShowMTBRIFForm(false);
+};
+
+
+// Later in the component, define the handleUpdateMTBRIF function
+const handleUpdateMTBRIF = (newMTBRIF) => {
+  setMtbrifs(currentMTBRIF => [...currentMTBRIF, newMTBRIF]);
+};
+
+  // State to control visibility of TSTGenForm
+  const [showTSTForm, setShowTSTForm] = useState(false);
+  const [tsts, setTsts] = useState([]);
+
+  const handleOpenTSTForm = () => {
+    setShowTSTForm(true);
+  };
+
+  const handleCloseTSTForm = () => {
+    setShowTSTForm(false);
+  };
+
+  const handleUpdateTSTs = (newTST) => {
+    setTsts(currentTsts => [...currentTsts, newTST]);
+  };
+
+
+    // State to control visibility of IGRAGenForm
+    const [showIGRAForm, setShowIGRAForm] = useState(false);
+    const [igras, setIgras] = useState([]);
+
+    const handleOpenIGRAForm = () => {
+      setShowIGRAForm(true);
+    };
+
+    const handleCloseIGRAForm = () => {
+      setShowIGRAForm(false);
+    };
+
+    const handleUpdateIGRAs = (newIGRA) => {
+      setIgras(currentIgras => [...currentIgras, newIGRA]);
+    };
+
+    // State to control visibility of DSTGenForm
+    const [showDSTForm, setShowDSTForm] = useState(false);
+    const [dsts, setDsts] = useState([]);
+
+    const handleOpenDSTForm = () => {
+      setShowDSTForm(true);
+    };
+
+    const handleCloseDSTForm = () => {
+      setShowDSTForm(false);
+    };
+
+    const handleUpdateDSTs = (newDST) => {
+      setDsts(currentDsts => [...currentDsts, newDST]);
+    };
+
 
 const viewDetails = (id) => {
   navigate(`/treatmentPlan/${id}`);
@@ -91,6 +191,29 @@ const viewDetails = (id) => {
     }
   };
 
+  useEffect(() => {
+    const fetchStartDate = async () => {
+      if (!caseId) {
+        console.error('caseId is undefined.');
+        return; // Exit the function if caseId is not set
+      }
+  
+      try {
+        const docRef = doc(db, 'cases', caseId);
+        const docSnap = await getDoc(docRef);
+  
+        if (docSnap.exists()) {
+        } else {
+          console.log('No such case!');
+        }
+      } catch (error) {
+        console.error('Error fetching case start date:', error);
+      }
+    };
+  
+    fetchStartDate();
+  }, [caseId]);
+  
 
   useEffect(() => {
     const fetchCaseData = async () => {
@@ -124,20 +247,18 @@ const viewDetails = (id) => {
         }
       };
   
-      if (caseId) { // Check if caseId is not null or undefined
+      if (caseId) { 
         fetchRelatedTreatmentPlans();
       }
     }, [caseId]);
 
     useEffect(() => {
       const fetchUserRole = async () => {
-        // Assuming you have the user's role saved in the database
         if (auth.currentUser) {
           const userRef = doc(db, 'users', auth.currentUser.uid);
           const docSnap = await getDoc(userRef);
           if (docSnap.exists()) {
             setUserRole(docSnap.data().role);
-            // Disable "Add Treatment" button for certain roles
             setIsAddTPDisabled(!canEditOrDelete(docSnap.data().role));
           } else {
             console.error("User document not found");
@@ -241,12 +362,12 @@ const viewDetails = (id) => {
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: '70vw', // Set width to 80% of the viewport width
-    maxWidth: '1000px', // Set a maximum width for larger screens
+    width: '70vw',
+    maxWidth: '1000px',
     bgcolor: 'background.paper',
     boxShadow: 24,
     p: 4,
-    overflowY: 'auto' // Add scroll for smaller screens
+    overflowY: 'auto' 
   };
 
   return (
@@ -315,16 +436,16 @@ const viewDetails = (id) => {
          allowScrollButtonsMobile
          sx={{
           '.MuiTabs-flexContainer': {
-            justifyContent: 'center', // This centers the tabs
+            justifyContent: 'center', 
           },
           '.MuiTab-root': {
-            color: colors.grey[500], // Color of unselected tabs
+            color: colors.grey[500], 
             '&.Mui-selected': {
-              color: '#fff', // Color of the selected tab
+              color: '#fff', 
             },
           },
           '.MuiTabs-indicator': {
-            backgroundColor: colors.greenAccent[600], // Color of the indicator
+            backgroundColor: colors.greenAccent[600], 
           },
         }}
        >
@@ -335,21 +456,189 @@ const viewDetails = (id) => {
          <Tab label="DST Tests" value="dst" />
        </TabList>
      </Box>
-     <TabPanel value="xray">
-       {/* Xray tests content */}
-     </TabPanel>
-     <TabPanel value="mtbrif">
+
+      {/* XRay tests content */}
+        <TabPanel value="xray">
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h4">Xray Tests</Typography>
+            <Button
+              variant="contained"
+              onClick={handleOpenXrayForm}
+              style={{
+                backgroundColor: colors.greenAccent[600],
+                color: colors.grey[100],
+                height: '50px',
+                marginLeft: theme.spacing(2),
+              }}
+            >
+              Add New Xray
+            </Button>
+          </Box>
+          {/* Modal for adding new Xray */}
+          <Modal
+            open={showXrayForm}
+            onClose={handleCloseXrayForm}
+            aria-labelledby="simple-modal-title"
+            aria-describedby="simple-modal-description"
+          >
+            <Box sx={modalStyle}>
+              <XrayGenForm
+                handleCloseForm={handleCloseXrayForm}
+                handleUpdateXrays={handleUpdateXrays}
+                caseNumber={caseData?.caseNumber}
+                caseId={caseId} 
+              />
+            </Box>
+          </Modal>
+          {/* Your DataGrid for displaying existing x-rays should be here */}
+        </TabPanel>
+
        {/* MTB/RIF tests content */}
-     </TabPanel>
-     <TabPanel value="tst">
-       {/* TST tests content */}
-     </TabPanel>
-     <TabPanel value="igra">
+       <TabPanel value="mtbrif">
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h4">MTBRIF Tests</Typography>
+          <Button 
+            variant="contained" 
+            onClick={handleOpenMTBRIFForm}
+            style={{
+              backgroundColor: colors.greenAccent[600],
+              color: colors.grey[100],
+              height: '50px',
+              marginLeft: theme.spacing(2)
+            }}
+          >
+            Add New MTBRIF
+          </Button>
+        </Box>
+        {/* Modal for adding new MTBRIF */}
+        <Modal
+          open={showMTBRIFForm}
+          onClose={handleCloseMTBRIFForm}
+          aria-labelledby="simple-modal-title"
+          aria-describedby="simple-modal-description"
+        >
+          <Box sx={modalStyle}>
+            <MTBRIFGenForm
+              handleCloseForm={handleCloseMTBRIFForm}
+              handleUpdateMTBRIF={handleUpdateMTBRIF}
+              caseNumber={caseData?.caseNumber}
+              caseId={caseId}
+            />
+          </Box>
+        </Modal>
+        {/* Your DataGrid for displaying existing MTBRIF tests should be here */}
+      </TabPanel>
+
+
+    {/* TST tests content */}
+    <TabPanel value="tst">
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h4">TST Tests</Typography>
+          <Button 
+            variant="contained" 
+            onClick={handleOpenTSTForm}
+            style={{
+              backgroundColor: colors.greenAccent[600],
+              color: colors.grey[100],
+              height: '50px',
+              marginLeft: theme.spacing(2)
+            }}
+          >
+            Add New TST
+          </Button>
+        </Box>
+        {/* Modal for adding new TST */}
+        <Modal
+          open={showTSTForm}
+          onClose={handleCloseTSTForm}
+          aria-labelledby="simple-modal-title"
+          aria-describedby="simple-modal-description"
+        >
+          <Box sx={modalStyle}>
+            <TSTGenForm
+              handleCloseForm={handleCloseTSTForm}
+              handleUpdateTSTs={handleUpdateTSTs}
+              caseNumber={caseData?.caseNumber}
+              caseId={caseId}
+            />
+          </Box>
+        </Modal>
+        {/* Your DataGrid for displaying existing TSTs should be here */}
+      </TabPanel>
+
        {/* IGRA tests content */}
-     </TabPanel>
-     <TabPanel value="dst">
+       <TabPanel value="igra">
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h4">IGRA Tests</Typography>
+            <Button
+              variant="contained"
+              onClick={handleOpenIGRAForm}
+              style={{
+                backgroundColor: colors.greenAccent[600],
+                color: colors.grey[100],
+                height: '50px',
+                marginLeft: theme.spacing(2),
+              }}
+            >
+              Add New IGRA
+            </Button>
+          </Box>
+          {/* Modal for adding new IGRA */}
+          <Modal
+            open={showIGRAForm}
+            onClose={handleCloseIGRAForm}
+            aria-labelledby="simple-modal-title"
+            aria-describedby="simple-modal-description"
+          >
+            <Box sx={modalStyle}>
+              <IGRAGenForm
+                handleCloseForm={handleCloseIGRAForm}
+                handleUpdateIGRAs={handleUpdateIGRAs}
+                caseNumber={caseData?.caseNumber}
+                caseId={caseId}
+              />
+            </Box>
+          </Modal>
+          {/* Your DataGrid for displaying existing IGRAs should be here */}
+        </TabPanel>
+
        {/* DST tests content */}
-     </TabPanel>
+       <TabPanel value="dst">
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h4">DST Tests</Typography>
+          <Button
+            variant="contained"
+            onClick={handleOpenDSTForm}
+            style={{
+              backgroundColor: colors.greenAccent[600],
+              color: colors.grey[100],
+              height: '50px',
+              marginLeft: theme.spacing(2),
+            }}
+          >
+            Add New DST
+          </Button>
+        </Box>
+        {/* Modal for adding new DST */}
+        <Modal
+          open={showDSTForm}
+          onClose={handleCloseDSTForm}
+          aria-labelledby="simple-modal-title"
+          aria-describedby="simple-modal-description"
+        >
+          <Box sx={modalStyle}>
+            <DSTGenForm
+              handleCloseForm={handleCloseDSTForm}
+              handleUpdateDSTs={handleUpdateDSTs}
+              caseNumber={caseData?.caseNumber}
+              caseId={caseId}
+            />
+          </Box>
+        </Modal>
+        {/* Your DataGrid for displaying existing DSTs should be here */}
+      </TabPanel>
+
+
    </TabContext>
  </Box>
       )}
@@ -504,5 +793,4 @@ const viewDetails = (id) => {
     </Box>
   );
 };
-
 export default CaseDetail;

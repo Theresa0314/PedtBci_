@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Grid,
   TextField,
@@ -9,19 +8,13 @@ import {
   MenuItem,
   Typography,
   Button,
-  RadioGroup,
-  FormControlLabel,
-  FormHelperText,
-  Radio,
   Container,
-  Divider,
-  Checkbox,
   useTheme,
   Input,
 } from "@mui/material";
 import { tokens } from "../../theme";
 import { db , storage} from "../../firebase.config";
-import { collection, addDoc } from "firebase/firestore";
+import {  collection, addDoc, doc, getDoc  } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Sample data for dropdowns
@@ -32,43 +25,39 @@ const location = [
 ];
 const result = ["With signs of TB", "No signs", "Undetermined"];
 
-const XrayGenForm = ({ handleUpdateXrays, caseNumber }) => {
-  // State hooks for xray information
-  //   const [caseNumber, setCaseNumber] = useState("");
-  const [xrayCaseNumber, setXrayCaseNumber] = useState("");
+const MTBRIFGenForm = ({ handleCloseForm, handleUpdateMTBRIF, caseId, caseNumber  }) => {
   const [testDate, setTestDate] = useState("");
-  const [referenceNumber, setReferenceNumber] = useState("");
   const [testLocation, setTestLocation] = useState("");
   const [testResult, setTestResult] = useState("");
-  const [validity, setValidity] = useState("");
   const [file, setFile] = useState(null);
   const [downloadURL, setDownloadURL] = useState(""); 
 
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const navigate = useNavigate();
 
-  const handleCancel = () => {
-    navigate("/patient_info");
+ // Fetch case start date when the component mounts or when caseId changes
+ useEffect(() => {
+  const fetchStartDate = async () => {
+    const docRef = doc(db, 'cases', caseId);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+    } else {
+      console.log('No such case!');
+    }
   };
 
-  // Set the caseNumber in the component's state
-  useEffect(() => {
-    setXrayCaseNumber(caseNumber);
-    console.log("caseNumber: " + caseNumber);
-  }, [caseNumber]);
+  fetchStartDate();
+}, [caseId]);
 
   useEffect(() => {
     const uploadFile = async () => {
       if (file) {
         try {
-          const storageRef = ref(storage, `xray-files/${file.name}`);
+          const storageRef = ref(storage, `mtbrif-files/${file.name}`);
           await uploadBytes(storageRef, file);
 
-          // Get the download URL of the uploaded file
           const url = await getDownloadURL(storageRef);
-
-          // Set the download URL in the state
           setDownloadURL(url);
           console.log("File uploaded. Download URL:", url);
         } catch (error) {
@@ -84,42 +73,40 @@ const XrayGenForm = ({ handleUpdateXrays, caseNumber }) => {
     event.preventDefault();
 
     // Generate a unique reference number
-    const referenceNumber =
-      "XR-" +
+    const newReferenceNumber =
+      "MTB-" +
       Date.now().toString(36) +
       Math.random().toString(36).substr(2, 5).toUpperCase();
 
-    // Get the current date and time in Philippine time
-    const dateAdded = new Date().toLocaleString("en-US", {
-      timeZone: "Asia/Manila",
-    });
+      const mtbrifData = {
+        caseId, 
+        caseNumber,
+        referenceNumber: newReferenceNumber,
+        testDate,
+        testLocation,
+        testResult,
+        fileURL: downloadURL,
+      };
 
-    const xrayData = {
-      caseNumber,
-      referenceNumber,
-      testDate,
-      testLocation,
-      testResult,
-      fileURL: downloadURL
+
+      try {
+        const docRef = await addDoc(collection(db, "mtbrif"), mtbrifData);
+        console.log("Document written with ID: ", docRef.id);
+  
+        if (handleUpdateMTBRIF) {
+          handleUpdateMTBRIF({
+            ...mtbrifData,
+            id: docRef.id
+          });
+          handleCloseForm(); // Close the form after submission
+        } 
+
+      } catch (e) {
+        console.error("Error adding document: ", e);
+      }
     };
-    try {
-      const docRef = await addDoc(collection(db, "xray"), xrayData);
-      console.log("Document written with ID: ", docRef.id);
-
-      if (handleUpdateXrays) {
-        const newXray = { ...xrayData, id: docRef.id };
-        handleUpdateXrays(newXray);
-      } 
-
-      // Navigate back to the patient_info page
-      navigate("/patient_info");
-    } catch (e) {
-      console.error("Error adding document: ", e);
-    }
-  };
 
   const handleFileChange = (e) => {
-    // Handle file upload logic here
     const selectedFile = e.target.files[0];
     setFile(selectedFile);
   };
@@ -139,7 +126,7 @@ const XrayGenForm = ({ handleUpdateXrays, caseNumber }) => {
         gutterBottom
         sx={{ color: colors.white, fontWeight: "bold" }}
       >
-        Add Xray Information
+         Add MTBRIF Test Information
       </Typography>
 
       <form onSubmit={handleSubmit}>
@@ -181,27 +168,14 @@ const XrayGenForm = ({ handleUpdateXrays, caseNumber }) => {
             />
           </Grid>
           <Grid item xs={6}>
-            <TextField
-              required
-              fullWidth
-              id="referenceNumber"
-              label="Reference Number"
-              name="referenceNumber"
-              variant="outlined"
-              margin="dense"
-              value={referenceNumber}
-              onChange={(e) => setReferenceNumber(e.target.value)}
-            />
-          </Grid>
-          <Grid item xs={6}>
             <FormControl fullWidth margin="dense">
-              <InputLabel id="testResult">Xray Test Result</InputLabel>
+              <InputLabel id="testResult"> MTBRIF Test Result</InputLabel>
               <Select
                 required
                 labelId="testResult"
                 id="testResult"
                 name="testResult"
-                label="Xray Test Result"
+                label="MTBRIF Test Result"
                 value={testResult}
                 onChange={(e) => setTestResult(e.target.value)}
               >
@@ -213,9 +187,9 @@ const XrayGenForm = ({ handleUpdateXrays, caseNumber }) => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={6}>
             <InputLabel htmlFor="validity" sx={{ color: colors.white }}>
-              Upload Xray File Attachment
+              Upload MTBRIF File Attachment
             </InputLabel>
             <Input
               required
@@ -260,7 +234,7 @@ const XrayGenForm = ({ handleUpdateXrays, caseNumber }) => {
           </Button>
           <Button
             variant="outlined"
-            onClick={handleCancel}
+            onClick={ handleCloseForm}
             sx={{ color: colors.grey[100], borderColor: colors.grey[700] }}
           >
             Back
@@ -271,4 +245,4 @@ const XrayGenForm = ({ handleUpdateXrays, caseNumber }) => {
   );
 };
 
-export default XrayGenForm;
+export default MTBRIFGenForm;
