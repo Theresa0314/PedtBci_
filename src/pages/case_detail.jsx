@@ -26,6 +26,7 @@ import MTBRIFGenForm from "./mtbrifgenform";
 import TSTGenForm from "./tstgenform";
 import IGRAGenForm from "./igragenform";
 import DSTGenForm from "./dstgenform";
+import EditXrayGenForm from "./editxraygenform";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import DiagnosisDetail from "./diagnosisdetail";
@@ -40,6 +41,7 @@ const Case_Detail = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const [currentCaseTab, setCurrentCaseTab] = useState(0);
   const [diagnosisModalData, setDiagnosisModalData] = useState(null);
+  const [xrayEditModalData, setXrayEditModalData] = useState(null);
   const handleTabChange = (event, newValue) => {
     setCurrentTab(newValue);
   };
@@ -237,6 +239,15 @@ const Case_Detail = () => {
   const handleEdit = (id) => {
     // Navigate to the edit page or open an edit modal
     // navigate(`/patientedit/${id}`);
+    const selectedEditData = xrayData.find(
+      (xray) => xray.id === id
+    );
+    console.log(selectedEditData);
+    // Pass the selected diagnosis data to the modal
+    setXrayEditModalData(selectedEditData);
+
+    //Open the Modal
+    setOpen(true);
   };
 
   const handleViewDiagnosis = (id) => {
@@ -951,6 +962,25 @@ const Case_Detail = () => {
                     >
                       <DataGrid rows={xrayData} columns={columns} />
                     </Box>
+
+                    {/* Modal for the XrayGenForm
+                    <Modal
+                        open={open}
+                        onClose={handleCloseForm}
+                        aria-labelledby="modal-modal-title"
+                        aria-describedby="modal-modal-description"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <EditXrayGenForm
+                          handleCloseForm={handleCloseForm}
+                          caseNumber={caseData.caseNumber}
+                          xrayDataToEdit={xrayEditModalData}
+                        />
+                      </Modal> */}
                     
                     {/* Delete Confirmation Dialog */}
                     <Dialog
