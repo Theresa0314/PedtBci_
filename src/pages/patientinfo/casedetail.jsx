@@ -532,16 +532,16 @@ const viewDetails = (id) => {
       flex: 1,
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
-        <Button
+      {/*}  <Button
           startIcon={<EditIcon />}
           onClick={() => navigate(`/dst/edit/${params.id}`)}
           variant="contained"
           color="secondary"
           size="small"
           style={{ marginRight: 8 }}
-        >
+        > 
           Edit
-        </Button>
+        </Button>*/}
         <Button
           startIcon={<DeleteIcon />}
           onClick={() => handleDeleteDst(params.id)}
@@ -992,7 +992,7 @@ const viewDetails = (id) => {
               </Modal>
           <Box
             sx={{
-            height: 500, 
+            height: 410, 
             width: "100%",
             "& .MuiDataGrid-root": {
                 border: `1px solid ${colors.primary[700]}`,

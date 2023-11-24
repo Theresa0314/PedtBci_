@@ -24,7 +24,7 @@ const LabTestTable = ({ rows, onEdit, onDelete }) => {
       flex: 1,
       renderCell: (params) => (
         <Box>
-          <Button
+         {/* <Button
             startIcon={<EditIcon />}
             onClick={() => onEdit(params.id)}
             variant="contained"
@@ -33,7 +33,7 @@ const LabTestTable = ({ rows, onEdit, onDelete }) => {
             style={{ marginRight: 8 }}
           >
             Edit
-          </Button>
+          </Button>*/}
           <Button
             startIcon={<DeleteIcon />}
             onClick={() => onDelete(params.id)}
