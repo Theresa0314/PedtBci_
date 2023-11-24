@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
+  TableContainer,
+  Paper,
+  Table,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@mui/material';
+import {
   createTheme,
   ThemeProvider,
   CssBaseline,
@@ -12,6 +20,7 @@ import {
   Box,
   Dialog,
   DialogContent,
+  Divider,
 } from '@mui/material';
 import { useTheme } from '@mui/material';
 import { GridToolbar, DataGrid } from '@mui/x-data-grid';
@@ -26,22 +35,24 @@ import {
   updateDoc,
   deleteDoc,
 } from 'firebase/firestore';
+import PediatricTBSymptomsForm from './PediatricTBSymptomsForm';
+
 
 const SymptomsReview = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  
-
 
   const [isAddFormOpen, setAddFormOpen] = useState(false);
   const [formData, setFormData] = useState({
-    id: '', // Include ID for editing
-    name: '',
-    dateOfBirth: '',
-    gender: '',
+    id: '',
+    symptomsReviewDate: '',
     symptoms: '',
-    temperature: '',
-    remarks: '',
+    otherSymptoms: '',
+    immunizationStatus: '',
+    familyHistory: '',
+    family: '',
+    closeContactWithTB: '',
+
   });
   const [tableData, setTableData] = useState([]);
 
@@ -54,22 +65,18 @@ const SymptomsReview = () => {
     const symptomsCollection = collection(db, 'symptoms');
     const symptomsSnapshot = await getDocs(symptomsCollection);
     const data = [];
+    // Convert the snapshot to an array and iterate through it using forEach
     symptomsSnapshot.forEach((doc) => {
-      data.push({ id: doc.id, ...doc.data() });
-    });
-    setTableData(data);
+    data.push(doc.data());
+  });
+
+  // Generate sequential IDs for the data
+    const formattedData = data.map((item, index) => ({ id: index + 1, ...item }));
+    setTableData(formattedData);
   };
 
   const handleAddClick = () => {
     setAddFormOpen(true);
-  };
-
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
   };
 
   const handleSubmit = async (event) => {
@@ -98,14 +105,16 @@ const SymptomsReview = () => {
       // If `id` doesn't exist in formData, it means we are adding a new record
       // Create a new data object with the form values
       const newData = {
-        name: formData.name,
-        dateOfBirth: formData.dateOfBirth,
-        gender: formData.gender,
+        symptomsReviewDate: formData.symptomsReviewDate,
         symptoms: formData.symptoms,
-        temperature: formData.temperature,
-        remarks: formData.remarks,
+        gender: formData.gender,
+        otherSymptoms: formData.otherSymptoms,
+        immunizationStatus: formData.immunizationStatus,
+        familyHistory: formData.familyHistory,
+        family: formData.family,
+        closeContactWithTB: formData.closeContactWithTB,
       };
-
+      
       // Save the data to Firebase
       try {
         const symptomsCollection = collection(db, 'symptoms');
@@ -126,34 +135,37 @@ const SymptomsReview = () => {
     // Clear the form data
     setFormData({
       id: '',
-      name: '',
-      dateOfBirth: '',
-      gender: '',
+      symptomsReviewDate: '',
       symptoms: '',
-      temperature: '',
-      remarks: '',
+      otherSymptoms: '',
+      immunizationStatus: '',
+      familyHistory: '',
+      family: '',
+      closeContactWithTB: '',
     });
   };
 
   const handleEditClick = (id) => {
     // Find the data for the selected row based on its `id`
     const selectedRow = tableData.find((row) => row.id === id);
-
+  
     // Check if the row exists
     if (selectedRow) {
-      // Update the form data with the selected row's values and set the ID
-      setFormData({
-        id: selectedRow.id, // Set the ID in formData
-        name: selectedRow.name,
-        dateOfBirth: new Date(selectedRow.dateOfBirth),
-        gender: selectedRow.gender,
-        symptoms: selectedRow.symptoms,
-        temperature: selectedRow.temperature,
-        remarks: selectedRow.remarks,
-      });
-
       // Open the dialog for editing
       setAddFormOpen(true);
+  
+      // Update the form data with the selected row's values and set the ID
+      setFormData({
+        id: selectedRow.id,
+        symptomsReviewDate: selectedRow.symptomsReviewDate,
+        symptoms: selectedRow.symptoms,
+        otherSymptoms: selectedRow.otherSymptoms,
+        immunizationStatus: selectedRow.immunizationStatus,
+        familyHistory: selectedRow.familyHistory,
+        family: selectedRow.familyHistory.family,
+        closeContactWithTB: selectedRow.closeContactWithTB,
+        // Add other fields as needed
+      });
     } else {
       // Handle the case where the row is not found
       console.error(`Row with ID ${id} not found`);
@@ -180,43 +192,48 @@ const SymptomsReview = () => {
     }
   };
 
+const [selectedRowDetails, setSelectedRowDetails] = useState(null); // State to hold the selected row details
+const [viewDetailsOpen, setViewDetailsOpen] = useState(false); // State to control the details modal
+
+// Function to handle the view details button click
+const handleViewClick = (id) => {
+  const selectedRow = tableData.find((row) => row.id === id);
+  if (selectedRow) {
+    setSelectedRowDetails(selectedRow);
+    setViewDetailsOpen(true);
+  }
+};
+
   const columns = [
-    { field: 'id', headerName: 'ID', flex: 0.1 },
+    { field: 'id', headerName: 'ID', flex: 1 },
     {
-      field: 'name',
-      headerName: 'Name',
+      field: 'view',
+      headerName: '',
       flex: 1,
+      sortable: false,
+      renderCell: (params) => (
+        <div>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => handleViewClick(params.row.id)}
+          >
+            View Details
+          </Button>
+        </div>
+      ),
     },
     {
-      field: 'dateOfBirth',
-      headerName: 'Date Of Birth',
+      field: 'symptomsReviewDate',
+      headerName: 'Review Date',
       type: 'date',
       headerAlign: 'left',
+      flex: 1.5,
       align: 'left',
       valueGetter: (params) => {
-        // Convert the date string to a Date object
-        return new Date(params.row.dateOfBirth);
-      },
-    },
-    {
-      field: 'gender',
-      headerName: 'Gender',
-      flex: 0.5,
-    },
-    {
-      field: 'symptoms',
-      headerName: 'Symptoms',
-      flex: 1,
-    },
-    {
-      field: 'temperature',
-      headerName: 'Temperature',
-      flex: 0.7,
-    },
-    {
-      field: 'remarks',
-      headerName: 'Remarks',
-      flex: 1,
+    // Assuming symptomsReviewDate is a string representation of a date
+    return new Date(params.row.symptomsReviewDate);
+  },
     },
     {
       field: 'action',
@@ -243,17 +260,18 @@ const SymptomsReview = () => {
       ),
     },
   ];
+  
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Container component="div" maxWidth="lg">
         <Header
-          title="Pediatric TB Symptoms Review"
-          subtitle="List of Symptoms Reviews for Decision Making"
+          title="Pediatric TB - Symptoms Review"
+          subtitle="List of Symptoms Reviews"
         />
 
-<Box m="40px 0 0 0" height="75vh">
+        <Box m="40px 0 0 0" height="75vh">
           <Box
             sx={{
               '& .MuiDataGrid-root': {
@@ -290,7 +308,7 @@ const SymptomsReview = () => {
               onClick={handleAddClick}
               style={{ marginRight: '8px' }}
             >
-              Add Data
+              Add Symptoms Review
             </Button>
 
             <DataGrid rows={tableData} columns={columns} components={{ Toolbar: GridToolbar }} />
@@ -299,107 +317,103 @@ const SymptomsReview = () => {
 
         <Dialog open={isAddFormOpen} onClose={() => setAddFormOpen(false)}>
           <DialogContent>
-            <div className="container mt-5">
-              <h1>Pediatric TB Symptoms Review Form</h1>
-              <form onSubmit={handleSubmit}>
-                <div className="form-row">
-                  <div className="form-group col-md-6">
-                    <label htmlFor="name">Name:</label>
-                    <TextField
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleFormChange}
-                      required
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
-                  <div className="form-group col-md-6">
-                    <label htmlFor="dateOfBirth">Date Of Birth:</label>
-                    <TextField
-                      type="date"
-                      id="dateOfBirth"
-                      name="dateOfBirth"
-                      value={formData.dateOfBirth}
-                      onChange={handleFormChange}
-                      required
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group col-md-3">
-                    <label htmlFor="gender">Gender:</label>
-                    <Select
-                      id="gender"
-                      name="gender"
-                      value={formData.gender}
-                      onChange={handleFormChange}
-                      required
-                      fullWidth
-                      margin="normal"
-                    >
-                      <MenuItem value="">Choose...</MenuItem>
-                      <MenuItem value="Male">Male</MenuItem>
-                      <MenuItem value="Female">Female</MenuItem>
-                      <MenuItem value="Other">Other</MenuItem>
-                    </Select>
-                  </div>
-                  <div className="form-group col-md-9">
-                    <label htmlFor="symptoms">Symptoms:</label>
-                    <TextField
-                      type="text"
-                      id="symptoms"
-                      name="symptoms"
-                      value={formData.symptoms}
-                      onChange={handleFormChange}
-                      required
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group col-md-6">
-                    <label htmlFor="temperature">Temperature:</label>
-                    <TextField
-                      type="text"
-                      id="temperature"
-                      name="temperature"
-                      value={formData.temperature}
-                      onChange={handleFormChange}
-                      required
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
-                  <div className="form-group col-md-6">
-                    <label htmlFor="remarks">Remarks:</label>
-                    <TextField
-                      type="text"
-                      id="remarks"
-                      name="remarks"
-                      value={formData.remarks}
-                      onChange={handleFormChange}
-                      required
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
-                </div>
-                <div className="d-flex justify-content-center align-items-center">
-                  <Button type="submit" variant="contained" color="secondary">
-                    Submit
-                  </Button>
-                </div>
-              </form>
-            </div>
+            {/* Include the PediatricTBSymptomsForm here */}
+            <PediatricTBSymptomsForm setAddFormOpen={setAddFormOpen} formData={formData} setFormData={setFormData} handleSubmit={handleSubmit} />
           </DialogContent>
         </Dialog>
       </Container>
+
+      <Dialog
+  open={viewDetailsOpen}
+  onClose={() => setViewDetailsOpen(false)}
+  maxWidth="md"
+  fullWidth
+>
+  <DialogContent>
+    {selectedRowDetails && (
+      <div style={{ padding: '20px', width: '500px' }}>
+        <Typography variant="h6" gutterBottom>
+          Symptoms Details
+        </Typography>
+        <Divider style={{ marginBottom: '15px' }} />
+        <TableContainer component={Paper}>
+          <Table aria-label="symptoms table">
+            <TableBody>
+              <TableRow>
+                <TableCell>
+                  <strong>Symptoms Review Date:</strong>
+                </TableCell>
+                <TableCell>
+                  {selectedRowDetails.symptomsReviewDate}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <strong>Symptoms:</strong>
+                </TableCell>
+                <TableCell>
+                  <ul>
+                    {Object.entries(selectedRowDetails.symptoms)
+                      .filter(([symptom, isPresent]) => isPresent)
+                      .map(([symptom]) => (
+                        <li key={symptom}>{symptom.replace(/([a-z])([A-Z])/g, '$1 $2')}</li>
+                      ))}
+                  </ul>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <strong>Other Symptoms/Remarks:</strong>
+                </TableCell>
+                <TableCell>
+                  {selectedRowDetails.otherSymptoms}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <strong>Immunization Status:</strong>
+                </TableCell>
+                <TableCell>
+                  {selectedRowDetails.immunizationStatus?.status === 'No Immunization'
+                    ? 'No Immunization'
+                    : selectedRowDetails.immunizationStatus?.status}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+              <TableCell>
+                <strong>Family History:</strong>
+              </TableCell>
+              <TableCell>
+                {selectedRowDetails.familyHistory?.hasFamilyHistory ? (
+                selectedRowDetails.familyHistory.family ? (
+                `Yes - ${selectedRowDetails.familyHistory.family}`
+                 ) : (
+                'Yes - N/A'
+                 )
+                ) : (
+                'No'
+                )}
+          </TableCell>
+
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <strong>Close Contact with TB:</strong>
+                </TableCell>
+                <TableCell>
+                  {selectedRowDetails.closeContactWithTB ? 'Yes' : 'No'}
+                </TableCell>
+              </TableRow>
+              {/* Add other fields as needed */}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
+    )}
+  </DialogContent>
+</Dialog>
+
+
     </ThemeProvider>
   );
 };
