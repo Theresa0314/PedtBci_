@@ -286,20 +286,42 @@ const viewDetails = (id) => {
       indicatorColor="secondary"
       textColor="inherit"
       variant="standard"
-      >
-      {/*  <Tab label='Contact Tracing' />*/}
+      >       
+       <Tab label='Laboratory Test' />
+      <Tab label='Diagnosis' />
+        <Tab label='Close Contacts' />
+        <Tab label='Assessment' />
         <Tab label='Treatment Plan' />
+        <Tab label='Similar Cases' />
         {/* Add other tabs as needed */}
       </Tabs>
 
-    {/*  {currentTab === 0 && (
-        <Container>
-           Content for Contact Tracing 
-        </Container>
-      )}*/}
-
       {currentTab === 0 && (
-  <     Box m="20px">
+         <  Box m="20px">
+           {/* Your Laboratory Tes tab content here */}
+        </Box>
+      )}
+
+      {currentTab === 1 && (
+         <  Box m="20px">
+           {/* Your Diagnosis tab content here */}
+        </Box>
+      )}
+
+    {currentTab === 2 && (
+         <  Box m="20px">
+           {/* Your Close Contact tab content here */}
+        </Box>
+      )}
+
+    {currentTab === 3 && (
+         <  Box m="20px">
+           {/* Your Assessment tab content here */}
+        </Box>
+      )}
+
+      {currentTab === 4 && (
+       <  Box m="20px">
         {/* Your Treatment Plan tab content here */}
         <Box sx={{
         display: 'flex',
@@ -422,7 +444,11 @@ const viewDetails = (id) => {
         </Box>
       )}
 
-      {/* Add other tab contents as needed */}
+      {currentTab === 5 && (
+         <  Box m="20px">
+           {/* Your Similar Cases content here */}
+        </Box>
+      )}
     </Box>
   );
 };
