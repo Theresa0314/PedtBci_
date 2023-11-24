@@ -23,7 +23,10 @@ const location = [
   "Philippine General Hospital",
   "St. Lukes Medical Center - Global City",
 ];
-const result = ["With signs of TB", "No signs", "Undetermined"];
+const result = [
+  "Positive",
+  "Negative",
+];
 
 const MTBRIFGenForm = ({ handleCloseForm, handleUpdateMTBRIF, caseId, caseNumber  }) => {
   const [testDate, setTestDate] = useState("");
@@ -92,14 +95,14 @@ const MTBRIFGenForm = ({ handleCloseForm, handleUpdateMTBRIF, caseId, caseNumber
       try {
         const docRef = await addDoc(collection(db, "mtbrif"), mtbrifData);
         console.log("Document written with ID: ", docRef.id);
-  
         if (handleUpdateMTBRIF) {
           handleUpdateMTBRIF({
             ...mtbrifData,
             id: docRef.id
           });
           handleCloseForm(); // Close the form after submission
-        } 
+        }
+        
 
       } catch (e) {
         console.error("Error adding document: ", e);

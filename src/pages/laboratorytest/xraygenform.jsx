@@ -97,13 +97,11 @@ const XrayGenForm = ({ handleCloseForm, handleUpdateXrays, caseId, caseNumber  }
         const docRef = await addDoc(collection(db, "xray"), xrayData);
         console.log("Document written with ID: ", docRef.id);
   
-        if (handleUpdateXrays) {
           handleUpdateXrays({
             ...xrayData,
             id: docRef.id
           });
           handleCloseForm(); // Close the form after submission
-        } 
 
       } catch (e) {
         console.error("Error adding document: ", e);

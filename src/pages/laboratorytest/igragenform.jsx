@@ -97,14 +97,13 @@ const IGRAGenForm = ({ handleCloseForm, handleUpdateIgras, caseId, caseNumber  }
           const docRef = await addDoc(collection(db, "igra"), igraData);
           console.log("Document written with ID: ", docRef.id);
     
-          if (handleUpdateIgras) {
             handleUpdateIgras({
               ...igraData,
               id: docRef.id
             });
             handleCloseForm(); // Close the form after submission
-          } 
-  
+
+
         } catch (e) {
           console.error("Error adding document: ", e);
         }

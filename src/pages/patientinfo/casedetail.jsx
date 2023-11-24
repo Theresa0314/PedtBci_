@@ -20,6 +20,7 @@ import MTBRIFGenForm from '../laboratorytest/mtbrifgenform';
 import TSTGenForm from '../laboratorytest/tstgenform';
 import IGRAGenForm from '../laboratorytest/igragenform';
 import DSTGenForm from '../laboratorytest/dstgenform';
+import LabTestTable from '../laboratorytest/labtesttable';
 
 
 const CaseDetail = () => {
@@ -76,12 +77,15 @@ const handleUpdateTP = (newTP) => {
   setTreatmentPlans([...treatmentPlans, newTP]);
 };
 
-const [xrays, setXrays] = useState([]);
+// Function to handle edit action
+const handleEdit = (id) => {
+  navigate(`/dst/edit/${id}`);
+};
 
-// Function to update the list of x-rays
 const handleUpdateXrays = (newXray) => {
-  // Use the spread operator to include the new x-ray in the existing list
-  setXrays(currentXrays => [...currentXrays, newXray]);
+  setXrayRows((prevXrays) => [...prevXrays, newXray]);
+  // Close the form modal if open
+  setShowXrayForm(false);
 };
 
   // Add a function to open the XrayGenForm
@@ -230,6 +234,178 @@ const viewDetails = (id) => {
     fetchCaseData();
     }, [caseId]);
 
+    // Xray rows data state
+    const [xrayRows, setXrayRows] = useState([]);
+
+    // Fetch Xray tests when the component mounts or when caseId changes
+    useEffect(() => {
+    const fetchXrayTests = async () => {
+      const q = query(collection(db, "xray"), where("caseId", "==", caseId));
+      const querySnapshot = await getDocs(q);
+      const tests = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        referenceNumber: doc.data().referenceNumber,
+        testLocation: doc.data().testLocation,
+        testDate: doc.data().testDate,
+        testResult: doc.data().testResult,
+
+      }));
+      setXrayRows(tests);
+    };
+
+    if (caseId) {
+      fetchXrayTests();
+    }
+  }, [caseId]);
+
+  const handleDeleteXray = async (id) => {
+
+      try {
+        await deleteDoc(doc(db, "xray", id)); // Replace "xray" with your actual collection name
+        // Update local state to remove the item
+        setXrayRows((prevRows) => prevRows.filter((row) => row.id !== id));
+        console.log(`Xray test with id: ${id} deleted successfully.`);
+      } catch (error) {
+        console.error("Error deleting Xray test: ", error);
+      }
+
+  };
+  
+
+  const [mtbrifTests, setMtbrifTests] = useState([]);
+
+  useEffect(() => {
+    const fetchMtbrifTests = async () => {
+      const q = query(collection(db, "mtbrif"), where("caseId", "==", caseId));
+      const querySnapshot = await getDocs(q);
+      const tests = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        referenceNumber: doc.data().referenceNumber,
+        testLocation: doc.data().testLocation,
+        testDate: doc.data().testDate,
+        testResult: doc.data().testResult,
+      }));
+      setMtbrifTests(tests);
+    };
+  
+    if (caseId) {
+      fetchMtbrifTests();
+    }
+  }, [caseId]);
+
+  const handleDeleteMtbrif = async (id) => {
+      try {
+        await deleteDoc(doc(db, "mtbrif", id)); // Replace "xray" with your actual collection name
+        // Update local state to remove the item
+        setXrayRows((prevRows) => prevRows.filter((row) => row.id !== id));
+        console.log(`Mtb/ Rif test with id: ${id} deleted successfully.`);
+      } catch (error) {
+        console.error("Error deleting Mtb/ rif test: ", error);
+      }
+  
+  };
+
+  const [tstTests, setTstTests] = useState([]);
+
+  useEffect(() => {
+    const fetchTstTests = async () => {
+      const q = query(collection(db, "tst"), where("caseId", "==", caseId));
+      const querySnapshot = await getDocs(q);
+      const tests = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        referenceNumber: doc.data().referenceNumber,
+        testLocation: doc.data().testLocation,
+        testDate: doc.data().testDate,
+        testResult: doc.data().testResult,
+      }));
+      setTstTests(tests);
+    };
+  
+    if (caseId) {
+      fetchTstTests();
+    }
+  }, [caseId]);
+
+
+  const handleDeleteTst = async (id) => {
+
+      try {
+        await deleteDoc(doc(db, "tst", id)); // Replace "xray" with your actual collection name
+        // Update local state to remove the item
+        setXrayRows((prevRows) => prevRows.filter((row) => row.id !== id));
+        console.log(`Tst test with id: ${id} deleted successfully.`);
+      } catch (error) {
+        console.error("Error deleting Tst test: ", error);
+      }
+
+  };
+  const [igraTests, setIgraTests] = useState([]);
+
+  useEffect(() => {
+    const fetchIgraTests = async () => {
+      const q = query(collection(db, "igra"), where("caseId", "==", caseId));
+      const querySnapshot = await getDocs(q);
+      const tests = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        referenceNumber: doc.data().referenceNumber,
+        testLocation: doc.data().testLocation,
+        testDate: doc.data().testDate,
+        testResult: doc.data().testResult,
+      }));
+      setIgraTests(tests);
+    };
+  
+    if (caseId) {
+      fetchIgraTests();
+    }
+  }, [caseId]);
+  const handleDeleteIgra = async (id) => {
+
+      try {
+        await deleteDoc(doc(db, "igra", id));
+        setXrayRows((prevRows) => prevRows.filter((row) => row.id !== id));
+        console.log(`Igra test with id: ${id} deleted successfully.`);
+      } catch (error) {
+        console.error("Error deleting Igra test: ", error);
+      }
+  };
+  const [dstTests, setDstTests] = useState([]);
+
+  useEffect(() => {
+    const fetchDstTests = async () => {
+      const q = query(collection(db, "dst"), where("caseId", "==", caseId));
+      const querySnapshot = await getDocs(q);
+      const tests = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        referenceNumber: doc.data().referenceNumber,
+        testLocation: doc.data().testLocation,
+        testDate: doc.data().testDate,
+        amikacin: doc.data().amikacin,
+        ethionamide: doc.data().ethionamide,
+        fluoroquinolones: doc.data().fluoroquinolones,
+        isoniazid: doc.data().isoniazid,
+      }));
+      setDstTests(tests);
+    };
+  
+    if (caseId) {
+      fetchDstTests();
+    }
+  }, [caseId]);
+  
+  const handleDeleteDst = async (id) => {
+
+      try {
+        await deleteDoc(doc(db, "dst", id)); 
+        // Update local state to remove the item
+        setDstTests((prevTests) => prevTests.filter((test) => test.id !== id));
+        console.log(`DST test with id: ${id} deleted successfully.`);
+      } catch (error) {
+        console.error("Error deleting DST test: ", error);
+      }
+  
+  };
+  
     // Fetch treatment plans for the specific case
     useEffect(() => {
       const fetchRelatedTreatmentPlans = async () => {
@@ -341,6 +517,46 @@ const viewDetails = (id) => {
     },
   ].filter(Boolean);
 
+  const dstColumns = [
+    { field: 'referenceNumber', headerName: 'Reference', flex: 1 },
+    { field: 'testLocation', headerName: 'Test Location', flex: 1 },
+    { field: 'testDate', headerName: 'Date Tested', flex: 1 },
+    { field: 'amikacin', headerName: 'Amikacin', flex: 1 },
+    { field: 'ethionamide', headerName: 'Ethionamide', flex: 1 },
+    { field: 'fluoroquinolones', headerName: 'Fluoroquinolones', flex: 1 },
+    { field: 'isoniazid', headerName: 'Isoniazid', flex: 1 },
+    {
+      field: 'action',
+      headerName: 'Action',
+      sortable: false,
+      flex: 1,
+      renderCell: (params) => (
+        <Box display="flex" justifyContent="center">
+        <Button
+          startIcon={<EditIcon />}
+          onClick={() => navigate(`/dst/edit/${params.id}`)}
+          variant="contained"
+          color="secondary"
+          size="small"
+          style={{ marginRight: 8 }}
+        >
+          Edit
+        </Button>
+        <Button
+          startIcon={<DeleteIcon />}
+          onClick={() => handleDeleteDst(params.id)}
+          variant="contained"
+          color="error"
+          size="small"
+        >
+          Delete
+        </Button>
+      </Box>
+      ),
+    },
+  ];
+  
+  
   if (loading) {
     return (
       <Box display='flex' justifyContent='center' alignItems='center' height='100vh'>
@@ -489,8 +705,13 @@ const viewDetails = (id) => {
                 caseId={caseId} 
               />
             </Box>
-          </Modal>
-          {/* Your DataGrid for displaying existing x-rays should be here */}
+          </Modal>            
+           {/* Call to LabTestTable for displaying existing Xray tests */}
+             <LabTestTable 
+            onEdit={handleEdit}
+            onDelete={handleDeleteXray}            
+             rows={xrayRows} />
+     
         </TabPanel>
 
        {/* MTB/RIF tests content */}
@@ -526,7 +747,11 @@ const viewDetails = (id) => {
             />
           </Box>
         </Modal>
-        {/* Your DataGrid for displaying existing MTBRIF tests should be here */}
+        {/* Call to LabTestTable for displaying existing MTBRIF tests */}
+        <LabTestTable 
+        onEdit={handleEdit}
+        onDelete={handleDeleteMtbrif}  
+        rows={mtbrifTests} />
       </TabPanel>
 
 
@@ -563,7 +788,11 @@ const viewDetails = (id) => {
             />
           </Box>
         </Modal>
-        {/* Your DataGrid for displaying existing TSTs should be here */}
+        {/* Call to LabTestTable for displaying existing TST tests */}
+        <LabTestTable 
+        onEdit={handleEdit}
+        onDelete={handleDeleteTst}  
+        rows={tstTests} />
       </TabPanel>
 
        {/* IGRA tests content */}
@@ -599,7 +828,11 @@ const viewDetails = (id) => {
               />
             </Box>
           </Modal>
-          {/* Your DataGrid for displaying existing IGRAs should be here */}
+        {/* Call to LabTestTable for displaying existing IGRA tests */}
+        <LabTestTable 
+         onEdit={handleEdit}
+         onDelete={handleDeleteIgra}         
+        rows={igraTests} />
         </TabPanel>
 
        {/* DST tests content */}
@@ -635,7 +868,45 @@ const viewDetails = (id) => {
             />
           </Box>
         </Modal>
-        {/* Your DataGrid for displaying existing DSTs should be here */}
+
+        <Box
+              sx={{
+              height: 350, 
+              width: "100%",
+              "& .MuiDataGrid-root": {
+                  border: `1px solid ${colors.primary[700]}`,
+                  color: colors.grey[100],
+                  backgroundColor: colors.primary[400],
+              },
+              "& .MuiDataGrid-columnHeaders": {
+                  backgroundColor: colors.blueAccent[700],
+                  color: colors.grey[100],
+              },
+              "& .MuiDataGrid-cell": {
+                  borderBottom: `1px solid ${colors.primary[700]}`,
+              },
+              "& .MuiDataGrid-footerContainer": {
+                  borderTop: `1px solid ${colors.primary[700]}`,
+                  backgroundColor: colors.blueAccent[700],
+                  color: colors.grey[100],
+              },
+              "& .MuiCheckbox-root": {
+                  color: colors.greenAccent[200],
+              },
+              "& .MuiDataGrid-toolbarContainer": {
+                  color: colors.grey[100],
+              },
+              }}
+          >
+            <DataGrid
+            rows={dstTests}
+            columns={dstColumns}
+            pageSize={5}
+            rowsPerPageOptions={[5, 10, 20]}
+            onRowClick={(params) => handleDeleteDst(params.id)}
+            />
+          </Box>
+
       </TabPanel>
 
 

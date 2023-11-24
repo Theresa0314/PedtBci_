@@ -97,13 +97,11 @@ const TSTGenForm = ({ handleCloseForm, handleUpdateTSTs, caseId, caseNumber }) =
         const docRef = await addDoc(collection(db, "tst"), tstData);
         console.log("Document written with ID: ", docRef.id);
   
-        if (handleUpdateTSTs) {
           handleUpdateTSTs({
             ...tstData,
             id: docRef.id
           });
           handleCloseForm(); // Close the form after submission
-        } 
 
       } catch (e) {
         console.error("Error adding document: ", e);
