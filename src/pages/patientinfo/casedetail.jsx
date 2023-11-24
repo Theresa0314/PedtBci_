@@ -14,6 +14,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import Header from '../../components/Header';
 import { tokens } from '../../theme';
 import TPForm from '../treatmentPlan/TPform';
+import Contacts from '../contacts';
 
 const CaseDetail = () => {
   const { caseId } = useParams(); 
@@ -288,7 +289,7 @@ const viewDetails = (id) => {
       variant="standard"
       >       
        <Tab label='Laboratory Test' />
-      <Tab label='Diagnosis' />
+        <Tab label='Diagnosis' />
         <Tab label='Close Contacts' />
         <Tab label='Assessment' />
         <Tab label='Treatment Plan' />
@@ -311,6 +312,7 @@ const viewDetails = (id) => {
     {currentTab === 2 && (
          <  Box m="20px">
            {/* Your Close Contact tab content here */}
+           <Contacts />
         </Box>
       )}
 
