@@ -21,6 +21,8 @@ import TSTGenForm from '../laboratorytest/tstgenform';
 import IGRAGenForm from '../laboratorytest/igragenform';
 import DSTGenForm from '../laboratorytest/dstgenform';
 import LabTestTable from '../laboratorytest/labtesttable';
+import DiagnosisDetail from '../laboratorytest/diagnosisdetail';
+import { async } from 'q';
 
 
 const CaseDetail = () => {
@@ -167,6 +169,113 @@ const handleUpdateMTBRIF = (newMTBRIF) => {
     const handleUpdateDSTs = (newDST) => {
       setDsts(currentDsts => [...currentDsts, newDST]);
     };
+
+    //State to control visibility of DiagnosisGenForm
+    const [diagnosisData, setDiagnosisData] = useState([]);
+    const [diagnosisModalData, setDiagnosisModalData] = useState(null);
+    const [open, setOpen] = useState(false);
+
+    const handleOpenForm = () => {
+      setOpen(true);
+    };
+
+    const handleCloseForm = () => {
+      setOpen(false);
+    };
+
+    const handleViewDiagnosis = (id) => {
+      // Find the specific diagnosis data based on the id
+      const selectedDiagnosis = diagnosisData.find(
+        (diagnosis) => diagnosis.id === id
+      );
+      console.log(selectedDiagnosis);
+      // Pass the selected diagnosis data to the modal
+      setDiagnosisData(selectedDiagnosis);
+  
+      //Open the Modal
+      setOpen(true);
+    };
+
+    useEffect(() => {
+      const fetchDiagnosisData = async () => {
+        try{
+          // Fetch diagnosis data
+          const queryDiagnosisSnapshot = await getDocs(
+            collection(db, "diagnosis")
+          );
+          const dataDiagnosis = queryDiagnosisSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            caseReferenceNumber: doc.data().caseReferenceNumber,
+            referenceNumber: doc.data().referenceNumber,
+            testDate: doc.data().testDate,
+            testResult: doc.data().testResult,
+            remarks: doc.data().remarks,
+            status: doc.data().status,
+
+          }));
+          setDiagnosisData(dataDiagnosis);
+        } catch (error) {
+          console.error("Error fetching data: ", error);
+        }
+      }
+
+      fetchDiagnosisData();
+    },[caseId]);
+
+    const diagnosisColumns = [
+      {
+        field: "referenceNumber",
+        headerName: "Case Number",
+        headerAlign: "center",
+        align: "center",
+        width: 120,
+      },
+      {
+        field: "testDate",
+        headerName: "Date Diagnosed",
+        headerAlign: "center",
+        align: "center",
+        
+      },
+      
+      {
+        field: "testResult",
+        headerName: "Diagnosis",
+        headerAlign: "center",
+        align: "center",
+        flex: 1,
+      },
+      {
+        field: "status",
+        headerName: "Status",
+        headerAlign: "center",
+        align: "center",
+        flex: 1,
+      },
+      {
+        field: "action",
+        headerName: "Action",
+        sortable: false,
+        headerAlign: "center",
+        align: "center",
+        renderCell: (params) => (
+          <Box display="flex" justifyContent="center">
+            <Button
+              startIcon={<EditIcon />}
+              onClick={() => {
+                handleViewDiagnosis(params.id);
+              }}
+              variant="contained"
+              color="secondary"
+              style={{ marginRight: 8 }}
+            >
+              View Diagnosis
+            </Button>
+          </Box>
+        ),
+        width: 200,
+      },
+    ];
 
 
 const viewDetails = (id) => {
@@ -929,7 +1038,85 @@ const viewDetails = (id) => {
       {currentTab === 1 && (
          <  Box m="20px">
            {/* Your Diagnosis tab content here */}
-        </Box>
+           
+              <Box mt="25px" p="30px">      
+                <div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Typography
+                      variant="h4"
+                      fontWeight="regular"
+                      color={colors.grey[100]}
+                      style={{ marginBottom: theme.spacing(1) }}
+                    >
+                      Diagnostic Test History
+                    </Typography>
+                  </div>
+                  <Box
+                    m="10px 0 0 0"
+                    height="auto"
+                    sx={{
+                      height: 350,
+                      "& .MuiDataGrid-root": {
+                        border: "none",
+                      },
+                      "& .MuiDataGrid-cell": {
+                        borderBottom: "none",
+                      },
+                      "& .name-column--cell": {
+                        color: colors.greenAccent[300],
+                      },
+                      "& .MuiDataGrid-columnHeaders": {
+                        backgroundColor: colors.blueAccent[700],
+                        borderBottom: "none",
+                      },
+                      "& .MuiDataGrid-virtualScroller": {
+                        backgroundColor: colors.primary[400],
+                      },
+                      "& .MuiDataGrid-footerContainer": {
+                        borderTop: "none",
+                        backgroundColor: colors.blueAccent[700],
+                      },
+                      "& .MuiCheckbox-root": {
+                        color: `${colors.greenAccent[200]} !important`,
+                      },
+                    }}
+                  >
+                    <DataGrid rows={diagnosisData} columns={diagnosisColumns} />
+                  </Box>
+                  {/* Modal for the PatientGenForm */}
+                  <Modal
+                    open={open}
+                    onClose={handleCloseForm}
+                    aria-labelledby="modal-modal-title"
+                    aria-describedby="modal-modal-description"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        maxHeight: "90vh",
+                        overflow: "auto",
+                        marginTop: "10px",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      <DiagnosisDetail
+                        diagnosisData={diagnosisData}
+                      />
+                    </div>
+                  </Modal>
+                </div>
+              </Box>
+            </Box>
       )}
 
     {currentTab === 2 && (
