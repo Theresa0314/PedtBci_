@@ -81,18 +81,16 @@ const SymptomsReview = () => {
     loadTableData();
   }, []);
 
+
+  // Generate sequential IDs for the data
   const loadTableData = async () => {
     const symptomsCollection = collection(db, 'symptoms');
     const symptomsSnapshot = await getDocs(symptomsCollection);
     const data = [];
-    // Convert the snapshot to an array and iterate through it using forEach
     symptomsSnapshot.forEach((doc) => {
-    data.push(doc.data());
-  });
-
-  // Generate sequential IDs for the data
-    const formattedData = data.map((item, index) => ({ id: index + 1, ...item }));
-    setTableData(formattedData);
+      data.push({ id: doc.id, ...doc.data() });
+    });
+    setTableData(data);
   };
 
   const handleAddClick = () => {
@@ -226,21 +224,28 @@ const handleViewClick = (id) => {
 };
 
   const columns = [
-    { field: 'id', headerName: 'ID', flex: 1 },
+    { field: 'id', headerName: 'ID', flex: 0.1 },
     {
       field: 'view',
       headerName: '',
       flex: 1,
       sortable: false,
       renderCell: (params) => (
-        <div>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Button
                 startIcon={<PageviewIcon />}
                 onClick={() => handleViewClick(params.row.id)}
                 variant="contained"
                 color="primary"
                 size="small"
-                style={{ marginRight: 8 }}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginRight: 30,
+                  width: '100%', // Ensure the button takes the full width of the cell
+                }}
+                
               >
                 View Details
               </Button>
@@ -252,7 +257,7 @@ const handleViewClick = (id) => {
       headerName: 'Review Date',
       type: 'date',
       headerAlign: 'left',
-      flex: 1.5,
+      flex: 3,
       align: 'left',
       valueGetter: (params) => {
     // Assuming symptomsReviewDate is a string representation of a date
@@ -339,7 +344,7 @@ const handleViewClick = (id) => {
             marginLeft: theme.spacing(2),
           }}
           >
-            Add Symptoms Review 
+            Add Review 
           </Button>
         )}
       </Box>
@@ -347,7 +352,7 @@ const handleViewClick = (id) => {
       {/* Modal for adding new symptoms */}
       <Dialog
         open={isAddFormOpen}
-        onClose={setAddFormOpen(false)}
+        onClose={() => setAddFormOpen(false)}
         aria-labelledby="add-contact-modal-title"
         aria-describedby="add-contact-modal-description"
         formData={formData} setFormData={setFormData} handleSubmit={handleSubmit}
