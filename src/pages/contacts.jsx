@@ -241,8 +241,7 @@ const Contacts = ({ caseId })=> {
       field: 'birthday',
       headerName: 'Date Of Birth',
       type: 'date',
-      headerAlign: 'left',
-      align: 'left',
+      flex: 1,
       valueGetter: (params) => {
         // Convert the date string to a Date object
         return new Date(params.row.birthday);
@@ -251,7 +250,7 @@ const Contacts = ({ caseId })=> {
     {
       field: 'gender',
       headerName: 'Gender',
-      flex: 0.5,
+      flex: 1,
     },
     {
       field: 'relationship',
@@ -271,7 +270,7 @@ const Contacts = ({ caseId })=> {
     {
       field: 'action',
       headerName: 'Action',
-      // ... other properties
+      flex: 1,
       renderCell: (params) => (
         <div>
           {canModifyContacts && (
@@ -305,49 +304,45 @@ const Contacts = ({ caseId })=> {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Container component="div" maxWidth="lg">
+      <Box sx={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center', // Align items vertically
+      p: 2,
+    }}>
 
-        <Box m="40px 0 0 0" height="75vh">
-          <Box
-            sx={{
-              '& .MuiDataGrid-root': {
-                border: 'none',
-              },
-              '& .MuiDataGrid-cell': {
-                borderBottom: 'none',
-              },
-              '& .name-column--cell': {
-                color: colors.greenAccent[300],
-              },
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: colors.blueAccent[700],
-                borderBottom: 'none',
-              },
-              '& .MuiDataGrid-virtualScroller': {
-                backgroundColor: colors.primary[400],
-              },
-              '& .MuiDataGrid-footerContainer': {
-                borderTop: 'none',
-                backgroundColor: colors.blueAccent[700],
-              },
-              '& .MuiCheckbox-root': {
-                color: `${colors.greenAccent[200]} !important`,
-              },
-              '& .MuiDataGrid-toolbarContainer .MuiButton-text': {
-                color: `${colors.grey[100]} !important`,
-              },
-            }}
-          >
+
+<Box sx={{
+        height: 400,
+        width: '100%',
+        '& .MuiDataGrid-root': {
+          border: `1px solid ${colors.primary[700]}`,
+          color: colors.grey[100],
+          backgroundColor: colors.primary[400],
+        },
+        '& .MuiDataGrid-columnHeaders': {
+          backgroundColor: colors.blueAccent[700],
+          color: colors.grey[100],
+        },
+        '& .MuiDataGrid-cell': {
+          borderBottom: `1px solid ${colors.primary[700]}`,
+        },
+        '& .MuiDataGrid-footerContainer': {
+          borderTop: `1px solid ${colors.primary[700]}`,
+          backgroundColor: colors.blueAccent[700],
+          color: colors.grey[100],
+        },
+      }}>
               {
                 canModifyContacts && (
                   <Button
                     variant="contained"
                     onClick={handleAddClick}
+                    
                     style={{
                       backgroundColor: colors.greenAccent[600],
                       color: colors.grey[100],
-                      width: "125px",
-                      height: "50px",
+           
                       marginLeft: theme.spacing(2),
                     }}
                   >
@@ -361,8 +356,7 @@ const Contacts = ({ caseId })=> {
             columns={columns} 
             components={{ Toolbar: GridToolbar }} />
           </Box>
-        </Box>
-        
+      
         <Dialog open={isAddFormOpen} onClose={() => setAddFormOpen(false)}>
           <DialogContent>
             <div className="container mt-5">
@@ -517,7 +511,7 @@ const Contacts = ({ caseId })=> {
             </div>
           </DialogContent>
         </Dialog>
-      </Container>
+      </Box>
     </ThemeProvider>
   );
 };
