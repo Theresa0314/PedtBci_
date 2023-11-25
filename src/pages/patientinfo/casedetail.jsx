@@ -18,7 +18,6 @@ import TPForm from '../treatmentPlan/TPform';
 
 import Contacts from '../contacts';
 
-import Symptoms from '../symptoms';
 
 import XrayGenForm from '../laboratorytest/xraygenform';
 import MTBRIFGenForm from '../laboratorytest/mtbrifgenform';
@@ -27,7 +26,7 @@ import IGRAGenForm from '../laboratorytest/igragenform';
 import DSTGenForm from '../laboratorytest/dstgenform';
 import LabTestTable from '../laboratorytest/labtesttable';
 import DiagnosisDetail from '../laboratorytest/diagnosisdetail';
-import { async } from 'q';
+
 
 
 
@@ -1135,7 +1134,7 @@ const viewDetails = (id) => {
     {currentTab === 3 && (
          <  Box m="20px">
            {/* Your Assessment tab content here */}
-           <Symptoms />
+          
         </Box>
       )}
 
