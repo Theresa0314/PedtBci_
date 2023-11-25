@@ -21,8 +21,11 @@ import {
   Dialog,
   DialogContent,
   Divider,
+  DialogContentText, 
+  DialogTitle,
+  DialogActions
 } from '@mui/material';
-import { useTheme } from '@mui/material';
+import { useTheme, InputAdornment,  } from '@mui/material';
 import { GridToolbar, DataGrid } from '@mui/x-data-grid';
 import { tokens } from '../theme';
 import Header from '../components/Header';
@@ -36,6 +39,12 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 import PediatricTBSymptomsForm from './PediatricTBSymptomsForm';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SearchIcon from '@mui/icons-material/Search';
+import PageviewIcon from '@mui/icons-material/Pageview';
+import { useNavigate } from 'react-router-dom';
+import SymptomsForm from './PediatricTBSymptomsForm';
 
 
 const SymptomsReview = () => {
@@ -55,24 +64,33 @@ const SymptomsReview = () => {
 
   });
   const [tableData, setTableData] = useState([]);
+  const [searchText, setSearchText] = useState('');
+
+  const handleSearchChange = (event) => {
+    setSearchText(event.target.value);
+  };
+
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [isAddSymptomsDisabled, setIsAddTPDisabled] = useState(false);
+  const handleCloseDeleteDialog = () => {
+    setOpenDeleteDialog(false);
+  };
 
   useEffect(() => {
     // Load data from Firebase when the component mounts
     loadTableData();
   }, []);
 
+
+  // Generate sequential IDs for the data
   const loadTableData = async () => {
     const symptomsCollection = collection(db, 'symptoms');
     const symptomsSnapshot = await getDocs(symptomsCollection);
     const data = [];
-    // Convert the snapshot to an array and iterate through it using forEach
     symptomsSnapshot.forEach((doc) => {
-    data.push(doc.data());
-  });
-
-  // Generate sequential IDs for the data
-    const formattedData = data.map((item, index) => ({ id: index + 1, ...item }));
-    setTableData(formattedData);
+      data.push({ id: doc.id, ...doc.data() });
+    });
+    setTableData(data);
   };
 
   const handleAddClick = () => {
@@ -194,6 +212,7 @@ const SymptomsReview = () => {
 
 const [selectedRowDetails, setSelectedRowDetails] = useState(null); // State to hold the selected row details
 const [viewDetailsOpen, setViewDetailsOpen] = useState(false); // State to control the details modal
+const navigate = useNavigate();
 
 // Function to handle the view details button click
 const handleViewClick = (id) => {
@@ -205,21 +224,31 @@ const handleViewClick = (id) => {
 };
 
   const columns = [
-    { field: 'id', headerName: 'ID', flex: 1 },
+    { field: 'id', headerName: 'ID', flex: 0.1 },
     {
       field: 'view',
       headerName: '',
       flex: 1,
       sortable: false,
       renderCell: (params) => (
-        <div>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => handleViewClick(params.row.id)}
-          >
-            View Details
-          </Button>
+                startIcon={<PageviewIcon />}
+                onClick={() => handleViewClick(params.row.id)}
+                variant="contained"
+                color="primary"
+                size="small"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginRight: 30,
+                  width: '100%', // Ensure the button takes the full width of the cell
+                }}
+                
+              >
+                View Details
+              </Button>
         </div>
       ),
     },
@@ -228,7 +257,7 @@ const handleViewClick = (id) => {
       headerName: 'Review Date',
       type: 'date',
       headerAlign: 'left',
-      flex: 1.5,
+      flex: 3,
       align: 'left',
       valueGetter: (params) => {
     // Assuming symptomsReviewDate is a string representation of a date
@@ -243,19 +272,24 @@ const handleViewClick = (id) => {
       renderCell: (params) => (
         <div>
           <Button
-            variant="contained"
-            color="primary"
-            onClick={() => handleEditClick(params.row.id)}
-          >
-            Edit
-          </Button>
+                startIcon={<EditIcon />}
+                onClick={() => handleEditClick(params.row.id)}
+                variant="contained"
+                color="secondary"
+                size="small"
+                style={{ marginRight: 8 }}
+              >
+                Edit
+              </Button>
           <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => handleDeleteClick(params.row.id)}
-          >
-            Delete
-          </Button>
+                startIcon={<DeleteIcon />}
+                onClick={() => handleDeleteClick(params.row.id)}
+                variant="contained"
+                color="error"
+                size="small"
+              >
+                Delete
+              </Button>
         </div>
       ),
     },
@@ -271,52 +305,137 @@ const handleViewClick = (id) => {
           subtitle="List of Symptoms Reviews"
         />
 
-        <Box m="40px 0 0 0" height="75vh">
-          <Box
-            sx={{
-              '& .MuiDataGrid-root': {
-                border: 'none',
-              },
-              '& .MuiDataGrid-cell': {
-                borderBottom: 'none',
-              },
-              '& .name-column--cell': {
-                color: colors.greenAccent[300],
-              },
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: colors.blueAccent[700],
-                borderBottom: 'none',
-              },
-              '& .MuiDataGrid-virtualScroller': {
-                backgroundColor: colors.primary[400],
-              },
-              '& .MuiDataGrid-footerContainer': {
-                borderTop: 'none',
-                backgroundColor: colors.blueAccent[700],
-              },
-              '& .MuiCheckbox-root': {
-                color: `${colors.greenAccent[200]} !important`,
-              },
-              '& .MuiDataGrid-toolbarContainer .MuiButton-text': {
-                color: `${colors.grey[100]} !important`,
-              },
-            }}
-          >
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={handleAddClick}
-              style={{ marginRight: '8px' }}
-            >
-              Add Symptoms Review
-            </Button>
+<Box m="20px">
+      {/* Search and Add Symptoms */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          p: 2,
+        }}
+      >
+        {/* Search TextField */}
+        <TextField
+          placeholder="Search Contacts"
+          variant="outlined"
+          value={searchText}
+          onChange={handleSearchChange}
+          sx={{ width: 550, backgroundColor: colors.blueAccent[700], marginLeft: theme.spacing(-2) }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
 
-            <DataGrid rows={tableData} columns={columns} components={{ Toolbar: GridToolbar }} />
-          </Box>
-        </Box>
+        {/* Add Symptoms Button */}
+        {!isAddSymptomsDisabled && (
+          <Button
+          variant="contained"
+          onClick={handleAddClick}
+          style={{
+            backgroundColor: colors.greenAccent[600],
+            color: colors.grey[100],
+            width: "150px",
+            height: "50px",
+            marginLeft: theme.spacing(2),
+          }}
+          >
+            Add Review 
+          </Button>
+        )}
+      </Box>
+
+      {/* Modal for adding new symptoms */}
+      <Dialog
+        open={isAddFormOpen}
+        onClose={() => setAddFormOpen(false)}
+        aria-labelledby="add-contact-modal-title"
+        aria-describedby="add-contact-modal-description"
+        formData={formData} setFormData={setFormData} handleSubmit={handleSubmit}
+      >
+        <DialogContent>
+         <SymptomsForm /> 
+        </DialogContent>
+      </Dialog>
+
+      {/* DataGrid for Symptoms */}
+      <Box
+        sx={{
+          height: 500,
+          width: '100%',
+          "& .MuiDataGrid-root": {
+            border: `1px solid ${colors.primary[700]}`,
+            color: colors.grey[100],
+            backgroundColor: colors.primary[400],
+          },
+          "& .MuiDataGrid-columnHeaders": {
+            backgroundColor: colors.blueAccent[700],
+            color: colors.grey[100],
+          },
+          "& .MuiDataGrid-cell": {
+            borderBottom: `1px solid ${colors.primary[700]}`,
+          },
+          "& .MuiDataGrid-footerContainer": {
+            borderTop: `1px solid ${colors.primary[700]}`,
+            backgroundColor: colors.blueAccent[700],
+            color: colors.grey[100],
+          },
+          "& .MuiCheckbox-root": {
+            color: colors.greenAccent[200],
+          },
+          "& .MuiDataGrid-toolbarContainer": {
+            color: colors.grey[100],
+          },
+          // Styles for DataGrid
+        }}
+      >
+        <DataGrid
+        rows={tableData}
+        columns={columns}
+        pageSize={5}
+        rowsPerPageOptions={[5, 10, 20]}
+        disableSelectionOnClick
+      />
+        {/* DataGrid component */}
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+         open={openDeleteDialog}
+         onClose={handleCloseDeleteDialog}
+         aria-labelledby="alert-dialog-title"
+         aria-describedby="alert-dialog-description"
+       >
+         <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
+         <DialogContent>
+           <DialogContentText id="alert-dialog-description">
+             Are you sure you want to delete this review? This action cannot be undone.
+           </DialogContentText>
+         </DialogContent>
+         <DialogActions>
+           <Button
+             onClick={handleCloseDeleteDialog}
+             style={{ color: colors.grey[100], borderColor: colors.greenAccent[500], marginRight: theme.spacing(1) }}
+           >
+             Cancel
+           </Button>
+           <Button
+             onClick={handleDeleteClick}
+             style={{ backgroundColor: colors.greenAccent[600], color: colors.grey[100] }}
+             autoFocus
+           >
+             Delete
+           </Button>
+         </DialogActions>
+        </Dialog>
+      </Box>
+    </Box>
 
         <Dialog open={isAddFormOpen} onClose={() => setAddFormOpen(false)}>
           <DialogContent>
+            
             {/* Include the PediatricTBSymptomsForm here */}
             <PediatricTBSymptomsForm setAddFormOpen={setAddFormOpen} formData={formData} setFormData={setFormData} handleSubmit={handleSubmit} />
           </DialogContent>
