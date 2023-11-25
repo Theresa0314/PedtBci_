@@ -38,11 +38,8 @@ import TPDetail from "./pages/treatmentPlan/TPdetail";
 import TPEdit from "./pages/treatmentPlan/TPedit";
 
 import { Form } from "react-router-dom";
-import Patient_Info from "./pages/patientinfo/patientInfo";
 import { Bar, Pie, Line } from "react-chartjs-2";
 
-
-import Case_Detail from "./pages/case_detail";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -80,11 +77,6 @@ const router = createBrowserRouter(
         <Route path="/" element={<Dashboard />} />
       </Route>
       <Route path="/form" element={<Form />} />
-      <Route path="/patient_info" element={<Patient_Info />} />
-      <Route
-        path="/patient_info/:caseNumber/case/:caseNumber" // Define route with dynamic parameters
-        element={<Case_Detail />}
-      />
       <Route path="/contacts" element={<Contacts />} />
       <Route path="/symptoms" element={<Symptoms />} />
       <Route path="/form" element={<Form />} />
@@ -92,8 +84,6 @@ const router = createBrowserRouter(
       <Route path="/pie" element={<Pie />} />
       <Route path="/line" element={<Line />} />
       <Route path="/calendar" element={<Calendar />} />
-      <Route path="/patientgenform" element={<PatientGenForm />} />
-      <Route path="/patient_info/:caseNumber" element={<PatientDetail />} />
     </Route>
   )
 );

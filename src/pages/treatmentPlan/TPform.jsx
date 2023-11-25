@@ -36,14 +36,12 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
    // Fetch case start date when the component mounts or when caseId changes
    useEffect(() => {
     const fetchStartDate = async () => {
-      // Fetch the start date from the database using the caseId
-      // Example using Firestore:
+
       const docRef = doc(db, 'cases', caseId);
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
-        setStartDate(docSnap.data().startDate); // Assuming startDate is a field in your case document
-      } else {
+        setStartDate(docSnap.data().startDate); 
         console.log('No such case!');
       }
     };

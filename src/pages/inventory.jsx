@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ThemeProvider, CssBaseline, Container, Typography, TextField, Button, Box,
+import {  DialogActions, Typography, TextField, Button, Box,InputAdornment,
   Dialog, DialogContent } from '@mui/material';
 import { useTheme } from '@mui/material';
 import { GridToolbar, DataGrid } from '@mui/x-data-grid';
 import { tokens } from '../theme';
 import Header from '../components/Header';
-import { db } from '../firebase.config';
+import { db,auth } from '../firebase.config';
 import {
   collection,
   addDoc,
@@ -13,11 +13,49 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  getDoc,
 } from 'firebase/firestore';
+import SearchIcon from '@mui/icons-material/Search';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import PageviewIcon from '@mui/icons-material/Pageview';
 
 const Inventory = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+
+  const [userRole, setUserRole] = useState('');
+
+  useEffect(() => {
+    loadTableData();
+    fetchUserRole(); 
+  }, []);
+
+  // Fetch user role
+  const fetchUserRole = async () => {
+    if (auth.currentUser) {
+      const userId = auth.currentUser.uid;
+      const userRef = doc(db, 'users', userId);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        setUserRole(userSnap.data().role);
+      } else {
+        console.error('User role not found');
+      }
+    } else {
+      console.error('No user is currently signed in');
+    }
+  };
+
+     // New state for search text
+     const [searchText, setSearchText] = useState('');
+
+     // Function to handle the search input change
+     const handleSearchChange = (event) => {
+       setSearchText(event.target.value);
+     };
+ 
+   
   
   const [isAddFormOpen, setAddFormOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -65,7 +103,7 @@ const Inventory = () => {
 
     // Check if it's an edit or add operation
     if (formData.id) {
-      // If `id` exists in formData, it means we are editing an existing record
+    
       try {
         // Update the document in the database
         await updateDoc(doc(db, 'inventory', formData.id), formData);
@@ -83,8 +121,6 @@ const Inventory = () => {
         console.error('Error updating document: ', error);
       }
     } else {
-      // If `id` doesn't exist in formData, it means we are adding a new record
-      // Create a new data object with the form values
       const newData = {
         name: formData.name,
         acronym: formData.acronym,
@@ -162,6 +198,11 @@ const Inventory = () => {
     }
   };
 
+    // Utility function to check if the user can add, edit or delete
+    const canModify = (role) => {
+      return ['Lab Aide', 'Medical Technologist', 'Admin'].includes(role);
+    };
+
   const columns = [
     {   
       field: 'id', 
@@ -204,152 +245,178 @@ const Inventory = () => {
       headerName: 'Action',
       flex: 1,
       sortable: false,
-      renderCell: (params) => (
-        <div>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => handleEditClick(params.row.id)}
-          >
-            Edit
-          </Button>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => handleDeleteClick(params.row.id)}
-          >
-            Delete
-          </Button>
-        </div>
-      ),
+      renderCell: (params) => {
+        // Check if the user has permission to edit or delete
+        const canEditDelete = canModify(userRole);
+        
+        return (
+          <Box display="flex" justifyContent="center">
+            {canEditDelete && (
+              <>
+                <Button
+                  startIcon={<EditIcon />}
+                  variant="contained"
+                  color="secondary"
+                  style={{ marginRight: 8 }}
+                  onClick={() => handleEditClick(params.row.id)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  startIcon={<DeleteIcon />}
+                  variant="contained"
+                  color="error"
+                  onClick={() => handleDeleteClick(params.row.id)}
+                >
+                  Delete
+                </Button>
+              </>
+            )}
+          </Box>
+        );
+      },
     },
+    
   ];
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Container component="div" maxWidth="lg">
-      <Header title="Clinical Inventory" subtitle="Managing TB drug inventory data" />
+<Box m="20px">
+        <Header title="Clinical Inventory" subtitle="Managing TB drug inventory data" />
 
-<Box m="40px 0 0 0" height="75vh">
-          <Box
+        
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            p: 2,
+          }}>
+            <TextField 
+              placeholder="Search Inventory" 
+              variant="outlined"
+              value={searchText} 
+              onChange={handleSearchChange}
+              sx={{ width: 550, backgroundColor: colors.blueAccent[700] , marginLeft: theme.spacing(-2) }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            {canModify(userRole) && (
+              <Button
+                variant="contained"
+                onClick={handleAddClick}
+                style={{
+                  backgroundColor: colors.greenAccent[600],
+                  color: colors.grey[100],
+                  height: '50px'
+                }}
+              >
+                Add Data
+              </Button>
+            )}
+          </Box>
+          <Box 
             sx={{
+              width: 'auto',
               '& .MuiDataGrid-root': {
-                border: 'none',
-              },
-              '& .MuiDataGrid-cell': {
-                borderBottom: 'none',
-              },
-              '& .name-column--cell': {
-                color: colors.greenAccent[300],
+                border: `1px solid ${colors.primary[700]}`,
+                color: colors.grey[100],
+                backgroundColor: colors.primary[400],
               },
               '& .MuiDataGrid-columnHeaders': {
                 backgroundColor: colors.blueAccent[700],
-                borderBottom: 'none',
+                color: colors.grey[100],
               },
-              '& .MuiDataGrid-virtualScroller': {
-                backgroundColor: colors.primary[400],
+              '& .MuiDataGrid-cell': {
+                borderBottom: `1px solid ${colors.primary[700]}`,
               },
               '& .MuiDataGrid-footerContainer': {
-                borderTop: 'none',
+                borderTop: `1px solid ${colors.primary[700]}`,
                 backgroundColor: colors.blueAccent[700],
+                color: colors.grey[100],
               },
               '& .MuiCheckbox-root': {
-                color: `${colors.greenAccent[200]} !important`,
+                color: colors.greenAccent[200],
               },
               '& .MuiDataGrid-toolbarContainer .MuiButton-text': {
                 color: `${colors.grey[100]} !important`,
               },
             }}
           >
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={handleAddClick}
-              style={{ marginRight: '8px' }}
-            >
-              Add Data
-            </Button>
+            <DataGrid
+              rows={tableData}
+              columns={columns}
+              pageSize={10}
+              rowsPerPageOptions={[5, 10, 20]}
+              disableSelectionOnClick
+              sortingMode="client"
+            />
 
-            <DataGrid rows={tableData} columns={columns} components={{ Toolbar: GridToolbar }} />
+          <Dialog open={isAddFormOpen} onClose={handleCloseForm} maxWidth="sm" fullWidth>
+            <DialogContent>
+              <Typography variant="h6" gutterBottom>
+                Add New Inventory Item
+              </Typography>
+              <form onSubmit={handleSubmit}>
+                <TextField
+                  required
+                  label="Name"
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleFormChange}
+                  fullWidth
+                  margin="dense"
+                />
+                <TextField
+                  label="Acronym"
+                  type="text"
+                  name="acronym"
+                  value={formData.acronym}
+                  onChange={handleFormChange}
+                  fullWidth
+                  margin="dense"
+                />
+                <TextField
+                  required
+                  label="Quantity"
+                  type="number"
+                  name="quantity"
+                  value={formData.quantity}
+                  onChange={handleFormChange}
+                  fullWidth
+                  margin="dense"
+                  InputProps={{ inputProps: { min: 0 } }}
+                />
+                <TextField
+                  label="Remarks"
+                  type="text"
+                  name="remarks"
+                  value={formData.remarks}
+                  onChange={handleFormChange}
+                  fullWidth
+                  margin="dense"
+                  multiline
+                  rows={4}
+                />
+                <Box mt={2} display="flex" justifyContent="space-between">
+                  <Button onClick={handleCloseForm}  style={{ color: colors.grey[100], borderColor: colors.greenAccent[500], marginRight: theme.spacing(1) }}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" variant="contained"  style={{ color: colors.grey[100], borderColor: colors.greenAccent[500], marginRight: theme.spacing(1) }}>
+                    Save
+                  </Button>
+                </Box>
+              </form>
+            </DialogContent>
+          </Dialog>
+
           </Box>
         </Box>
 
-        <Dialog open={isAddFormOpen} onClose={handleCloseForm}>
-          <DialogContent>
-            <div className="container mt-5">
-              <h1>Drug Information Form</h1>
-              <form onSubmit={handleSubmit}>
-                <div className="form-row">
-                  <div className="form-group col-md-6">
-                    <TextField
-                      required
-                      label="Name"
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleFormChange}
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
-                  <div className="form-group col-md-6">
-                    <TextField
-                      label="Acronym"
-                      type="text"
-                      id="acronym"
-                      name="acronym"
-                      value={formData.acronym}
-                      onChange={handleFormChange}
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group col-md-3">
-                    <TextField
-                        required
-                        fullWidth
-                        id="quantity"
-                        label="Quantity"
-                        name="quantity"
-                        type="number"
-                        variant="outlined"
-                        margin="dense"
-                        value={formData.quantity}
-                        onChange={handleFormChange}
-                        InputProps={{ inputProps: { min: 0, step: "1" } }} 
-                    />
-                  </div>
-                  <div className="form-group col-md-6">
-                    <TextField
-                      label="Remarks"
-                      type="text"
-                      id="remarks"
-                      name="remarks"
-                      value={formData.remarks}
-                      onChange={handleFormChange}
-                      fullWidth
-                      margin="normal"
-                    />
-                  </div>
-                </div>
-                <div className="d-flex justify-content-center align-items-center">
-                  <Button type="submit" variant="contained" color="secondary">
-                    Submit
-                  </Button>
-                  <Button variant="outlined"  onClick={handleCloseForm} sx={{ color: colors.grey[100], borderColor: colors.grey[700] }}>
-                        Cancel
-                    </Button>
-                </div>
-              </form>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </Container>
-    </ThemeProvider>
   );
 };
 

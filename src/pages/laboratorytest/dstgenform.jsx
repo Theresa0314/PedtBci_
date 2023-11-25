@@ -1,59 +1,126 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
 import {
-  Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Button, RadioGroup, FormControlLabel, FormHelperText, Radio, Container, Divider, Checkbox, useTheme, Input
-} from '@mui/material';
-import { tokens } from "../theme";
-import { db } from '../firebase.config';
-import { collection, addDoc } from 'firebase/firestore';
+  Grid,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Typography,
+  Button,
+  Container,
+  useTheme,
+  Input,
+} from "@mui/material";
+import { tokens } from "../../theme";
+import { db , storage} from "../../firebase.config";
+import {  collection, addDoc, doc, getDoc  } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Sample data for dropdowns
-const location = ["Lung Center of the Philippines", "Philippine General Hospital", "St. Lukes Medical Center - Global City"];
+const location = [
+    "Lung Center of the Philippines",
+    "Philippine General Hospital",
+    "St. Lukes Medical Center - Global City",
+  ];
 const result = ["Resistant", "Susceptible", "Indeterminate"];
 
 
-const DSTGenForm = () => {
-    // State hooks for xray information
+const DSTGenForm = ({ handleCloseForm, handleUpdateDsts, caseId, caseNumber  }) => {
+    // State hooks for dst information
     const [testDate, setTestDate] = useState('');
-    const [referenceNumber, setReferenceNumber] = useState('');
     const [testLocation, setTestLocation] = useState('');
-    const [testResult, setTestResult] = useState('');
     const [isoniazid, setIsoniazid] = useState('');
     const [ethionamide, setEthionamide] = useState('');
     const [fluoroquinolones, setFluoroquinolones] = useState('');
     const [amikacin, setAmikacin] = useState('');
-    const [validity, setValidity] = useState('');
+    const [file, setFile] = useState(null);
+    const [downloadURL, setDownloadURL] = useState(""); 
     
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
-    const navigate = useNavigate();
 
-    const handleCancel = () => {
-        navigate("/patient_info");
+   // Fetch case start date when the component mounts or when caseId changes
+   useEffect(() => {
+    const fetchStartDate = async () => {
+      const docRef = doc(db, 'cases', caseId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+      } else {
+        console.log('No such case!');
+      }
     };
-
-    const handleSubmit = () =>{
-        console.log("Hello");
-    }
-
-    const handleFileChange = (e) => {
-        // Handle file upload logic here
-        // You can use e.target.files to access the selected file(s)
-    };
-
-    const style = {
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        width: "100%", // Use a percentage to make it responsive
-        maxWidth: 1000, // You can also set a maxWidth
-        bgcolor: "background.paper",
-        boxShadow: 20,
-        p: 4,
-        borderRadius: 2, // Optional: if you want rounded corners
+  
+    fetchStartDate();
+  }, [caseId]);
+  
+    useEffect(() => {
+      const uploadFile = async () => {
+        if (file) {
+          try {
+            const storageRef = ref(storage, `dst-files/${file.name}`);
+            await uploadBytes(storageRef, file);
+  
+            // Get the download URL of the uploaded file
+            const url = await getDownloadURL(storageRef);
+  
+            // Set the download URL in the state
+            setDownloadURL(url);
+            console.log("File uploaded. Download URL:", url);
+          } catch (error) {
+            console.error("Error uploading file:", error);
+          }
+        }
       };
+  
+      uploadFile();
+    }, [file]);
+  
+    const handleSubmit = async (event) => {
+      event.preventDefault();
+  
+      // Generate a unique reference number
+      const newReferenceNumber =
+        "DST-" +
+        Date.now().toString(36) +
+        Math.random().toString(36).substr(2, 5).toUpperCase();
+  
+        const dstData = {
+          caseId, 
+          caseNumber,
+          referenceNumber: newReferenceNumber,
+          amikacin,
+          ethionamide,
+          fluoroquinolones,
+          isoniazid,
+          testDate,
+          testLocation,
+          fileURL: downloadURL,
+        };
+  
+  
+        try {
+          const docRef = await addDoc(collection(db, "dst"), dstData);
+          console.log("Document written with ID: ", docRef.id);
+          if (handleUpdateDsts) {
+            handleUpdateDsts({
+              ...dstData,
+              id: docRef.id
+            });
+          }
 
+          handleCloseForm(); // Close the form after submission
+        } catch (e) {
+          console.error("Error adding document: ", e);
+        }
+      };
+  
+    const handleFileChange = (e) => {
+      // Handle file upload logic here
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+    };
 
     
 
@@ -70,7 +137,7 @@ const DSTGenForm = () => {
         <form onSubmit={handleSubmit}>
             {/* Personal Information Section */}
             <Grid container spacing={5}>
-            <Grid item xs={12}>
+            <Grid item xs={6}>
                 <FormControl fullWidth margin="dense">
                     <InputLabel id="testLocation">Issued By:</InputLabel>
                     <Select
@@ -103,19 +170,6 @@ const DSTGenForm = () => {
                     margin="dense"
                     value={testDate}
                     onChange={(e) => setTestDate(e.target.value)}
-                />
-            </Grid>
-            <Grid item xs={6}>
-                <TextField
-                    required
-                    fullWidth
-                    id="referenceNumber"
-                    label="Reference Number"
-                    name="referenceNumber"
-                    variant="outlined"
-                    margin="dense"
-                    value={referenceNumber}
-                    onChange={(e) => setReferenceNumber(e.target.value)}
                 />
             </Grid>
             <Grid item xs={6}>
@@ -168,7 +222,7 @@ const DSTGenForm = () => {
                     name="fluoroquinolones"
                     label="Fluoroquinolones Result"
                     value={fluoroquinolones}
-                    onChange={(e) => setEthionamide(e.target.value)}
+                    onChange={(e) => setFluoroquinolones(e.target.value)}
                     >
                     {result.map((item) => (
                         <MenuItem key={item} value={item}>
@@ -228,15 +282,25 @@ const DSTGenForm = () => {
             </Grid>
         </Grid>
             
-
-
             <Grid container justifyContent="center" sx={{ mt: 4 }}>
-                <Button type="submit" variant="contained" sx={{ backgroundColor: colors.greenAccent[600], color: colors.grey[100], mr: 1 }}>
-                    Save Information
-                </Button>
-                <Button variant="outlined" onClick={handleCancel} sx={{ color: colors.grey[100], borderColor: colors.grey[700] }}>
-                    Back
-                </Button>
+            <Button
+                type="submit"
+                variant="contained"
+                sx={{
+                backgroundColor: colors.greenAccent[600],
+                color: colors.grey[100],
+                mr: 1,
+                }}
+            >
+                Save Information
+            </Button>
+            <Button
+                variant="outlined"
+                onClick={ handleCloseForm}
+                sx={{ color: colors.grey[100], borderColor: colors.grey[700] }}
+            >
+                Back
+            </Button>
             </Grid>
         </form>
     </Container> );

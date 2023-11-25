@@ -16,14 +16,14 @@ import {
   Grid,
 } from '@mui/material';
 import { useTheme } from '@mui/material';
-import { Box, InputAdornment, DialogTitle, DialogContentText, DialogActions } from '@mui/material';
+import { Box } from '@mui/material';
 import { GridToolbar, DataGrid } from '@mui/x-data-grid';
-import { tokens } from '../theme'; // Import your theme tokens from your theme file
+import { tokens } from '../theme'; 
 import Header from '../components/Header';
-import { db } from '../firebase.config'; // Firebase configuration
-import EditIcon from '@mui/icons-material/Edit';
+import { db, auth } from '../firebase.config';
 import DeleteIcon from '@mui/icons-material/Delete';
-import SearchIcon from '@mui/icons-material/Search';
+import EditIcon from '@mui/icons-material/Edit';
+
 import {
   collection,
   addDoc,
@@ -31,31 +31,15 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  query, where, getDoc
 } from 'firebase/firestore';
 
 
-const Contacts = () => {
+const Contacts = ({ caseId })=> {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
   const [isAddFormOpen, setAddFormOpen] = useState(false);
-
-  const [searchText, setSearchText] = useState('');
-
-  const [openAddForm, setOpenAddForm] = useState(false);
-
-  const handleCloseAddForm = () => setOpenAddForm(false); 
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-
-  const handleCloseDeleteDialog = () => {
-    setOpenDeleteDialog(false);
-  };
-
-  const handleSearchChange = (event) => {
-    setSearchText(event.target.value);
-  }; 
-
-  const [isAddContactDisabled, setIsAddContactDisabled] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -71,22 +55,22 @@ const Contacts = () => {
   const [tableData, setTableData] = useState([]);
 
   useEffect(() => {
-    // Load data from Firebase when the component mounts
-    loadTableData();
-  }, []);
-
-  const loadTableData = async () => {
-    const contactsCollection = collection(db, 'contactTracing');
-    const contactsSnapshot = await getDocs(contactsCollection);
-    const data = [];
-    contactsSnapshot.forEach((doc) => {
-      data.push({ id: doc.id, ...doc.data() });
-    });
-    setTableData(data);
-  };
+    const loadTableData = async () => {
+      // Create a query against the 'contactTracing' collection where 'caseId' matches the given caseId
+      const q = query(collection(db, 'contactTracing'), where('caseId', '==', caseId));
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setTableData(data);
+    };
+  
+    if (caseId) {
+      loadTableData();
+    }
+  }, [caseId]);
+  
 
   const handleAddClick = () => {
-    setOpenAddForm(true);
+    setAddFormOpen(true);
   };
 
   const handleFormChange = (e) => {
@@ -99,58 +83,54 @@ const Contacts = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    
+    // Log the formData to check if all fields are correct before attempting to update
+    console.log('Form data on submit:', formData);
 
-    // Check if it's an edit or add operation
     if (formData.id) {
-      // If `id` exists in formData, it means we are editing an existing record
       try {
-        // Update the document in the database
-        await updateDoc(doc(db, 'contactTracing', formData.id), formData);
-
-        // Update the local table data
-        setTableData((prevData) => {
-          const updatedData = prevData.map((row) =>
-            row.id === formData.id ? { ...row, ...formData } : row
-          );
-          return updatedData;
-        });
-
-        console.log(`Row with ID ${formData.id} updated in the database`);
+        const contactRef = doc(db, 'contactTracing', formData.id);
+        console.log('Attempting to update document with ID:', formData.id);
+        
+        const { caseId: omittedCaseId, caseNumber: omittedCaseNumber, ...updatedData } = formData;
+        
+        await updateDoc(contactRef, updatedData);
+        setTableData(prev =>
+          prev.map(row => (row.id === formData.id ? { ...row, ...updatedData } : row))
+        );
+        
+        console.log(`Document with ID ${formData.id} updated`);
       } catch (error) {
-        console.error('Error updating document: ', error);
+        console.error('Error updating document:', error);
       }
     } else {
-      // If `id` doesn't exist in formData, it means we are adding a new record
-      // Create a new data object with the form values
-      const newData = {
-        firstName: formData.firstName,
-        middleName: formData.middleName,
-        lastName: formData.lastName,
-        birthday: formData.birthday,
-        gender: formData.gender,
-        relationship: formData.relationship,
-        contact: formData.contact,
-        email: formData.email,
-      };
-
-      // Save the data to Firebase
+      // Adding a new contact
       try {
-        const contactsCollection = collection(db, 'contactTracing');
-        const docRef = await addDoc(contactsCollection, newData);
-
-        // Update the local table data
-        setTableData([...tableData, { id: docRef.id, ...newData }]);
-
-        console.log(`Row with ID ${docRef.id} added to the database`);
+        const caseRef = doc(db, 'cases', caseId);
+        const caseSnap = await getDoc(caseRef);
+        
+        if (caseSnap.exists()) {
+          const caseData = caseSnap.data();
+          
+          const newData = {
+            ...formData,
+            caseId: caseId,
+            caseNumber: caseData.caseNumber,
+          };
+          
+          const docRef = await addDoc(collection(db, 'contactTracing'), newData);
+          setTableData([...tableData, { id: docRef.id, ...newData }]);
+          console.log(`New document added with ID: ${docRef.id}`);
+        } else {
+          console.error('No such case!');
+        }
       } catch (error) {
-        console.error('Error adding document: ', error);
+        console.error('Error adding new document:', error);
       }
     }
-
-    // Close the form
-    setOpenAddForm(false);
-
-    // Clear the form data
+    
+    // Close the form and reset form data
+    setAddFormOpen(false);
     setFormData({
       firstName: '',
       middleName: '',
@@ -162,29 +142,68 @@ const Contacts = () => {
       email: '',
     });
   };
+  
 
+
+  
+  
   const handleEditClick = (id) => {
     const selectedRow = tableData.find((row) => row.id === id);
   
     if (selectedRow) {
+      // Check if birthday is a Firestore Timestamp
+      let formattedBirthday;
+      if (selectedRow.birthday && typeof selectedRow.birthday.toDate === 'function') {
+        formattedBirthday = selectedRow.birthday.toDate().toISOString().substring(0, 10); // Convert to 'YYYY-MM-DD' format
+      } else if (selectedRow.birthday) {
+        // If it's already a Date object or a string, use it as is or convert to Date object
+        const date = new Date(selectedRow.birthday);
+        formattedBirthday = isNaN(date) ? '' : date.toISOString().substring(0, 10);
+      } else {
+        formattedBirthday = ''; // If no birthday is set, use an empty string
+      }
+  
       setFormData({
         id: selectedRow.id,
         firstName: selectedRow.firstName,
         middleName: selectedRow.middleName,
         lastName: selectedRow.lastName,
-        birthday: selectedRow.birthday, // Keep the string format from Firebase
+        birthday: formattedBirthday,
         gender: selectedRow.gender,
         relationship: selectedRow.relationship,
         contact: selectedRow.contact,
         email: selectedRow.email,
       });
   
-      setOpenAddForm(true);
+      setAddFormOpen(true);
     } else {
       console.error(`Row with ID ${id} not found`);
     }
   };
   
+  
+    const [userRole, setUserRole] = useState(null); // State to store user role
+
+    // Fetch user role from Firebase when the component mounts
+    useEffect(() => {
+      const fetchUserRole = async () => {
+        // Assuming 'auth' is your authentication object and it has a current user
+        const userId = auth.currentUser.uid;
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserRole(userData.role); // Set user role from user data
+        }
+      };
+
+      fetchUserRole();
+    }, []);
+
+    // Check if the user has permission to modify contacts
+    const canModifyContacts = userRole === 'Admin' || userRole === 'Lab Aide';
+
+  
+
   const handleDeleteClick = async (id) => {
     // Display a confirmation dialog
     const confirmDeletion = window.confirm("Are you sure you want to delete this contact?");
@@ -252,30 +271,32 @@ const Contacts = () => {
     {
       field: 'action',
       headerName: 'Action',
-      flex: 1,
-      sortable: false,
+      // ... other properties
       renderCell: (params) => (
         <div>
-          <Button
+          {canModifyContacts && (
+            <>
+              <Button
                 startIcon={<EditIcon />}
-                onClick={() => handleEditClick(params.row.id)}
                 variant="contained"
                 color="secondary"
                 size="small"
                 style={{ marginRight: 8 }}
+                onClick={() => handleEditClick(params.row.id)}
               >
                 Edit
               </Button>
-          
-          <Button
-            startIcon={<DeleteIcon />}
-            variant="contained"
-            color="error"
-            onClick={() => handleDeleteClick(params.row.id)}
-            size='small'
-          >
-            Delete
-          </Button>
+              <Button
+                startIcon={<DeleteIcon />}
+                variant="contained"
+                color="error"
+                size="small"
+                onClick={() => handleDeleteClick(params.row.id)}
+              >
+                Delete
+              </Button>
+            </>
+          )}
         </div>
       ),
     },
@@ -284,61 +305,67 @@ const Contacts = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Header
-          title="Contact Tracing"
-          subtitle="List of Close Contacts of this Patient"
-        />
+      <Container component="div" maxWidth="lg">
 
-    <Box m="20px">
-    {/* Contacts tab content here */}
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        p: 2,
-      }}
-    >
-      <TextField
-        placeholder="Search Contacts"
-        variant="outlined"
-        value={searchText}
-        onChange={handleSearchChange}
-        sx={{ width: 550, backgroundColor: colors.blueAccent[700], marginLeft: theme.spacing(-2) }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon />
-            </InputAdornment>
-          ),
-        }}
-      />
-      {/* Conditionally render the "Add Contact" button based on the user role */}
-      {!isAddContactDisabled && (
-        <Button
-          variant="contained"
-          onClick={handleAddClick}
-          style={{
-            backgroundColor: colors.greenAccent[600],
-            color: colors.grey[100],
-            width: "150px",
-            height: "50px",
-            marginLeft: theme.spacing(2),
-          }}
-        >
-          Add Close Contact
-        </Button>
-      )}
-    </Box>
-    {/* Modal for adding new contact */}
-    <Dialog
-      open={openAddForm}
-      onClose={handleCloseAddForm}
-      aria-labelledby="add-contact-modal-title"
-      aria-describedby="add-contact-modal-description"
-    >
-      <DialogContent>
-      <div className="container mt-5">
+        <Box m="40px 0 0 0" height="75vh">
+          <Box
+            sx={{
+              '& .MuiDataGrid-root': {
+                border: 'none',
+              },
+              '& .MuiDataGrid-cell': {
+                borderBottom: 'none',
+              },
+              '& .name-column--cell': {
+                color: colors.greenAccent[300],
+              },
+              '& .MuiDataGrid-columnHeaders': {
+                backgroundColor: colors.blueAccent[700],
+                borderBottom: 'none',
+              },
+              '& .MuiDataGrid-virtualScroller': {
+                backgroundColor: colors.primary[400],
+              },
+              '& .MuiDataGrid-footerContainer': {
+                borderTop: 'none',
+                backgroundColor: colors.blueAccent[700],
+              },
+              '& .MuiCheckbox-root': {
+                color: `${colors.greenAccent[200]} !important`,
+              },
+              '& .MuiDataGrid-toolbarContainer .MuiButton-text': {
+                color: `${colors.grey[100]} !important`,
+              },
+            }}
+          >
+              {
+                canModifyContacts && (
+                  <Button
+                    variant="contained"
+                    onClick={handleAddClick}
+                    style={{
+                      backgroundColor: colors.greenAccent[600],
+                      color: colors.grey[100],
+                      width: "125px",
+                      height: "50px",
+                      marginLeft: theme.spacing(2),
+                    }}
+                  >
+                    Add Contact
+                  </Button>
+                )
+              }
+
+            <DataGrid   
+            rows={tableData.filter(row => row.caseId === caseId)}
+            columns={columns} 
+            components={{ Toolbar: GridToolbar }} />
+          </Box>
+        </Box>
+        
+        <Dialog open={isAddFormOpen} onClose={() => setAddFormOpen(false)}>
+          <DialogContent>
+            <div className="container mt-5">
             <div style={{ textAlign: 'center' }}>
               <h1> Pediatric TB - Contact Tracing Form</h1>
               </div>
@@ -488,75 +515,9 @@ const Contacts = () => {
                 </div>
               </form>
             </div>
-      </DialogContent>
-    </Dialog>
-    <Box
-      sx={{
-        height: 500,
-        width: "100%",
-        "& .MuiDataGrid-root": {
-          border: `1px solid ${colors.primary[700]}`,
-          color: colors.grey[100],
-          backgroundColor: colors.primary[400],
-        },
-        "& .MuiDataGrid-columnHeaders": {
-          backgroundColor: colors.blueAccent[700],
-          color: colors.grey[100],
-        },
-        "& .MuiDataGrid-cell": {
-          borderBottom: `1px solid ${colors.primary[700]}`,
-        },
-        "& .MuiDataGrid-footerContainer": {
-          borderTop: `1px solid ${colors.primary[700]}`,
-          backgroundColor: colors.blueAccent[700],
-          color: colors.grey[100],
-        },
-        "& .MuiCheckbox-root": {
-          color: colors.greenAccent[200],
-        },
-        "& .MuiDataGrid-toolbarContainer": {
-          color: colors.grey[100],
-        },
-      }}
-    >
-      <DataGrid
-        rows={tableData}
-        columns={columns}
-        pageSize={5}
-        rowsPerPageOptions={[5, 10, 20]}
-        disableSelectionOnClick
-      />
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={openDeleteDialog}
-        onClose={handleCloseDeleteDialog}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Are you sure you want to delete this contact? This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={handleCloseDeleteDialog}
-            style={{ color: colors.grey[100], borderColor: colors.greenAccent[500], marginRight: theme.spacing(1) }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleDeleteClick}
-            style={{ backgroundColor: colors.greenAccent[600], color: colors.grey[100] }}
-            autoFocus
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
-  </Box>
+          </DialogContent>
+        </Dialog>
+      </Container>
     </ThemeProvider>
   );
 };
