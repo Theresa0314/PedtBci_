@@ -32,9 +32,7 @@ import {
   updateDoc,
   deleteDoc,
 } from 'firebase/firestore';
-import { mockDataContacts } from '../data/mockData';
-import { Timestamp } from 'firebase/firestore';
-import { format } from 'date-fns';
+
 
 const Contacts = () => {
   const theme = useTheme();
