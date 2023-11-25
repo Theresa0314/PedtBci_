@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Grid,
   TextField,
@@ -12,9 +13,9 @@ import {
   useTheme,
   Input,
 } from "@mui/material";
-import { tokens } from "../../theme";
-import { db , storage} from "../../firebase.config";
-import {  collection, addDoc, doc, getDoc  } from "firebase/firestore";
+import { tokens } from "../theme";
+import { db, storage } from "../firebase.config";
+import { doc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Sample data for dropdowns
@@ -23,93 +24,89 @@ const location = [
   "Philippine General Hospital",
   "St. Lukes Medical Center - Global City",
 ];
-const result = [
-  "Positive",
-  "Negative",
-];
+const result = ["With signs of TB", "No signs", "Undetermined"];
 
-const MTBRIFGenForm = ({ handleCloseForm, handleUpdateMTBRIF, caseId, caseNumber  }) => {
+const EditXrayGenForm = ({ handleUpdateXrays, caseNumber, xrayDataToEdit }) => {
+  // State hooks for xray information
+  const [xrayCaseNumber, setXrayCaseNumber] = useState("");
   const [testDate, setTestDate] = useState("");
+  const [referenceNumber, setReferenceNumber] = useState("");
   const [testLocation, setTestLocation] = useState("");
   const [testResult, setTestResult] = useState("");
   const [file, setFile] = useState(null);
-  const [downloadURL, setDownloadURL] = useState(""); 
-
+  const [downloadURL, setDownloadURL] = useState("");
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const navigate = useNavigate();
 
- // Fetch case start date when the component mounts or when caseId changes
- useEffect(() => {
-  const fetchStartDate = async () => {
-    const docRef = doc(db, 'cases', caseId);
-    const docSnap = await getDoc(docRef);
-    
-    if (docSnap.exists()) {
-    } else {
-      console.log('No such case!');
-    }
+  const handleCancel = () => {
+    navigate(0);
   };
 
-  fetchStartDate();
-}, [caseId]);
-
+  // Set the caseNumber in the component's state
   useEffect(() => {
-    const uploadFile = async () => {
-      if (file) {
-        try {
-          const storageRef = ref(storage, `mtbrif-files/${file.name}`);
-          await uploadBytes(storageRef, file);
-
-          const url = await getDownloadURL(storageRef);
-          setDownloadURL(url);
-          console.log("File uploaded. Download URL:", url);
-        } catch (error) {
-          console.error("Error uploading file:", error);
-        }
-      }
-    };
-
-    uploadFile();
-  }, [file]);
+    if (xrayDataToEdit) {
+      setXrayCaseNumber(caseNumber);
+      setTestLocation(xrayDataToEdit.testLocation || "");
+      setTestDate(xrayDataToEdit.testDate || "");
+      setReferenceNumber(xrayDataToEdit.referenceNumber || "");
+      setTestResult(xrayDataToEdit.testResult || "");
+      console.log("caseNumber: " + caseNumber);
+    }
+  }, [caseNumber, xrayDataToEdit]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // Generate a unique reference number
-    const newReferenceNumber =
-      "MTB-" +
-      Date.now().toString(36) +
-      Math.random().toString(36).substr(2, 5).toUpperCase();
+    try {
+      // Upload file
+      if (file) {
+        const storageRef = ref(storage, `xray-files/${file.name}`);
+        await uploadBytes(storageRef, file);
 
-      const mtbrifData = {
-        caseId, 
+        // Get the download URL of the uploaded file
+        const url = await getDownloadURL(storageRef);
+
+        // Set the download URL in the state
+        setDownloadURL(url);
+        console.log("File uploaded. Download URL:", url);
+      }
+
+      // // Generate a unique reference number
+      // const referenceNumber =
+      //   "XR-" +
+      //   Date.now().toString(36) +
+      //   Math.random().toString(36).substr(2, 5).toUpperCase();
+
+      const xrayData = {
         caseNumber,
-        referenceNumber: newReferenceNumber,
+        referenceNumber,
         testDate,
         testLocation,
         testResult,
+        fileName: file.name,
         fileURL: downloadURL,
       };
 
+      // Update xray data in Firestore
+        // Assume xrayDataToEdit.id exists as the document ID for the record being edited
+        await updateDoc(doc(db, 'xray', xrayDataToEdit.id), xrayData);
 
-      try {
-        const docRef = await addDoc(collection(db, "mtbrif"), mtbrifData);
-        console.log("Document written with ID: ", docRef.id);
-        if (handleUpdateMTBRIF) {
-          handleUpdateMTBRIF({
-            ...mtbrifData,
-            id: docRef.id
-          });
-          handleCloseForm(); // Close the form after submission
-        }
-        
-
-      } catch (e) {
-        console.error("Error adding document: ", e);
+      // Update xrays if handleUpdateXrays is provided
+      if (handleUpdateXrays) {
+        const updatedXray = { ...xrayData, id: xrayDataToEdit?.id || undefined };
+        handleUpdateXrays(updatedXray);
       }
-    };
+
+      // Navigate back to the patient_info page
+      navigate(0);
+    } catch (error) {
+      console.error("Error handling submit: ", error);
+    }
+  };
 
   const handleFileChange = (e) => {
+    // Handle file upload logic here
     const selectedFile = e.target.files[0];
     setFile(selectedFile);
   };
@@ -129,7 +126,7 @@ const MTBRIFGenForm = ({ handleCloseForm, handleUpdateMTBRIF, caseId, caseNumber
         gutterBottom
         sx={{ color: colors.white, fontWeight: "bold" }}
       >
-         Add MTBRIF Test Information
+        Update Xray Information
       </Typography>
 
       <form onSubmit={handleSubmit}>
@@ -171,14 +168,27 @@ const MTBRIFGenForm = ({ handleCloseForm, handleUpdateMTBRIF, caseId, caseNumber
             />
           </Grid>
           <Grid item xs={6}>
+            <TextField
+              required
+              fullWidth
+              id="referenceNumber"
+              label="Reference Number"
+              name="referenceNumber"
+              variant="outlined"
+              margin="dense"
+              value={referenceNumber}
+              onChange={(e) => setReferenceNumber(e.target.value)}
+            />
+          </Grid>
+          <Grid item xs={6}>
             <FormControl fullWidth margin="dense">
-              <InputLabel id="testResult"> MTBRIF Test Result</InputLabel>
+              <InputLabel id="testResult">Xray Test Result</InputLabel>
               <Select
                 required
                 labelId="testResult"
                 id="testResult"
                 name="testResult"
-                label="MTBRIF Test Result"
+                label="Xray Test Result"
                 value={testResult}
                 onChange={(e) => setTestResult(e.target.value)}
               >
@@ -190,20 +200,20 @@ const MTBRIFGenForm = ({ handleCloseForm, handleUpdateMTBRIF, caseId, caseNumber
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={6}>
-            <InputLabel htmlFor="validity" sx={{ color: colors.white }}>
-              Upload MTBRIF File Attachment
+          <Grid item xs={12}>
+            <InputLabel htmlFor="fileName" sx={{ color: colors.white }}>
+              Upload Xray File Attachment
             </InputLabel>
             <Input
               required
               fullWidth
-              id="validity"
+              id="fileName"
               type="file"
-              inputProps={{ accept: ".pdf, .doc, .docx, .jpg, .jpeg, .png" }} // Specify accepted file types
+              inputProps={{ accept: ".jpg, .jpeg, .png" }} // Specify accepted file types
               onChange={handleFileChange}
               sx={{ display: "none" }} // Hide the default input style
             />
-            <label htmlFor="validity">
+            <label htmlFor="fileName">
               <Button
                 style={{ color: "white", width: "100%" }}
                 sx={{
@@ -233,11 +243,11 @@ const MTBRIFGenForm = ({ handleCloseForm, handleUpdateMTBRIF, caseId, caseNumber
               mr: 1,
             }}
           >
-            Save Information
+            Update Information
           </Button>
           <Button
             variant="outlined"
-            onClick={ handleCloseForm}
+            onClick={handleCancel}
             sx={{ color: colors.grey[100], borderColor: colors.grey[700] }}
           >
             Back
@@ -248,4 +258,4 @@ const MTBRIFGenForm = ({ handleCloseForm, handleUpdateMTBRIF, caseId, caseNumber
   );
 };
 
-export default MTBRIFGenForm;
+export default EditXrayGenForm;
