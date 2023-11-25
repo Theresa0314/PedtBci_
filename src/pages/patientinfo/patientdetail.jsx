@@ -516,7 +516,7 @@ const PatientDetail = () => {
           </Box>
           <Box
             sx={{
-              height: 650, 
+              height: 450, 
               width: "100%",
               "& .MuiDataGrid-root": {
                 border: `1px solid ${colors.primary[700]}`,

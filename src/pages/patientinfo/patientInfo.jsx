@@ -221,7 +221,7 @@ const PatientInfo = () => {
       <Box sx={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center', // Align items vertically
+        alignItems: 'center', 
         p: 2,
       }}>
         <TextField 
