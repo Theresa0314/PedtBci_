@@ -312,7 +312,7 @@ const viewDetails = (id) => {
     {currentTab === 2 && (
          <  Box m="20px">
            {/* Your Close Contact tab content here */}
-           <Contacts />
+           <Contacts caseId={caseId} />
         </Box>
       )}
 

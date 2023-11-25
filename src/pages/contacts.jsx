@@ -18,9 +18,11 @@ import {
 import { useTheme } from '@mui/material';
 import { Box } from '@mui/material';
 import { GridToolbar, DataGrid } from '@mui/x-data-grid';
-import { tokens } from '../theme'; // Import your theme tokens from your theme file
+import { tokens } from '../theme'; 
 import Header from '../components/Header';
-import { db } from '../firebase.config'; // Firebase configuration
+import { db } from '../firebase.config'; 
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 
 import {
   collection,
@@ -29,10 +31,11 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  query, where, getDoc
 } from 'firebase/firestore';
 
 
-const Contacts = () => {
+const Contacts = ({ caseId })=> {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -52,19 +55,19 @@ const Contacts = () => {
   const [tableData, setTableData] = useState([]);
 
   useEffect(() => {
-    // Load data from Firebase when the component mounts
-    loadTableData();
-  }, []);
-
-  const loadTableData = async () => {
-    const contactsCollection = collection(db, 'contactTracing');
-    const contactsSnapshot = await getDocs(contactsCollection);
-    const data = [];
-    contactsSnapshot.forEach((doc) => {
-      data.push({ id: doc.id, ...doc.data() });
-    });
-    setTableData(data);
-  };
+    const loadTableData = async () => {
+      // Create a query against the 'contactTracing' collection where 'caseId' matches the given caseId
+      const q = query(collection(db, 'contactTracing'), where('caseId', '==', caseId));
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setTableData(data);
+    };
+  
+    if (caseId) {
+      loadTableData();
+    }
+  }, [caseId]);
+  
 
   const handleAddClick = () => {
     setAddFormOpen(true);
@@ -80,58 +83,54 @@ const Contacts = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    
+    // Log the formData to check if all fields are correct before attempting to update
+    console.log('Form data on submit:', formData);
 
-    // Check if it's an edit or add operation
     if (formData.id) {
-      // If `id` exists in formData, it means we are editing an existing record
       try {
-        // Update the document in the database
-        await updateDoc(doc(db, 'contactTracing', formData.id), formData);
-
-        // Update the local table data
-        setTableData((prevData) => {
-          const updatedData = prevData.map((row) =>
-            row.id === formData.id ? { ...row, ...formData } : row
-          );
-          return updatedData;
-        });
-
-        console.log(`Row with ID ${formData.id} updated in the database`);
+        const contactRef = doc(db, 'contactTracing', formData.id);
+        console.log('Attempting to update document with ID:', formData.id);
+        
+        const { caseId: omittedCaseId, caseNumber: omittedCaseNumber, ...updatedData } = formData;
+        
+        await updateDoc(contactRef, updatedData);
+        setTableData(prev =>
+          prev.map(row => (row.id === formData.id ? { ...row, ...updatedData } : row))
+        );
+        
+        console.log(`Document with ID ${formData.id} updated`);
       } catch (error) {
-        console.error('Error updating document: ', error);
+        console.error('Error updating document:', error);
       }
     } else {
-      // If `id` doesn't exist in formData, it means we are adding a new record
-      // Create a new data object with the form values
-      const newData = {
-        firstName: formData.firstName,
-        middleName: formData.middleName,
-        lastName: formData.lastName,
-        birthday: formData.birthday,
-        gender: formData.gender,
-        relationship: formData.relationship,
-        contact: formData.contact,
-        email: formData.email,
-      };
-
-      // Save the data to Firebase
+      // Adding a new contact
       try {
-        const contactsCollection = collection(db, 'contactTracing');
-        const docRef = await addDoc(contactsCollection, newData);
-
-        // Update the local table data
-        setTableData([...tableData, { id: docRef.id, ...newData }]);
-
-        console.log(`Row with ID ${docRef.id} added to the database`);
+        const caseRef = doc(db, 'cases', caseId);
+        const caseSnap = await getDoc(caseRef);
+        
+        if (caseSnap.exists()) {
+          const caseData = caseSnap.data();
+          
+          const newData = {
+            ...formData,
+            caseId: caseId,
+            caseNumber: caseData.caseNumber,
+          };
+          
+          const docRef = await addDoc(collection(db, 'contactTracing'), newData);
+          setTableData([...tableData, { id: docRef.id, ...newData }]);
+          console.log(`New document added with ID: ${docRef.id}`);
+        } else {
+          console.error('No such case!');
+        }
       } catch (error) {
-        console.error('Error adding document: ', error);
+        console.error('Error adding new document:', error);
       }
     }
-
-    // Close the form
+    
+    // Close the form and reset form data
     setAddFormOpen(false);
-
-    // Clear the form data
     setFormData({
       firstName: '',
       middleName: '',
@@ -143,25 +142,27 @@ const Contacts = () => {
       email: '',
     });
   };
-
+  
+  
+  
   const handleEditClick = (id) => {
-    // Find the data for the selected row based on its `id`
     const selectedRow = tableData.find((row) => row.id === id);
   
-    // Check if the row exists
     if (selectedRow) {
-      // Convert birthday to Firestore Timestamp, handle null case
-      const formattedBirthday = selectedRow.birthday
-        ? new Date(selectedRow.birthday.seconds * 1000).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-          })
-        : null;
+      // Check if birthday is a Firestore Timestamp
+      let formattedBirthday;
+      if (selectedRow.birthday && typeof selectedRow.birthday.toDate === 'function') {
+        formattedBirthday = selectedRow.birthday.toDate().toISOString().substring(0, 10); // Convert to 'YYYY-MM-DD' format
+      } else if (selectedRow.birthday) {
+        // If it's already a Date object or a string, use it as is or convert to Date object
+        const date = new Date(selectedRow.birthday);
+        formattedBirthday = isNaN(date) ? '' : date.toISOString().substring(0, 10);
+      } else {
+        formattedBirthday = ''; // If no birthday is set, use an empty string
+      }
   
-      // Update the form data with the selected row's values and set the ID
       setFormData({
-        id: selectedRow.id, // Set the ID in formData
+        id: selectedRow.id,
         firstName: selectedRow.firstName,
         middleName: selectedRow.middleName,
         lastName: selectedRow.lastName,
@@ -172,13 +173,12 @@ const Contacts = () => {
         email: selectedRow.email,
       });
   
-      // Open the dialog for editing
       setAddFormOpen(true);
     } else {
-      // Handle the case where the row is not found
       console.error(`Row with ID ${id} not found`);
     }
   };
+  
   
   
 
@@ -254,15 +254,20 @@ const Contacts = () => {
       renderCell: (params) => (
         <div>
           <Button
+            startIcon={<EditIcon />}
             variant="contained"
-            color="primary"
+            color="secondary"
+            size="small"
+            style={{ marginRight: 8 }}
             onClick={() => handleEditClick(params.row.id)}
           >
             Edit
           </Button>
           <Button
+            startIcon={<DeleteIcon />}
             variant="contained"
-            color="secondary"
+            color="error"
+            size="small"
             onClick={() => handleDeleteClick(params.row.id)}
           >
             Delete
@@ -276,10 +281,6 @@ const Contacts = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Container component="div" maxWidth="lg">
-      <Header
-          title="Contact Tracing"
-          subtitle="List of Contacts for Future Reference"
-        />
 
         <Box m="40px 0 0 0" height="75vh">
           <Box
@@ -314,14 +315,22 @@ const Contacts = () => {
           >
             <Button
               variant="contained"
-              color="secondary"
               onClick={handleAddClick}
-              style={{ marginRight: '8px' }} // Add margin to the right
+              style={{
+                backgroundColor: colors.greenAccent[600],
+                color: colors.grey[100],
+                width: "125px",
+                height: "50px",
+                marginLeft: theme.spacing(2),
+              }}
             >
-              Add Close Contact
+              Add Contact
             </Button>
 
-            <DataGrid rows={tableData} columns={columns} components={{ Toolbar: GridToolbar }} />
+            <DataGrid   
+            rows={tableData.filter(row => row.caseId === caseId)}
+            columns={columns} 
+            components={{ Toolbar: GridToolbar }} />
           </Box>
         </Box>
         

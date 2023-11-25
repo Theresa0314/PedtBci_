@@ -204,16 +204,6 @@ const Sidebar = () => {
             />
             )}
 
-          {canView('Contact Tracing') && (
-            <Item
-              title="Contact Tracing"
-              to="/contacts"
-              icon={<ContactsOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            )}
-
         {canView('Symptoms') && (
             <Item
               title="Symptoms"
