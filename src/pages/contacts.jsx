@@ -20,7 +20,7 @@ import { Box } from '@mui/material';
 import { GridToolbar, DataGrid } from '@mui/x-data-grid';
 import { tokens } from '../theme'; 
 import Header from '../components/Header';
-import { db } from '../firebase.config'; 
+import { db, auth } from '../firebase.config';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 
@@ -143,6 +143,8 @@ const Contacts = ({ caseId })=> {
     });
   };
   
+
+
   
   
   const handleEditClick = (id) => {
@@ -180,6 +182,26 @@ const Contacts = ({ caseId })=> {
   };
   
   
+    const [userRole, setUserRole] = useState(null); // State to store user role
+
+    // Fetch user role from Firebase when the component mounts
+    useEffect(() => {
+      const fetchUserRole = async () => {
+        // Assuming 'auth' is your authentication object and it has a current user
+        const userId = auth.currentUser.uid;
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserRole(userData.role); // Set user role from user data
+        }
+      };
+
+      fetchUserRole();
+    }, []);
+
+    // Check if the user has permission to modify contacts
+    const canModifyContacts = userRole === 'Admin' || userRole === 'Lab Aide';
+
   
 
   const handleDeleteClick = async (id) => {
@@ -249,29 +271,32 @@ const Contacts = ({ caseId })=> {
     {
       field: 'action',
       headerName: 'Action',
-      flex: 1,
-      sortable: false,
+      // ... other properties
       renderCell: (params) => (
         <div>
-          <Button
-            startIcon={<EditIcon />}
-            variant="contained"
-            color="secondary"
-            size="small"
-            style={{ marginRight: 8 }}
-            onClick={() => handleEditClick(params.row.id)}
-          >
-            Edit
-          </Button>
-          <Button
-            startIcon={<DeleteIcon />}
-            variant="contained"
-            color="error"
-            size="small"
-            onClick={() => handleDeleteClick(params.row.id)}
-          >
-            Delete
-          </Button>
+          {canModifyContacts && (
+            <>
+              <Button
+                startIcon={<EditIcon />}
+                variant="contained"
+                color="secondary"
+                size="small"
+                style={{ marginRight: 8 }}
+                onClick={() => handleEditClick(params.row.id)}
+              >
+                Edit
+              </Button>
+              <Button
+                startIcon={<DeleteIcon />}
+                variant="contained"
+                color="error"
+                size="small"
+                onClick={() => handleDeleteClick(params.row.id)}
+              >
+                Delete
+              </Button>
+            </>
+          )}
         </div>
       ),
     },
@@ -313,19 +338,23 @@ const Contacts = ({ caseId })=> {
               },
             }}
           >
-            <Button
-              variant="contained"
-              onClick={handleAddClick}
-              style={{
-                backgroundColor: colors.greenAccent[600],
-                color: colors.grey[100],
-                width: "125px",
-                height: "50px",
-                marginLeft: theme.spacing(2),
-              }}
-            >
-              Add Contact
-            </Button>
+              {
+                canModifyContacts && (
+                  <Button
+                    variant="contained"
+                    onClick={handleAddClick}
+                    style={{
+                      backgroundColor: colors.greenAccent[600],
+                      color: colors.grey[100],
+                      width: "125px",
+                      height: "50px",
+                      marginLeft: theme.spacing(2),
+                    }}
+                  >
+                    Add Contact
+                  </Button>
+                )
+              }
 
             <DataGrid   
             rows={tableData.filter(row => row.caseId === caseId)}
