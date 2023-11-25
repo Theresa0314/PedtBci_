@@ -29,11 +29,12 @@ import { useTheme, InputAdornment,  } from '@mui/material';
 import { GridToolbar, DataGrid } from '@mui/x-data-grid';
 import { tokens } from '../theme';
 import Header from '../components/Header';
-import { db } from '../firebase.config';
+import { db,auth } from '../firebase.config';
 import {
   collection,
   addDoc,
   getDocs,
+  getDoc,
   doc,
   updateDoc,
   deleteDoc,
@@ -96,6 +97,33 @@ const SymptomsReview = () => {
   const handleAddClick = () => {
     setAddFormOpen(true);
   };
+
+  const [userRole, setUserRole] = useState(null); // State to store the user role
+
+  useEffect(() => {
+    // This listener will only set the user role after the auth state has been confirmed
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        const fetchUserRole = async () => {
+          const userId = user.uid; // Now you are sure that user is not null
+          const userDoc = await getDoc(doc(db, 'users', userId));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setUserRole(userData.role); 
+          }
+        };
+  
+        fetchUserRole();
+      }
+    });
+  
+    // Unsubscribe from the listener when the component unmounts
+    return () => unsubscribe();
+  }, []);
+  
+  // Check if the user has permission to modify the symptoms
+  const canModifySymptoms = userRole === 'Admin' || userRole === 'Lab Aide';
+
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -271,6 +299,8 @@ const handleViewClick = (id) => {
       sortable: false,
       renderCell: (params) => (
         <div>
+         {canModifySymptoms && (
+          <>
           <Button
                 startIcon={<EditIcon />}
                 onClick={() => handleEditClick(params.row.id)}
@@ -290,6 +320,8 @@ const handleViewClick = (id) => {
               >
                 Delete
               </Button>
+               </> 
+          )}
         </div>
       ),
     },
@@ -332,21 +364,21 @@ const handleViewClick = (id) => {
         />
 
         {/* Add Symptoms Button */}
-        {!isAddSymptomsDisabled && (
-          <Button
-          variant="contained"
-          onClick={handleAddClick}
-          style={{
-            backgroundColor: colors.greenAccent[600],
-            color: colors.grey[100],
-            width: "150px",
-            height: "50px",
-            marginLeft: theme.spacing(2),
-          }}
-          >
-            Add Review 
-          </Button>
-        )}
+        {canModifySymptoms && (
+            <Button
+              variant="contained"
+              onClick={handleAddClick}
+              style={{
+                backgroundColor: colors.greenAccent[600],
+                color: colors.grey[100],
+                width: "150px",
+                height: "50px",
+                marginLeft: theme.spacing(2),
+              }}
+            >
+              Add Review
+            </Button>
+          )}
       </Box>
 
       {/* Modal for adding new symptoms */}
