@@ -37,7 +37,11 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  query,
+  where,
+  getDoc,
 } from 'firebase/firestore';
+import { auth } from '../firebase.config'; 
 import PediatricTBSymptomsForm from './PediatricTBSymptomsForm';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -47,7 +51,7 @@ import { useNavigate } from 'react-router-dom';
 import SymptomsForm from './PediatricTBSymptomsForm';
 
 
-const SymptomsReview = () => {
+const SymptomsReview = (caseId) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -77,21 +81,18 @@ const SymptomsReview = () => {
   };
 
   useEffect(() => {
-    // Load data from Firebase when the component mounts
-    loadTableData();
-  }, []);
-
-
-  // Generate sequential IDs for the data
-  const loadTableData = async () => {
-    const symptomsCollection = collection(db, 'symptoms');
-    const symptomsSnapshot = await getDocs(symptomsCollection);
-    const data = [];
-    symptomsSnapshot.forEach((doc) => {
-      data.push({ id: doc.id, ...doc.data() });
-    });
-    setTableData(data);
-  };
+    const loadTableData = async () => {
+      // Create a query against the 'contactTracing' collection where 'caseId' matches the given caseId
+      const q = query(collection(db, 'symptoms'), where('caseId', '==', caseId));
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setTableData(data);
+    };
+  
+    if (caseId) {
+      loadTableData();
+    }
+  }, [caseId]);
 
   const handleAddClick = () => {
     setAddFormOpen(true);
@@ -102,64 +103,58 @@ const SymptomsReview = () => {
 
     // Check if it's an edit or add operation
     if (formData.id) {
-      // If `id` exists in formData, it means we are editing an existing record
       try {
-        // Update the document in the database
-        await updateDoc(doc(db, 'symptoms', formData.id), formData);
-
-        // Update the local table data
-        setTableData((prevData) => {
-          const updatedData = prevData.map((row) =>
-            row.id === formData.id ? { ...row, ...formData } : row
-          );
-          return updatedData;
-        });
-
-        console.log(`Row with ID ${formData.id} updated in the database`);
+        const contactRef = doc(db, 'symptoms', formData.id);
+        console.log('Attempting to update document with ID:', formData.id);
+        
+        const { caseId: omittedCaseId, caseNumber: omittedCaseNumber, ...updatedData } = formData;
+        
+        await updateDoc(contactRef, updatedData);
+        setTableData(prev =>
+          prev.map(row => (row.id === formData.id ? { ...row, ...updatedData } : row))
+        );
+        
+        console.log(`Document with ID ${formData.id} updated`);
       } catch (error) {
-        console.error('Error updating document: ', error);
+        console.error('Error updating document:', error);
       }
     } else {
-      // If `id` doesn't exist in formData, it means we are adding a new record
-      // Create a new data object with the form values
-      const newData = {
-        symptomsReviewDate: formData.symptomsReviewDate,
-        symptoms: formData.symptoms,
-        gender: formData.gender,
-        otherSymptoms: formData.otherSymptoms,
-        immunizationStatus: formData.immunizationStatus,
-        familyHistory: formData.familyHistory,
-        family: formData.family,
-        closeContactWithTB: formData.closeContactWithTB,
-      };
-      
-      // Save the data to Firebase
+      // Adding a new contact
       try {
-        const symptomsCollection = collection(db, 'symptoms');
-        const docRef = await addDoc(symptomsCollection, newData);
-
-        // Update the local table data
-        setTableData([...tableData, { id: docRef.id, ...newData }]);
-
-        console.log(`Row with ID ${docRef.id} added to the database`);
+        const caseRef = doc(db, 'cases', caseId);
+        const caseSnap = await getDoc(caseRef);
+        
+        if (caseSnap.exists()) {
+          const caseData = caseSnap.data();
+          
+          const newData = {
+            ...formData,
+            caseId: caseId,
+            caseNumber: caseData.caseNumber,
+          };
+          
+          const docRef = await addDoc(collection(db, 'symptoms'), newData);
+          setTableData([...tableData, { id: docRef.id, ...newData }]);
+          console.log(`New document added with ID: ${docRef.id}`);
+        } else {
+          console.error('No such case!');
+        }
       } catch (error) {
-        console.error('Error adding document: ', error);
+        console.error('Error adding new document:', error);
       }
     }
-
-    // Close the form
+    
+    // Close the form and reset form data
     setAddFormOpen(false);
-
-    // Clear the form data
     setFormData({
-      id: '',
-      symptomsReviewDate: '',
-      symptoms: '',
-      otherSymptoms: '',
-      immunizationStatus: '',
-      familyHistory: '',
-      family: '',
-      closeContactWithTB: '',
+      firstName: '',
+      middleName: '',
+      lastName: '',
+      birthday: '',
+      gender: '',
+      relationship: '',
+      contact: '',
+      email: '',
     });
   };
 
