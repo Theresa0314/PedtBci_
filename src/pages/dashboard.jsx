@@ -301,9 +301,7 @@ const Dashboard = () => {
                 >
                   {doc.caseNumber}
                 </Typography>
-                <Typography color={colors.grey[100]}>
-                  {doc.dotsStaffName}
-                </Typography>
+
               </Box>
               {/* date referred */}
               <Box 
