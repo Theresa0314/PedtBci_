@@ -16,12 +16,14 @@ import {
   Grid,
 } from '@mui/material';
 import { useTheme } from '@mui/material';
-import { Box } from '@mui/material';
+import { Box, InputAdornment, DialogTitle, DialogContentText, DialogActions } from '@mui/material';
 import { GridToolbar, DataGrid } from '@mui/x-data-grid';
 import { tokens } from '../theme'; // Import your theme tokens from your theme file
 import Header from '../components/Header';
 import { db } from '../firebase.config'; // Firebase configuration
-
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SearchIcon from '@mui/icons-material/Search';
 import {
   collection,
   addDoc,
@@ -39,6 +41,23 @@ const Contacts = () => {
   const colors = tokens(theme.palette.mode);
 
   const [isAddFormOpen, setAddFormOpen] = useState(false);
+
+  const [searchText, setSearchText] = useState('');
+
+  const [openAddForm, setOpenAddForm] = useState(false);
+
+  const handleCloseAddForm = () => setOpenAddForm(false); 
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+
+  const handleCloseDeleteDialog = () => {
+    setOpenDeleteDialog(false);
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchText(event.target.value);
+  }; 
+
+  const [isAddContactDisabled, setIsAddContactDisabled] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -69,7 +88,7 @@ const Contacts = () => {
   };
 
   const handleAddClick = () => {
-    setAddFormOpen(true);
+    setOpenAddForm(true);
   };
 
   const handleFormChange = (e) => {
@@ -131,7 +150,7 @@ const Contacts = () => {
     }
 
     // Close the form
-    setAddFormOpen(false);
+    setOpenAddForm(false);
 
     // Clear the form data
     setFormData({
@@ -147,43 +166,27 @@ const Contacts = () => {
   };
 
   const handleEditClick = (id) => {
-    // Find the data for the selected row based on its `id`
     const selectedRow = tableData.find((row) => row.id === id);
   
-    // Check if the row exists
     if (selectedRow) {
-      // Convert birthday to Firestore Timestamp, handle null case
-      const formattedBirthday = selectedRow.birthday
-        ? new Date(selectedRow.birthday.seconds * 1000).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-          })
-        : null;
-  
-      // Update the form data with the selected row's values and set the ID
       setFormData({
-        id: selectedRow.id, // Set the ID in formData
+        id: selectedRow.id,
         firstName: selectedRow.firstName,
         middleName: selectedRow.middleName,
         lastName: selectedRow.lastName,
-        birthday: formattedBirthday,
+        birthday: selectedRow.birthday, // Keep the string format from Firebase
         gender: selectedRow.gender,
         relationship: selectedRow.relationship,
         contact: selectedRow.contact,
         email: selectedRow.email,
       });
   
-      // Open the dialog for editing
-      setAddFormOpen(true);
+      setOpenAddForm(true);
     } else {
-      // Handle the case where the row is not found
       console.error(`Row with ID ${id} not found`);
     }
   };
   
-  
-
   const handleDeleteClick = async (id) => {
     // Display a confirmation dialog
     const confirmDeletion = window.confirm("Are you sure you want to delete this contact?");
@@ -256,16 +259,22 @@ const Contacts = () => {
       renderCell: (params) => (
         <div>
           <Button
-            variant="contained"
-            color="primary"
-            onClick={() => handleEditClick(params.row.id)}
-          >
-            Edit
-          </Button>
+                startIcon={<EditIcon />}
+                onClick={() => handleEditClick(params.row.id)}
+                variant="contained"
+                color="secondary"
+                size="small"
+                style={{ marginRight: 8 }}
+              >
+                Edit
+              </Button>
+          
           <Button
+            startIcon={<DeleteIcon />}
             variant="contained"
-            color="secondary"
+            color="error"
             onClick={() => handleDeleteClick(params.row.id)}
+            size='small'
           >
             Delete
           </Button>
@@ -277,59 +286,61 @@ const Contacts = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Container component="div" maxWidth="lg">
       <Header
           title="Contact Tracing"
-          subtitle="List of Contacts for Future Reference"
+          subtitle="List of Close Contacts of this Patient"
         />
 
-        <Box m="40px 0 0 0" height="75vh">
-          <Box
-            sx={{
-              '& .MuiDataGrid-root': {
-                border: 'none',
-              },
-              '& .MuiDataGrid-cell': {
-                borderBottom: 'none',
-              },
-              '& .name-column--cell': {
-                color: colors.greenAccent[300],
-              },
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: colors.blueAccent[700],
-                borderBottom: 'none',
-              },
-              '& .MuiDataGrid-virtualScroller': {
-                backgroundColor: colors.primary[400],
-              },
-              '& .MuiDataGrid-footerContainer': {
-                borderTop: 'none',
-                backgroundColor: colors.blueAccent[700],
-              },
-              '& .MuiCheckbox-root': {
-                color: `${colors.greenAccent[200]} !important`,
-              },
-              '& .MuiDataGrid-toolbarContainer .MuiButton-text': {
-                color: `${colors.grey[100]} !important`,
-              },
-            }}
-          >
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={handleAddClick}
-              style={{ marginRight: '8px' }} // Add margin to the right
-            >
-              Add Close Contact
-            </Button>
-
-            <DataGrid rows={tableData} columns={columns} components={{ Toolbar: GridToolbar }} />
-          </Box>
-        </Box>
-        
-        <Dialog open={isAddFormOpen} onClose={() => setAddFormOpen(false)}>
-          <DialogContent>
-            <div className="container mt-5">
+    <Box m="20px">
+    {/* Contacts tab content here */}
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        p: 2,
+      }}
+    >
+      <TextField
+        placeholder="Search Contacts"
+        variant="outlined"
+        value={searchText}
+        onChange={handleSearchChange}
+        sx={{ width: 550, backgroundColor: colors.blueAccent[700], marginLeft: theme.spacing(-2) }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon />
+            </InputAdornment>
+          ),
+        }}
+      />
+      {/* Conditionally render the "Add Contact" button based on the user role */}
+      {!isAddContactDisabled && (
+        <Button
+          variant="contained"
+          onClick={handleAddClick}
+          style={{
+            backgroundColor: colors.greenAccent[600],
+            color: colors.grey[100],
+            width: "150px",
+            height: "50px",
+            marginLeft: theme.spacing(2),
+          }}
+        >
+          Add Close Contact
+        </Button>
+      )}
+    </Box>
+    {/* Modal for adding new contact */}
+    <Dialog
+      open={openAddForm}
+      onClose={handleCloseAddForm}
+      aria-labelledby="add-contact-modal-title"
+      aria-describedby="add-contact-modal-description"
+    >
+      <DialogContent>
+      <div className="container mt-5">
             <div style={{ textAlign: 'center' }}>
               <h1> Pediatric TB - Contact Tracing Form</h1>
               </div>
@@ -479,9 +490,75 @@ const Contacts = () => {
                 </div>
               </form>
             </div>
-          </DialogContent>
-        </Dialog>
-      </Container>
+      </DialogContent>
+    </Dialog>
+    <Box
+      sx={{
+        height: 500,
+        width: "100%",
+        "& .MuiDataGrid-root": {
+          border: `1px solid ${colors.primary[700]}`,
+          color: colors.grey[100],
+          backgroundColor: colors.primary[400],
+        },
+        "& .MuiDataGrid-columnHeaders": {
+          backgroundColor: colors.blueAccent[700],
+          color: colors.grey[100],
+        },
+        "& .MuiDataGrid-cell": {
+          borderBottom: `1px solid ${colors.primary[700]}`,
+        },
+        "& .MuiDataGrid-footerContainer": {
+          borderTop: `1px solid ${colors.primary[700]}`,
+          backgroundColor: colors.blueAccent[700],
+          color: colors.grey[100],
+        },
+        "& .MuiCheckbox-root": {
+          color: colors.greenAccent[200],
+        },
+        "& .MuiDataGrid-toolbarContainer": {
+          color: colors.grey[100],
+        },
+      }}
+    >
+      <DataGrid
+        rows={tableData}
+        columns={columns}
+        pageSize={5}
+        rowsPerPageOptions={[5, 10, 20]}
+        disableSelectionOnClick
+      />
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={handleCloseDeleteDialog}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to delete this contact? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleCloseDeleteDialog}
+            style={{ color: colors.grey[100], borderColor: colors.greenAccent[500], marginRight: theme.spacing(1) }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteClick}
+            style={{ backgroundColor: colors.greenAccent[600], color: colors.grey[100] }}
+            autoFocus
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  </Box>
     </ThemeProvider>
   );
 };

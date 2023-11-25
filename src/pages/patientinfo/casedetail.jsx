@@ -15,6 +15,7 @@ import Header from '../../components/Header';
 import { tokens } from '../../theme';
 import TPForm from '../treatmentPlan/TPform';
 import Contacts from '../contacts';
+import Symptoms from '../symptoms';
 
 const CaseDetail = () => {
   const { caseId } = useParams(); 
@@ -319,6 +320,7 @@ const viewDetails = (id) => {
     {currentTab === 3 && (
          <  Box m="20px">
            {/* Your Assessment tab content here */}
+           <Symptoms />
         </Box>
       )}
 
