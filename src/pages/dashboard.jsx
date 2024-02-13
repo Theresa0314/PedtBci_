@@ -1,34 +1,40 @@
 import { Box, Button, Typography, useTheme } from "@mui/material";
 import { tokens } from "../theme";
-import { Chart } from "chart.js/auto"
+import { Chart } from "chart.js/auto";
 import { Bar, Doughnut } from "react-chartjs-2";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import Header from "../components/Header";
 import StatBox from "../components/StatBox";
-import { db } from '../firebase.config';
-import { collection, getDocs, getCountFromServer, query, where } from 'firebase/firestore';
-import { useState, useEffect, useRef } from 'react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { db } from "../firebase.config";
+import {
+  collection,
+  getDocs,
+  getCountFromServer,
+  query,
+  where,
+} from "firebase/firestore";
+import { useState, useEffect, useRef } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const pdfRef = useRef();
 
-  const [patientCount, setPatientCount]= useState(null);
-  const [sTreatmentCount, setsTreatmentCount]= useState(null); //start Treatment
-  const [oTreatmentCount, setoTreatmentCount]= useState(null); //ongoing Treatment
-  const [eTreatmentCount, seteTreatmentCount]= useState(null); //end Treatment
-  const [treatment, setTreatment]= useState([]);
-  const [inventory, setInventory]= useState([]);
-  const [patients, setPatients]= useState([]);
+  const [patientCount, setPatientCount] = useState(null);
+  const [sTreatmentCount, setsTreatmentCount] = useState(null); //start Treatment
+  const [oTreatmentCount, setoTreatmentCount] = useState(null); //ongoing Treatment
+  const [eTreatmentCount, seteTreatmentCount] = useState(null); //end Treatment
+  const [treatment, setTreatment] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [patients, setPatients] = useState([]);
 
-  const [mtbrif, setMTBRIF]= useState([]);
-  const [xray, setXray]= useState([]);
-  const [tst, setTST]= useState([]);
-  const [igra, setIGRA]= useState([]);
-  const [dst, setDST]= useState([]);
+  const [mtbrif, setMTBRIF] = useState([]);
+  const [xray, setXray] = useState([]);
+  const [tst, setTST] = useState([]);
+  const [igra, setIGRA] = useState([]);
+  const [dst, setDST] = useState([]);
 
   useEffect(() => {
     // Load data from Firebase when the component mounts
@@ -36,64 +42,84 @@ const Dashboard = () => {
   }, []);
 
   const loadData = async () => {
-// ROW 1
+    // ROW 1
     //# of patients
-    const patientRef = await getCountFromServer(query(collection(db, "treatmentPlan")));
+    const patientRef = await getCountFromServer(
+      query(collection(db, "treatmentPlan"))
+    );
     const patientCounter = patientRef.data().count;
     setPatientCount(patientCounter);
     //# of started treatment
-    const sTreatmentRef = await getDocs(query(collection(db, "treatmentPlan"), where("status", "==", "Start")));
-    const sTreatmentCounter = sTreatmentRef.size
+    const sTreatmentRef = await getDocs(
+      query(collection(db, "treatmentPlan"), where("status", "==", "Start"))
+    );
+    const sTreatmentCounter = sTreatmentRef.size;
     setsTreatmentCount(sTreatmentCounter);
     //# of ongoing treatment
-    const oTreatmentRef = await getDocs(query(collection(db, "treatmentPlan"), where("status", "==", "Ongoing")));
-    const oTreatmentCounter = oTreatmentRef.size
+    const oTreatmentRef = await getDocs(
+      query(collection(db, "treatmentPlan"), where("status", "==", "Ongoing"))
+    );
+    const oTreatmentCounter = oTreatmentRef.size;
     setoTreatmentCount(oTreatmentCounter);
     //# of end treatment
-    const eTreatmentRef = await getDocs(query(collection(db, "treatmentPlan"), where("status", "==", "End")));
-    const eTreatmentCounter = eTreatmentRef.size
+    const eTreatmentRef = await getDocs(
+      query(collection(db, "treatmentPlan"), where("status", "==", "End"))
+    );
+    const eTreatmentCounter = eTreatmentRef.size;
     seteTreatmentCount(eTreatmentCounter);
-// ROW 2
+    // ROW 2
     //treatment progress
     const treatmentRef = await getDocs(collection(db, "treatmentPlan"));
-    let treatmentData = treatmentRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    let treatmentData = treatmentRef.docs.map((doc) => ({
+      ...doc.data(),
+      id: doc.id,
+    }));
     setPatients(treatmentData);
     //inventory
     const inventoryRef = await getDocs(collection(db, "inventory"));
-    let inventoryData = inventoryRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    let inventoryData = inventoryRef.docs.map((doc) => ({
+      ...doc.data(),
+      id: doc.id,
+    }));
     setInventory(inventoryData);
     //referred patients
     const patientsRef = await getDocs(collection(db, "referralform"));
-    let patientsData = patientsRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    let patientsData = patientsRef.docs.map((doc) => ({
+      ...doc.data(),
+      id: doc.id,
+    }));
     setPatients(patientsData);
     //MTB/RIF tests
     const mtbrifRef = await getDocs(collection(db, "mtbrif"));
-    let mtbrifData = mtbrifRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    let mtbrifData = mtbrifRef.docs.map((doc) => ({
+      ...doc.data(),
+      id: doc.id,
+    }));
     setMTBRIF(mtbrifData);
-// ROW 3
+    // ROW 3
     //XRay tests
     const xrayRef = await getDocs(collection(db, "xray"));
-    let xrayData = xrayRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    let xrayData = xrayRef.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
     setXray(xrayData);
     //TST tests
     const tstRef = await getDocs(collection(db, "tst"));
-    let tstData = tstRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    let tstData = tstRef.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
     setTST(tstData);
     //IGRA tests
     const igraRef = await getDocs(collection(db, "igra"));
-    let igraData = igraRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    let igraData = igraRef.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
     setIGRA(igraData);
     //DST tests
     const dstRef = await getDocs(collection(db, "dst"));
-    let dstData = dstRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    let dstData = dstRef.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
     setDST(dstData);
-  }
-  
+  };
+
   const downloadPDF = () => {
     const input = pdfRef.current;
-    html2canvas(input).then((canvas) =>{
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4', true);
+    html2canvas(input).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4", true);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const imgWidth = canvas.width;
@@ -101,10 +127,17 @@ const Dashboard = () => {
       const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
       const imgX = (pdfWidth - imgWidth * ratio) / 2;
       const imgY = 30;
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-      pdf.save('invoice.pdf');
+      pdf.addImage(
+        imgData,
+        "PNG",
+        imgX,
+        imgY,
+        imgWidth * ratio,
+        imgHeight * ratio
+      );
+      pdf.save("invoice.pdf");
     });
-  }
+  };
 
   return (
     <Box m="20px">
@@ -145,10 +178,7 @@ const Dashboard = () => {
           alignItems="center"
           justifyContent="center"
         >
-          <StatBox
-            title= {patientCount}
-            subtitle="Number of Patients"
-          />
+          <StatBox title={patientCount} subtitle="Number of Patients" />
         </Box>
         <Box
           gridColumn="span 3"
@@ -157,10 +187,7 @@ const Dashboard = () => {
           alignItems="center"
           justifyContent="center"
         >
-          <StatBox
-            title={sTreatmentCount}
-            subtitle="Started Treatment"
-          />
+          <StatBox title={sTreatmentCount} subtitle="Started Treatment" />
         </Box>
         <Box
           gridColumn="span 3"
@@ -169,10 +196,7 @@ const Dashboard = () => {
           alignItems="center"
           justifyContent="center"
         >
-          <StatBox
-            title={oTreatmentCount}
-            subtitle="Ongoing Treatment"
-          />
+          <StatBox title={oTreatmentCount} subtitle="Ongoing Treatment" />
         </Box>
         <Box
           gridColumn="span 3"
@@ -181,118 +205,121 @@ const Dashboard = () => {
           alignItems="center"
           justifyContent="center"
         >
-          <StatBox
-            title={eTreatmentCount}
-            subtitle="Ended Treatment"
-          />
+          <StatBox title={eTreatmentCount} subtitle="Ended Treatment" />
         </Box>
 
         {/* ROW 2 */}
         <Box
-          gridColumn="span 3"
+          gridColumn="span 4"
           gridRow="span 2"
+          p="16px"
           backgroundColor={colors.primary[400]}
+          display="flex"
+          flexDirection="column"
+          alignItems="center" // Align items vertically
         >
-          <Box
-            mt="25px"
-            display="flex "
-          >
           <Typography
             variant="h3"
             fontWeight="600"
-            sx={{ padding: "0px 0px 0px 30px" }}
-            marginBottom="20px"
+            textAlign="center"
+            sx={{ padding: "0px 0px 0px 0px" }}
           >
-          Treatment Progress of Patients
+            Treatment Progress of Patients
           </Typography>
-          <Box height="250px" m="-20px 0 0 0">
-          <Doughnut
+          <Box height="220px" minHeight="150px" marginTop="8px">
+            <Doughnut
               data={{
-                labels: ['Start', 'Ongoing', 'End'],
+                labels: ["Start", "Ongoing", "End"],
                 datasets: [
                   {
                     label: "Count",
-                    data: [sTreatmentCount,oTreatmentCount,eTreatmentCount],
+                    data: [sTreatmentCount, oTreatmentCount, eTreatmentCount],
                     backgroundColor: [
-                      'rgb(255, 99, 132)',
-                      'rgb(54, 162, 235)',
-                      'rgb(255, 205, 86)'
+                      "rgb(255, 99, 132)",
+                      "rgb(54, 162, 235)",
+                      "rgb(255, 205, 86)",
                     ],
-                    hoverOffset: 4
-                  }]
+                    hoverOffset: 4,
+                  },
+                ],
               }}
-           />
-          </Box>
+            />
           </Box>
         </Box>
 
         <Box
-          gridColumn="span 3"
+          gridColumn="span 8"
           gridRow="span 2"
+          p="16px"
           backgroundColor={colors.primary[400]}
         >
-          <Box
-            mt="25px"
-            p="0 30px"
-            display="flex "
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Box>
-              <Typography
+          <Typography
             variant="h3"
             fontWeight="600"
-            marginBottom="25px"
-              >
-                Clinical Inventory
-              </Typography>
-            </Box>
-          </Box>
-          <Box height="250px" m="-20px 0 0 0" marginLeft="30px">
-           <Bar
+            textAlign="center"
+            sx={{ padding: "0px 0px 0px 0px" }}
+          >
+            Clinical Inventory
+          </Typography>
+          <Box
+            height="230px"
+            marginTop="16px"
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+          >
+            <Bar
               data={{
                 labels: inventory.map((doc) => doc.name),
                 datasets: [
                   {
                     label: "Quantity",
                     data: inventory.map((doc) => doc.quantity),
-                    backgroundColor: ['rgb(208, 162, 247)', 'aqua', 'pink', 'lightgreen', 'lightblue', 'gold'],
-                    borderColor: ['white'],
+                    backgroundColor: [
+                      "rgb(208, 162, 247)",
+                      "aqua",
+                      "pink",
+                      "lightgreen",
+                      "lightblue",
+                      "gold",
+                    ],
+                    borderColor: ["white"],
                     borderWidth: 2,
-                    
-                  }]
+                  },
+                ],
               }}
-           />
+              options={{
+                maintainAspectRatio: false,
+              }}
+            />
           </Box>
         </Box>
 
         <Box
-          gridColumn="span 3"
+          gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
           overflow="auto"
         >
-        <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
+          <Typography
+            variant="h3"
+            fontWeight="600"
+            ml="16px"
+            mt="16px"
+            mb="8px"
+            sx={{ padding: "0px 0px 0px 0px" }}
           >
-            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recently Referred Patients
-            </Typography>
-            </Box>
-            {patients.map((doc, i) => (
-              <Box
+            Recently Referred Patients
+          </Typography>
+          {patients.map((doc, i) => (
+            <Box
               key={`${doc.id}-${i}`}
               display="flex"
               justifyContent="space-between"
               alignItems="center"
               borderBottom={`4px solid ${colors.primary[500]}`}
               p="15px"
-              >
+            >
               <Box>
                 <Typography
                   color={colors.greenAccent[500]}
@@ -306,10 +333,9 @@ const Dashboard = () => {
                 </Typography>
               </Box>
               {/* date referred */}
-              <Box 
-              color={colors.grey[100]}>
+              <Box color={colors.grey[100]}>
                 {doc.receivingFacilityDateReceived}
-                </Box>
+              </Box>
               <Box
                 backgroundColor={colors.greenAccent[500]}
                 p="5px 10px"
@@ -322,23 +348,21 @@ const Dashboard = () => {
         </Box>
         {/* MTBRIF */}
         <Box
-          gridColumn="span 3"
+          gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
           overflow="auto"
         >
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
+          <Typography
+            variant="h3"
+            fontWeight="600"
+            ml="16px"
+            mt="16px"
+            mb="8px"
+            sx={{ padding: "0px 0px 0px 0px" }}
           >
-            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recently Added MTB/RIF Tests
-            </Typography>
-          </Box>
+            Recently Added MTB/RIF Tests
+          </Typography>
           {mtbrif.map((doc, i) => (
             <Box
               key={`${doc.id}-${i}`}
@@ -360,10 +384,7 @@ const Dashboard = () => {
                   {doc.referenceNumber}
                 </Typography>
               </Box>
-              <Box 
-              color={colors.grey[100]}>
-                {/* {doc.testDate} */}
-                </Box>
+              <Box color={colors.grey[100]}>{/* {doc.testDate} */}</Box>
               <Box
                 backgroundColor={colors.greenAccent[500]}
                 p="5px 10px"
@@ -374,37 +395,35 @@ const Dashboard = () => {
             </Box>
           ))}
         </Box>
-        
+
         {/* ROW 3 */}
         <Box
-          gridColumn="span 3"
+          gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
           overflow="auto"
         >
           {/* Xray */}
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
+          <Typography
+            variant="h3"
+            fontWeight="600"
+            ml="16px"
+            mt="16px"
+            mb="8px"
+            sx={{ padding: "0px 0px 0px 0px" }}
           >
-            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recently Added Xray Tests
-            </Typography>
-            </Box>
-            {xray.map((doc, i) => (
-              <Box
+            Recently Added Xray Tests
+          </Typography>
+          {xray.map((doc, i) => (
+            <Box
               key={`${doc.id}-${i}`}
               display="flex"
               justifyContent="space-between"
               alignItems="center"
               borderBottom={`4px solid ${colors.primary[500]}`}
               p="15px"
-              >
-                <Box>
+            >
+              <Box>
                 <Typography
                   color={colors.greenAccent[500]}
                   variant="h5"
@@ -416,10 +435,7 @@ const Dashboard = () => {
                   {doc.referenceNumber}
                 </Typography>
               </Box>
-              <Box 
-              color={colors.grey[100]}>
-                {/* {doc.testDate} */}
-                </Box>
+              <Box color={colors.grey[100]}>{/* {doc.testDate} */}</Box>
               <Box
                 backgroundColor={colors.greenAccent[500]}
                 p="5px 10px"
@@ -432,33 +448,31 @@ const Dashboard = () => {
         </Box>
         {/* TST */}
         <Box
-          gridColumn="span 3"
+          gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
           overflow="auto"
         >
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
+          <Typography
+            variant="h3"
+            fontWeight="600"
+            ml="16px"
+            mt="16px"
+            mb="8px"
+            sx={{ padding: "0px 0px 0px 0px" }}
           >
-            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recently Added TST Tests
-            </Typography>
-            </Box>
-            {tst.map((doc, i) => (
-              <Box
+            Recently Added TST Tests
+          </Typography>
+          {tst.map((doc, i) => (
+            <Box
               key={`${doc.id}-${i}`}
               display="flex"
               justifyContent="space-between"
               alignItems="center"
               borderBottom={`4px solid ${colors.primary[500]}`}
               p="15px"
-              >
-                <Box>
+            >
+              <Box>
                 <Typography
                   color={colors.greenAccent[500]}
                   variant="h5"
@@ -470,64 +484,7 @@ const Dashboard = () => {
                   {doc.referenceNumber}
                 </Typography>
               </Box>
-              <Box 
-              color={colors.grey[100]}>
-                {/* {doc.testDate} */}
-                </Box>
-              <Box
-                backgroundColor={colors.greenAccent[500]}
-                p="5px 10px"
-                borderRadius="4px"
-              >
-                {doc.testResult}
-              </Box>
-            </Box>
-          ))}
-        </Box>
-        
-        <Box
-          gridColumn="span 3"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-          overflow="auto"
-        >
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
-          >
-            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recently Added IGRA Tests
-            </Typography>
-            </Box>
-            {igra.map((doc, i) => (
-              <Box
-              key={`${doc.id}-${i}`}
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              borderBottom={`4px solid ${colors.primary[500]}`}
-              p="15px"
-              >
-                <Box>
-                <Typography
-                  color={colors.greenAccent[500]}
-                  variant="h5"
-                  fontWeight="600"
-                >
-                  {doc.caseNumber}
-                </Typography>
-                <Typography color={colors.grey[100]}>
-                  {doc.referenceNumber}
-                </Typography>
-              </Box>
-              <Box 
-              color={colors.grey[100]}>
-                {/* {doc.testDate} */}
-                </Box>
+              <Box color={colors.grey[100]}>{/* {doc.testDate} */}</Box>
               <Box
                 backgroundColor={colors.greenAccent[500]}
                 p="5px 10px"
@@ -540,34 +497,31 @@ const Dashboard = () => {
         </Box>
 
         <Box
-          gridColumn="span 3"
+          gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
           overflow="auto"
         >
-           
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
+          <Typography
+            variant="h3"
+            fontWeight="600"
+            ml="16px"
+            mt="16px"
+            mb="8px"
+            sx={{ padding: "0px 0px 0px 0px" }}
           >
-          <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recently Added DST Tests
-            </Typography>
-            </Box>
-            {dst.map((doc, i) => (
-              <Box
+            Recently Added IGRA Tests
+          </Typography>
+          {igra.map((doc, i) => (
+            <Box
               key={`${doc.id}-${i}`}
               display="flex"
               justifyContent="space-between"
               alignItems="center"
               borderBottom={`4px solid ${colors.primary[500]}`}
               p="15px"
-              >
-                <Box>
+            >
+              <Box>
                 <Typography
                   color={colors.greenAccent[500]}
                   variant="h5"
@@ -579,10 +533,7 @@ const Dashboard = () => {
                   {doc.referenceNumber}
                 </Typography>
               </Box>
-              <Box 
-              color={colors.grey[100]}>
-                {doc.testDate}
-                </Box>
+              <Box color={colors.grey[100]}>{/* {doc.testDate} */}</Box>
               <Box
                 backgroundColor={colors.greenAccent[500]}
                 p="5px 10px"
@@ -591,9 +542,57 @@ const Dashboard = () => {
                 {doc.testResult}
               </Box>
             </Box>
-            ))}
+          ))}
         </Box>
 
+        <Box
+          gridColumn="span 4"
+          gridRow="span 2"
+          backgroundColor={colors.primary[400]}
+          overflow="auto"
+        >
+          <Typography
+            variant="h3"
+            fontWeight="600"
+            ml="16px"
+            mt="16px"
+            mb="8px"
+            sx={{ padding: "0px 0px 0px 0px" }}
+          >
+            Recently Added DST Tests
+          </Typography>
+          {dst.map((doc, i) => (
+            <Box
+              key={`${doc.id}-${i}`}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              borderBottom={`4px solid ${colors.primary[500]}`}
+              p="15px"
+            >
+              <Box>
+                <Typography
+                  color={colors.greenAccent[500]}
+                  variant="h5"
+                  fontWeight="600"
+                >
+                  {doc.caseNumber}
+                </Typography>
+                <Typography color={colors.grey[100]}>
+                  {doc.referenceNumber}
+                </Typography>
+              </Box>
+              <Box color={colors.grey[100]}>{doc.testDate}</Box>
+              <Box
+                backgroundColor={colors.greenAccent[500]}
+                p="5px 10px"
+                borderRadius="4px"
+              >
+                {doc.testResult}
+              </Box>
+            </Box>
+          ))}
+        </Box>
       </Box>
     </Box>
   );
