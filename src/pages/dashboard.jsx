@@ -145,10 +145,7 @@ const Dashboard = () => {
           alignItems="center"
           justifyContent="center"
         >
-          <StatBox
-            title= {patientCount}
-            subtitle="Number of Patients"
-          />
+          <StatBox title={patientCount} subtitle="Number of Patients" />
         </Box>
         <Box
           gridColumn="span 3"
@@ -157,10 +154,7 @@ const Dashboard = () => {
           alignItems="center"
           justifyContent="center"
         >
-          <StatBox
-            title={sTreatmentCount}
-            subtitle="Started Treatment"
-          />
+          <StatBox title={sTreatmentCount} subtitle="Started Treatment" />
         </Box>
         <Box
           gridColumn="span 3"
@@ -169,10 +163,7 @@ const Dashboard = () => {
           alignItems="center"
           justifyContent="center"
         >
-          <StatBox
-            title={oTreatmentCount}
-            subtitle="Ongoing Treatment"
-          />
+          <StatBox title={oTreatmentCount} subtitle="Ongoing Treatment" />
         </Box>
         <Box
           gridColumn="span 3"
@@ -181,118 +172,121 @@ const Dashboard = () => {
           alignItems="center"
           justifyContent="center"
         >
-          <StatBox
-            title={eTreatmentCount}
-            subtitle="Ended Treatment"
-          />
+          <StatBox title={eTreatmentCount} subtitle="Ended Treatment" />
         </Box>
 
         {/* ROW 2 */}
         <Box
-          gridColumn="span 3"
+          gridColumn="span 4"
           gridRow="span 2"
+          p="16px"
           backgroundColor={colors.primary[400]}
+          display="flex"
+          flexDirection="column"
+          alignItems="center" // Align items vertically
         >
-          <Box
-            mt="25px"
-            display="flex "
-          >
           <Typography
             variant="h3"
             fontWeight="600"
-            sx={{ padding: "0px 0px 0px 30px" }}
-            marginBottom="20px"
+            textAlign="center"
+            sx={{ padding: "0px 0px 0px 0px" }}
           >
-          Treatment Progress of Patients
+            Treatment Progress of Patients
           </Typography>
-          <Box height="250px" m="-20px 0 0 0">
-          <Doughnut
+          <Box height="220px" minHeight="150px" marginTop="8px">
+            <Doughnut
               data={{
-                labels: ['Start', 'Ongoing', 'End'],
+                labels: ["Start", "Ongoing", "End"],
                 datasets: [
                   {
                     label: "Count",
-                    data: [sTreatmentCount,oTreatmentCount,eTreatmentCount],
+                    data: [sTreatmentCount, oTreatmentCount, eTreatmentCount],
                     backgroundColor: [
-                      'rgb(255, 99, 132)',
-                      'rgb(54, 162, 235)',
-                      'rgb(255, 205, 86)'
+                      "rgb(255, 99, 132)",
+                      "rgb(54, 162, 235)",
+                      "rgb(255, 205, 86)",
                     ],
-                    hoverOffset: 4
-                  }]
+                    hoverOffset: 4,
+                  },
+                ],
               }}
-           />
-          </Box>
+            />
           </Box>
         </Box>
 
         <Box
-          gridColumn="span 3"
+          gridColumn="span 8"
           gridRow="span 2"
+          p="16px"
           backgroundColor={colors.primary[400]}
         >
-          <Box
-            mt="25px"
-            p="0 30px"
-            display="flex "
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Box>
-              <Typography
+          <Typography
             variant="h3"
             fontWeight="600"
-            marginBottom="25px"
-              >
-                Clinical Inventory
-              </Typography>
-            </Box>
-          </Box>
-          <Box height="250px" m="-20px 0 0 0" marginLeft="30px">
-           <Bar
+            textAlign="center"
+            sx={{ padding: "0px 0px 0px 0px" }}
+          >
+            Clinical Inventory
+          </Typography>
+          <Box
+            height="230px"
+            marginTop="16px"
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+          >
+            <Bar
               data={{
                 labels: inventory.map((doc) => doc.name),
                 datasets: [
                   {
                     label: "Quantity",
                     data: inventory.map((doc) => doc.quantity),
-                    backgroundColor: ['rgb(208, 162, 247)', 'aqua', 'pink', 'lightgreen', 'lightblue', 'gold'],
-                    borderColor: ['white'],
+                    backgroundColor: [
+                      "rgb(208, 162, 247)",
+                      "aqua",
+                      "pink",
+                      "lightgreen",
+                      "lightblue",
+                      "gold",
+                    ],
+                    borderColor: ["white"],
                     borderWidth: 2,
-                    
-                  }]
+                  },
+                ],
               }}
-           />
+              options={{
+                maintainAspectRatio: false,
+              }}
+            />
           </Box>
         </Box>
 
         <Box
-          gridColumn="span 3"
+          gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
           overflow="auto"
         >
-        <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
+          <Typography
+            variant="h3"
+            fontWeight="600"
+            ml="16px"
+            mt="16px"
+            mb="8px"
+            sx={{ padding: "0px 0px 0px 0px" }}
           >
-            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recently Referred Patients
-            </Typography>
-            </Box>
-            {patients.map((doc, i) => (
-              <Box
+            Recently Referred Patients
+          </Typography>
+          {patients.map((doc, i) => (
+            <Box
               key={`${doc.id}-${i}`}
               display="flex"
               justifyContent="space-between"
               alignItems="center"
               borderBottom={`4px solid ${colors.primary[500]}`}
               p="15px"
-              >
+            >
               <Box>
                 <Typography
                   color={colors.greenAccent[500]}
@@ -301,13 +295,14 @@ const Dashboard = () => {
                 >
                   {doc.caseNumber}
                 </Typography>
-
+                <Typography color={colors.grey[100]}>
+                  {doc.dotsStaffName}
+                </Typography>
               </Box>
               {/* date referred */}
-              <Box 
-              color={colors.grey[100]}>
+              <Box color={colors.grey[100]}>
                 {doc.receivingFacilityDateReceived}
-                </Box>
+              </Box>
               <Box
                 backgroundColor={colors.greenAccent[500]}
                 p="5px 10px"
@@ -320,23 +315,21 @@ const Dashboard = () => {
         </Box>
         {/* MTBRIF */}
         <Box
-          gridColumn="span 3"
+          gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
           overflow="auto"
         >
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
+          <Typography
+            variant="h3"
+            fontWeight="600"
+            ml="16px"
+            mt="16px"
+            mb="8px"
+            sx={{ padding: "0px 0px 0px 0px" }}
           >
-            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recently Added MTB/RIF Tests
-            </Typography>
-          </Box>
+            Recently Added MTB/RIF Tests
+          </Typography>
           {mtbrif.map((doc, i) => (
             <Box
               key={`${doc.id}-${i}`}
@@ -358,10 +351,7 @@ const Dashboard = () => {
                   {doc.referenceNumber}
                 </Typography>
               </Box>
-              <Box 
-              color={colors.grey[100]}>
-                {/* {doc.testDate} */}
-                </Box>
+              <Box color={colors.grey[100]}>{/* {doc.testDate} */}</Box>
               <Box
                 backgroundColor={colors.greenAccent[500]}
                 p="5px 10px"
@@ -372,37 +362,35 @@ const Dashboard = () => {
             </Box>
           ))}
         </Box>
-        
+
         {/* ROW 3 */}
         <Box
-          gridColumn="span 3"
+          gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
           overflow="auto"
         >
           {/* Xray */}
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
+          <Typography
+            variant="h3"
+            fontWeight="600"
+            ml="16px"
+            mt="16px"
+            mb="8px"
+            sx={{ padding: "0px 0px 0px 0px" }}
           >
-            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recently Added Xray Tests
-            </Typography>
-            </Box>
-            {xray.map((doc, i) => (
-              <Box
+            Recently Added Xray Tests
+          </Typography>
+          {xray.map((doc, i) => (
+            <Box
               key={`${doc.id}-${i}`}
               display="flex"
               justifyContent="space-between"
               alignItems="center"
               borderBottom={`4px solid ${colors.primary[500]}`}
               p="15px"
-              >
-                <Box>
+            >
+              <Box>
                 <Typography
                   color={colors.greenAccent[500]}
                   variant="h5"
@@ -414,10 +402,7 @@ const Dashboard = () => {
                   {doc.referenceNumber}
                 </Typography>
               </Box>
-              <Box 
-              color={colors.grey[100]}>
-                {/* {doc.testDate} */}
-                </Box>
+              <Box color={colors.grey[100]}>{/* {doc.testDate} */}</Box>
               <Box
                 backgroundColor={colors.greenAccent[500]}
                 p="5px 10px"
@@ -430,33 +415,31 @@ const Dashboard = () => {
         </Box>
         {/* TST */}
         <Box
-          gridColumn="span 3"
+          gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
           overflow="auto"
         >
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
+          <Typography
+            variant="h3"
+            fontWeight="600"
+            ml="16px"
+            mt="16px"
+            mb="8px"
+            sx={{ padding: "0px 0px 0px 0px" }}
           >
-            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recently Added TST Tests
-            </Typography>
-            </Box>
-            {tst.map((doc, i) => (
-              <Box
+            Recently Added TST Tests
+          </Typography>
+          {tst.map((doc, i) => (
+            <Box
               key={`${doc.id}-${i}`}
               display="flex"
               justifyContent="space-between"
               alignItems="center"
               borderBottom={`4px solid ${colors.primary[500]}`}
               p="15px"
-              >
-                <Box>
+            >
+              <Box>
                 <Typography
                   color={colors.greenAccent[500]}
                   variant="h5"
@@ -468,64 +451,7 @@ const Dashboard = () => {
                   {doc.referenceNumber}
                 </Typography>
               </Box>
-              <Box 
-              color={colors.grey[100]}>
-                {/* {doc.testDate} */}
-                </Box>
-              <Box
-                backgroundColor={colors.greenAccent[500]}
-                p="5px 10px"
-                borderRadius="4px"
-              >
-                {doc.testResult}
-              </Box>
-            </Box>
-          ))}
-        </Box>
-        
-        <Box
-          gridColumn="span 3"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-          overflow="auto"
-        >
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
-          >
-            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recently Added IGRA Tests
-            </Typography>
-            </Box>
-            {igra.map((doc, i) => (
-              <Box
-              key={`${doc.id}-${i}`}
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              borderBottom={`4px solid ${colors.primary[500]}`}
-              p="15px"
-              >
-                <Box>
-                <Typography
-                  color={colors.greenAccent[500]}
-                  variant="h5"
-                  fontWeight="600"
-                >
-                  {doc.caseNumber}
-                </Typography>
-                <Typography color={colors.grey[100]}>
-                  {doc.referenceNumber}
-                </Typography>
-              </Box>
-              <Box 
-              color={colors.grey[100]}>
-                {/* {doc.testDate} */}
-                </Box>
+              <Box color={colors.grey[100]}>{/* {doc.testDate} */}</Box>
               <Box
                 backgroundColor={colors.greenAccent[500]}
                 p="5px 10px"
@@ -538,34 +464,31 @@ const Dashboard = () => {
         </Box>
 
         <Box
-          gridColumn="span 3"
+          gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
           overflow="auto"
         >
-           
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
+          <Typography
+            variant="h3"
+            fontWeight="600"
+            ml="16px"
+            mt="16px"
+            mb="8px"
+            sx={{ padding: "0px 0px 0px 0px" }}
           >
-          <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recently Added DST Tests
-            </Typography>
-            </Box>
-            {dst.map((doc, i) => (
-              <Box
+            Recently Added IGRA Tests
+          </Typography>
+          {igra.map((doc, i) => (
+            <Box
               key={`${doc.id}-${i}`}
               display="flex"
               justifyContent="space-between"
               alignItems="center"
               borderBottom={`4px solid ${colors.primary[500]}`}
               p="15px"
-              >
-                <Box>
+            >
+              <Box>
                 <Typography
                   color={colors.greenAccent[500]}
                   variant="h5"
@@ -577,10 +500,7 @@ const Dashboard = () => {
                   {doc.referenceNumber}
                 </Typography>
               </Box>
-              <Box 
-              color={colors.grey[100]}>
-                {doc.testDate}
-                </Box>
+              <Box color={colors.grey[100]}>{/* {doc.testDate} */}</Box>
               <Box
                 backgroundColor={colors.greenAccent[500]}
                 p="5px 10px"
@@ -589,9 +509,57 @@ const Dashboard = () => {
                 {doc.testResult}
               </Box>
             </Box>
-            ))}
+          ))}
         </Box>
 
+        <Box
+          gridColumn="span 4"
+          gridRow="span 2"
+          backgroundColor={colors.primary[400]}
+          overflow="auto"
+        >
+          <Typography
+            variant="h3"
+            fontWeight="600"
+            ml="16px"
+            mt="16px"
+            mb="8px"
+            sx={{ padding: "0px 0px 0px 0px" }}
+          >
+            Recently Added DST Tests
+          </Typography>
+          {dst.map((doc, i) => (
+            <Box
+              key={`${doc.id}-${i}`}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              borderBottom={`4px solid ${colors.primary[500]}`}
+              p="15px"
+            >
+              <Box>
+                <Typography
+                  color={colors.greenAccent[500]}
+                  variant="h5"
+                  fontWeight="600"
+                >
+                  {doc.caseNumber}
+                </Typography>
+                <Typography color={colors.grey[100]}>
+                  {doc.referenceNumber}
+                </Typography>
+              </Box>
+              <Box color={colors.grey[100]}>{doc.testDate}</Box>
+              <Box
+                backgroundColor={colors.greenAccent[500]}
+                p="5px 10px"
+                borderRadius="4px"
+              >
+                {doc.testResult}
+              </Box>
+            </Box>
+          ))}
+        </Box>
       </Box>
     </Box>
   );
