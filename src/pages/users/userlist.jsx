@@ -1,21 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  Box, Button, TextField, InputAdornment, CircularProgress,
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  MenuItem, Select, FormControl, InputLabel,
-  useTheme
+  Box,
+  Button,
+  TextField,
+  InputAdornment,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  useTheme,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
-import { collection, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
-import moment from 'moment';
-import { db, auth } from '../../firebase.config';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { signOut } from 'firebase/auth'; 
-import { useNavigate } from 'react-router-dom';
-import SearchIcon from '@mui/icons-material/Search';
-import EditIcon from '@mui/icons-material/Edit';
+import {
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  getDoc,
+} from "firebase/firestore";
+import moment from "moment";
+import { db, auth } from "../../firebase.config";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { signOut } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import SearchIcon from "@mui/icons-material/Search";
+import EditIcon from "@mui/icons-material/Edit";
 
 const UserList = () => {
   const theme = useTheme();
@@ -24,15 +40,19 @@ const UserList = () => {
   const [currentUser, loading, error] = useAuthState(auth);
 
   const [users, setUsers] = useState([]);
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState("");
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
-  const [selectedUserRole, setSelectedUserRole] = useState('');
+  const [selectedUserRole, setSelectedUserRole] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Dropdown choices for roles
   const roleOptions = [
-    'Doctor', 'Nurse', 'Medical Technologist', 'Lab Aide', 'Parent'
+    "Doctor",
+    "Nurse",
+    "Medical Technologist",
+    "Lab Aide",
+    "Parent",
   ];
 
   useEffect(() => {
@@ -44,30 +64,35 @@ const UserList = () => {
       return;
     }
     if (currentUser) {
-      const userRef = doc(db, 'users', currentUser.uid);
+      const userRef = doc(db, "users", currentUser.uid);
       getDoc(userRef).then((docSnap) => {
-        if (docSnap.exists() && docSnap.data().role === 'Admin') {
+        if (docSnap.exists() && docSnap.data().role === "Admin") {
           setIsAdmin(true);
           // Fetch the users as admin is verified
           fetchUsers();
         } else {
           // If not admin or if the document does not exist, sign out and redirect to login
-          signOut(auth).then(() => {
-            navigate('/login');
-          }).catch((error) => {
-            console.error('Logout failed', error);
-          });
+          signOut(auth)
+            .then(() => {
+              navigate("/login");
+            })
+            .catch((error) => {
+              console.error("Logout failed", error);
+            });
         }
       });
     } else if (!loading) {
       // If there is no current user and it's not loading, redirect to login
-      navigate('/login');
+      navigate("/login");
     }
   }, [currentUser, loading, navigate, error]);
 
   const fetchUsers = async () => {
     const querySnapshot = await getDocs(collection(db, "users"));
-    const usersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    const usersData = querySnapshot.docs.map((doc) => ({
+      ...doc.data(),
+      id: doc.id,
+    }));
     setUsers(usersData);
   };
 
@@ -84,67 +109,67 @@ const UserList = () => {
     setSearchText(value.toLowerCase());
   };
 
-
   const handleRoleChange = (event) => {
     setSelectedUserRole(event.target.value);
   };
 
-    // Function to open the role editing dialog
-    const handleEditRolesClick = (userId, role) => {
-      setSelectedUserId(userId);
-      setSelectedUserRole(role);
-      setIsRoleDialogOpen(true);
-    };
+  // Function to open the role editing dialog
+  const handleEditRolesClick = (userId, role) => {
+    setSelectedUserId(userId);
+    setSelectedUserRole(role);
+    setIsRoleDialogOpen(true);
+  };
 
-    // Function to close the role editing dialog
-    const handleCloseRoleDialog = () => {
-      setIsRoleDialogOpen(false);
-      setSelectedUserId(null);
-      setSelectedUserRole('');
-    };
+  // Function to close the role editing dialog
+  const handleCloseRoleDialog = () => {
+    setIsRoleDialogOpen(false);
+    setSelectedUserId(null);
+    setSelectedUserRole("");
+  };
 
-    // Function to save the new role to Firestore
-    const handleSaveRole = async () => {
-      if (selectedUserId) {
-        const userDocRef = doc(db, 'users', selectedUserId);
-        await updateDoc(userDocRef, { role: selectedUserRole });
-        
-        // Re-fetch users or update the local state to reflect the changes
-        setUsers((prevUsers) =>
-          prevUsers.map((user) =>
-            user.id === selectedUserId ? { ...user, role: selectedUserRole } : user
-          )
-        );
-        handleCloseRoleDialog();
+  // Function to save the new role to Firestore
+  const handleSaveRole = async () => {
+    if (selectedUserId) {
+      const userDocRef = doc(db, "users", selectedUserId);
+      await updateDoc(userDocRef, { role: selectedUserRole });
 
-      }
-    };
+      // Re-fetch users or update the local state to reflect the changes
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === selectedUserId
+            ? { ...user, role: selectedUserRole }
+            : user
+        )
+      );
+      handleCloseRoleDialog();
+    }
+  };
 
   const filteredRows = searchText
-    ? users.filter((user) =>
-        user.fullName.toLowerCase().includes(searchText) ||
-        user.email.toLowerCase().includes(searchText)
+    ? users.filter(
+        (user) =>
+          user.fullName.toLowerCase().includes(searchText) ||
+          user.email.toLowerCase().includes(searchText)
       )
     : users;
 
-      
-    const formatDate = (value) => {
-        return moment(value.toDate()).format('MM/DD/YYYY'); 
-    };
+  const formatDate = (value) => {
+    return moment(value.toDate()).format("MM/DD/YYYY");
+  };
 
   const columns = [
-    { field: 'fullName', headerName: 'Full Name', flex: 1,},
-    { field: 'email', headerName: 'Email', flex: 1, },
-    { field: 'role', headerName: 'Role', flex: 1, },
+    { field: "fullName", headerName: "Full Name", flex: 1 },
+    { field: "email", headerName: "Email", flex: 1 },
+    { field: "role", headerName: "Role", flex: 1 },
     {
-      field: 'dateAdded',
-      headerName: 'Date Added',
+      field: "dateAdded",
+      headerName: "Date Added",
       flex: 1,
       valueFormatter: (params) => formatDate(params.value),
     },
     {
-      field: 'action',
-      headerName: 'Action',
+      field: "action",
+      headerName: "Action",
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
           <Button
@@ -165,18 +190,24 @@ const UserList = () => {
   return (
     <Box m="20px">
       <Header title="User List" subtitle="Managing user data" />
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center', 
-        p: 2,
-      }}>
-        <TextField 
-          placeholder="Search Users" 
-          variant="outlined" 
-          value={searchText} 
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          p: 2,
+        }}
+      >
+        <TextField
+          placeholder="Search Users"
+          variant="outlined"
+          value={searchText}
           onChange={handleSearchChange}
-          sx={{ width: 550, backgroundColor: colors.blueAccent[700] , marginLeft: theme.spacing(-2) }}
+          sx={{
+            width: 550,
+            backgroundColor: colors.blueAccent[700],
+            marginLeft: theme.spacing(-2),
+          }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -185,24 +216,25 @@ const UserList = () => {
             ),
           }}
         />
-
       </Box>
       <Box
         sx={{
-          width: 'auto',
-          '& .MuiDataGrid-root': {
+          width: "100%",
+          height: "70vh", // Set the height to 70% of the viewport height or adjust as needed
+          overflow: "auto", // Enable scrolling if content overflows
+          "& .MuiDataGrid-root": {
             border: `1px solid ${colors.primary[700]}`,
             color: colors.grey[100],
             backgroundColor: colors.primary[400],
           },
-          '& .MuiDataGrid-columnHeaders': {
+          "& .MuiDataGrid-columnHeaders": {
             backgroundColor: colors.blueAccent[700],
             color: colors.grey[100],
           },
-          '& .MuiDataGrid-cell': {
+          "& .MuiDataGrid-cell": {
             borderBottom: `1px solid ${colors.primary[700]}`,
           },
-          '& .MuiDataGrid-footerContainer': {
+          "& .MuiDataGrid-footerContainer": {
             borderTop: `1px solid ${colors.primary[700]}`,
             backgroundColor: colors.blueAccent[700],
             color: colors.grey[100],
@@ -217,56 +249,56 @@ const UserList = () => {
           disableSelectionOnClick
         />
 
-    <Dialog open={isRoleDialogOpen} onClose={handleCloseRoleDialog}>
-        <DialogTitle>Edit User Role</DialogTitle>
-        <DialogContent>
-          <FormControl fullWidth>
-            <InputLabel id="role-select-label">Role</InputLabel>
-            <Select
-              labelId="role-select-label"
-              id="role-select"
-              value={selectedUserRole}
-              label="Role"
-              onChange={handleRoleChange}
+        <Dialog open={isRoleDialogOpen} onClose={handleCloseRoleDialog}>
+          <DialogTitle>Edit User Role</DialogTitle>
+          <DialogContent>
+            <FormControl fullWidth>
+              <InputLabel id="role-select-label">Role</InputLabel>
+              <Select
+                labelId="role-select-label"
+                id="role-select"
+                value={selectedUserRole}
+                label="Role"
+                onChange={handleRoleChange}
+              >
+                {roleOptions.map((role) => (
+                  <MenuItem key={role} value={role}>
+                    {role}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={handleCloseRoleDialog}
+              variant="outlined"
+              sx={{
+                color: colors.grey[100],
+                borderColor: colors.grey[700],
+                "&:hover": {
+                  borderColor: colors.grey[500],
+                  backgroundColor: "transparent",
+                },
+              }}
             >
-              {roleOptions.map((role) => (
-                <MenuItem key={role} value={role}>{role}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button 
-            onClick={handleCloseRoleDialog} 
-            variant="outlined" 
-            sx={{ 
-              color: colors.grey[100], 
-              borderColor: colors.grey[700],
-              '&:hover': {
-                borderColor: colors.grey[500], 
-                backgroundColor: 'transparent',
-              }
-            }}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSaveRole} 
-            variant="contained" 
-            sx={{ 
-              backgroundColor: colors.greenAccent[600], 
-              color: colors.grey[100],
-              '&:hover': {
-                backgroundColor: colors.greenAccent[700], 
-              }
-            }}
-          >
-            Save
-          </Button>
-        </DialogActions>
-
-      </Dialog>
-
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveRole}
+              variant="contained"
+              sx={{
+                backgroundColor: colors.greenAccent[600],
+                color: colors.grey[100],
+                "&:hover": {
+                  backgroundColor: colors.greenAccent[700],
+                },
+              }}
+            >
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </Box>
   );

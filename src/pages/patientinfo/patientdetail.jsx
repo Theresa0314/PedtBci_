@@ -516,8 +516,9 @@ const PatientDetail = () => {
           </Box>
           <Box
             sx={{
-              height: 450, 
-              width: "100%",
+              width: '100%',
+              height: '70vh', // Set the height to 70% of the viewport height or adjust as needed
+              overflow: 'auto', // Enable scrolling if content overflows
               "& .MuiDataGrid-root": {
                 border: `1px solid ${colors.primary[700]}`,
                 color: colors.grey[100],

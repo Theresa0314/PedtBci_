@@ -128,17 +128,17 @@ const ReferralInfo = () => {
     {
       field: 'caseNumber',
       headerName: 'Case Number',
-      flex: 1,
+      flex: 2,
     },
     {
       field: 'referringFacilityName',
       headerName: 'Referring Facility/Unit',
-      flex: 1,
+      flex: 2,
     },
     {
       field: 'caseStatus',
       headerName: 'Case Status',
-      flex: 1,
+      flex: 2,
       renderCell: (params) => {
         // Here you can add more logic to handle different statuses
         let color;
@@ -166,7 +166,7 @@ const ReferralInfo = () => {
     {
       field: 'dateReferred',
       headerName: 'Date Referred',
-      flex: 1,
+      flex: 2,
       valueFormatter: (params) => {
         const valueFormatted = new Date(params.value).toLocaleDateString('en-US', { timeZone: 'Asia/Manila' });
         return valueFormatted;
@@ -175,7 +175,7 @@ const ReferralInfo = () => {
     {
       field: 'action',
       headerName: 'Action',
-      flex: 1,
+      flex: 4,
       renderCell: (params) => (
         <Box display="flex" justifyContent="center">
             <Button
@@ -255,8 +255,9 @@ const ReferralInfo = () => {
         )}
     </Box>
       <Box sx={{
-        height: 400,
-        width: '100%',
+         width: '100%',
+         height: '70vh', // Set the height to 70% of the viewport height or adjust as needed
+         overflow: 'auto', // Enable scrolling if content overflows
         '& .MuiDataGrid-root': {
           border: `1px solid ${colors.primary[700]}`,
           color: colors.grey[100],

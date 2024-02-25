@@ -252,11 +252,11 @@ const handleViewClick = (id) => {
 };
 
   const columns = [
-    { field: 'id', headerName: 'ID', flex: 0.1 },
+    { field: 'id', headerName: 'ID', flex: 3 },
     {
       field: 'view',
       headerName: '',
-      flex: 1,
+      flex: 3,
       sortable: false,
       renderCell: (params) => (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -295,7 +295,7 @@ const handleViewClick = (id) => {
     {
       field: 'action',
       headerName: 'Action',
-      flex: 1,
+      flex: 3,
       sortable: false,
       renderCell: (params) => (
         <div>
@@ -397,8 +397,9 @@ const handleViewClick = (id) => {
       {/* DataGrid for Symptoms */}
       <Box
         sx={{
-          height: 500,
-          width: '100%',
+          width: "100%",
+          height: "70vh", // Set the height to 70% of the viewport height or adjust as needed
+          overflow: "auto", // Enable scrolling if content overflows
           "& .MuiDataGrid-root": {
             border: `1px solid ${colors.primary[700]}`,
             color: colors.grey[100],
