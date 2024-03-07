@@ -16,24 +16,24 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
    // State hooks for form data
    const [regimen, setRegimen] = useState('');
 
-  // New state hook for startDate
-  // const [startDate, setStartDate] = useState('');
+  // New state hook for name
+  const [name, setName] = useState('');
 
-  //  // Fetch case start date when the component mounts or when caseId changes (?)
-  //  useEffect(() => {
-  //   const fetchStartDate = async () => {
+   // Fetch case name when the component mounts
+   useEffect(() => {
+    const fetchName = async () => {
 
-  //     const docRef = doc(db, 'cases', caseId);
-  //     const docSnap = await getDoc(docRef);
+      const docRef = doc(db, 'cases', caseId);
+      const docSnap = await getDoc(docRef);
       
-  //     if (docSnap.exists()) {
-  //       setStartDate(docSnap.data().startDate); 
-  //       console.log('No such case!');
-  //     }
-  //   };
+      if (docSnap.exists()) {
+        setName(docSnap.data().fullName); 
+        console.log('No such case!');
+      }
+    };
 
-  //   fetchStartDate();
-  // }, [caseId]);
+    fetchName();
+  }, [caseId]);
 
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -80,7 +80,6 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
           followUpDates.push(new Date(currentDate));
           currentDate.setDate(currentDate.getDate() + 14); // Add 2 weeks
         }
-     
         return followUpDates;
       };
     
@@ -92,6 +91,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
         const TPData = {
           caseId, // Directly used from props
           caseNumber, // Directly used from props
+          name,
           regimen,
           startDateTP,
           endDateTP,
@@ -119,7 +119,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
             <form onSubmit={handleSubmit}>
                 {/* Start Section */}
                 <Typography variant="h5" gutterBottom sx={{ color: colors.greenAccent[500], fontWeight: 'bold' }}>
-                    Treatment Plan Information
+                    Treatment Plan Information of {name}
                 </Typography>
                 <Grid container spacing={3}>
 

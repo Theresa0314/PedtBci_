@@ -23,15 +23,19 @@ const [events, setEvents] = useState([]);
 
 useEffect(() => {
   const fetchData = async () => {
+
     const treatmentPlanCollection = collection(db, "treatmentPlan");
     const treatmentPlanSnapshot = await getDocs(treatmentPlanCollection);
     const newEvents = [];
+
     treatmentPlanSnapshot.docs.forEach(doc => {
       const followUpDates = doc.data().followUpDates;
+      const name = doc.data().name;
+
       if (followUpDates && Array.isArray(followUpDates)) {
         followUpDates.forEach(schedule => {
           newEvents.push({
-            title: 'Follow Up' ,
+            title: `Follow Up for ${name}`,
             date: schedule.toDate(),
           });
         });
@@ -49,7 +53,8 @@ const isSameDay = (d1, d2) => {
     d1.getDate() === d2.getDate();
 };
 
-//
+  // Sort the events by date
+  events.sort((a, b) => new Date(a.date) - new Date(b.date));
 
   const handleDateClick = (selected) => {
     const title = prompt("Please enter a new title for your event");
@@ -141,20 +146,6 @@ const isSameDay = (d1, d2) => {
             select={handleDateClick}
             eventClick={handleEventClick}
             eventsSet={(events) => setCurrentEvents(events)}
-            
-            initialEvents={[
-              {
-                id: "12315",
-                title: "All-day event",
-                date: "2022-09-14",
-              },
-              {
-                id: "5123",
-                title: "Timed event",
-                date: "2022-09-28",
-              },
-            ]}
-
           />
         </Box>
       </Box>
