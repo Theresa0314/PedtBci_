@@ -1,4 +1,7 @@
-import { useState } from "react";
+import React, { useState, useEffect } from 'react';
+import { db } from '../firebase.config';
+import { doc, collection, getDoc, getDocs } from 'firebase/firestore';
+
 import FullCalendar from "@fullcalendar/react";
 import { formatDate } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -6,12 +9,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import {
-  Box,
-  List,
-  ListItem,
-  ListItemText,
-  Typography,
-  useTheme,
+  Box, List, ListItem, ListItemText, Typography, useTheme,
 } from "@mui/material";
 import Header from "../components/Header";
 import { tokens } from "../theme";
@@ -20,6 +18,38 @@ const Calendar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [currentEvents, setCurrentEvents] = useState([]);
+//followUp dates
+const [events, setEvents] = useState([]);
+
+useEffect(() => {
+  const fetchData = async () => {
+    const treatmentPlanCollection = collection(db, "treatmentPlan");
+    const treatmentPlanSnapshot = await getDocs(treatmentPlanCollection);
+    const newEvents = [];
+    treatmentPlanSnapshot.docs.forEach(doc => {
+      const followUpDates = doc.data().followUpDates;
+      if (followUpDates && Array.isArray(followUpDates)) {
+        followUpDates.forEach(schedule => {
+          newEvents.push({
+            title: 'Follow Up' ,
+            date: schedule.toDate(),
+          });
+        });
+      }
+    });
+    setEvents(newEvents);
+  };
+  fetchData();
+}, []);
+
+// Helper function to check if two dates are on the same day
+const isSameDay = (d1, d2) => {
+  return d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate();
+};
+
+//
 
   const handleDateClick = (selected) => {
     const title = prompt("Please enter a new title for your event");
@@ -103,6 +133,7 @@ const Calendar = () => {
               right: "dayGridMonth,timeGridWeek,timeGridDay,listMonth",
             }}
             initialView="dayGridMonth"
+            events={events}
             editable={true}
             selectable={true}
             selectMirror={true}
@@ -110,6 +141,7 @@ const Calendar = () => {
             select={handleDateClick}
             eventClick={handleEventClick}
             eventsSet={(events) => setCurrentEvents(events)}
+            
             initialEvents={[
               {
                 id: "12315",
@@ -122,6 +154,7 @@ const Calendar = () => {
                 date: "2022-09-28",
               },
             ]}
+
           />
         </Box>
       </Box>
