@@ -566,11 +566,8 @@ const viewDetails = (id) => {
 
      // Define columns for DataGrid
      const treatmentColumns = [
-        { field: 'duration', headerName: 'Duration', flex: 1 },
-        { field: 'drug', headerName: 'Medicine/Type of Drug Intake', flex: 1 },
-        { field: 'dosage', headerName: 'Dosage', flex: 1 },
-        { field: 'frequency', headerName: 'Frequency', flex: 1 },
-        { field: 'status',
+        { field: 'caseNumber', headerName: 'Case Number ', flex: 1 },
+                { field: 'status',
          headerName: 'Status', 
          flex: 1, 
          renderCell: (params) => (
@@ -583,6 +580,10 @@ const viewDetails = (id) => {
           </Typography>
         ),
         },
+        { field: 'regimen', headerName: 'Treatment Regimen', flex: 1 },
+        { field: 'startDateTP', headerName: 'TP Start Date', flex: 1 },
+        { field: 'duration', headerName: 'Duration', flex: 1 },
+        { field: 'endDateTP', headerName: 'TP End Date', flex: 1 },
         {
           field: 'action',
           headerName: 'Action',
