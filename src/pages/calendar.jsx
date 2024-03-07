@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase.config';
-import { doc, collection, getDoc, getDocs } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 
 import FullCalendar from "@fullcalendar/react";
 import { formatDate } from "@fullcalendar/core";
