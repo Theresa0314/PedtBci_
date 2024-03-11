@@ -588,7 +588,7 @@ const viewDetails = (id) => {
           field: 'action',
           headerName: 'Action',
           sortable: false,
-          flex: 1, 
+          flex: 2, 
           // Hide edit/delete actions based on user role
            hide: isAddTPDisabled,
           renderCell: (params) => (
@@ -622,6 +622,7 @@ const viewDetails = (id) => {
                 variant="contained"
                 color="error"
                 size="small"
+                
               >
                 Delete
               </Button>
@@ -696,8 +697,7 @@ const viewDetails = (id) => {
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: '70vw',
-    maxWidth: '1000px',
+    width: '100%',
     bgcolor: 'background.paper',
     boxShadow: 24,
     p: 4,
@@ -999,8 +999,9 @@ const viewDetails = (id) => {
 
         <Box
               sx={{
-              height: 350, 
+              height: '100vh', 
               width: "100%",
+              overflow: 'auto',
               "& .MuiDataGrid-root": {
                   border: `1px solid ${colors.primary[700]}`,
                   color: colors.grey[100],
@@ -1186,7 +1187,8 @@ const viewDetails = (id) => {
                 aria-labelledby="add-treatment-modal-title"
                 aria-describedby="add-treatment-modal-description"
               >
-                <Box sx={modalStyle}>
+                <Box sx={modalStyle} 
+                    sx={{width:'100%', height:'100vh', overflow:'auto'}}>
                   {/* Pass the case details as props to TPForm */}
                   <TPForm
                     caseId={caseId}
