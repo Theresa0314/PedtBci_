@@ -105,10 +105,18 @@ const TPDetail = () => {
               <strong>Medications/Type of Drug Intake:</strong> {treatmentPlan.medication || 'N/A'}
             </Typography>
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-              <strong>Dosage:</strong> {treatmentPlan.dosage || 'N/A'}
-            </Typography>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-              <strong>Frequency:</strong> {treatmentPlan.frequency || 'N/A'}
+              <strong>Dosage:</strong>
+              {treatmentPlan.weight ? (
+              <ul>
+                      {Object.entries(treatmentPlan.dosage).map(([drug, dose]) => (
+                        <li key={drug}>
+                          {drug}: {dose}
+                        </li>
+                      ))}
+                </ul>
+             ) : (
+            <p></p>
+            )}
             </Typography>
           </Grid>
         </Grid>

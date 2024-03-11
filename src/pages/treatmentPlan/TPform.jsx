@@ -14,10 +14,9 @@ const regimens = ["I. 2HRZE/4HR", "Ia. 2HRZE/10HR", "II. 2HRZES/1HRZE/5HRE", "II
 
 const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
    // State hooks for form data
-   const [regimen, setRegimen] = useState('');
-
-  // New state hook for name
- const [name, setName] = useState('');
+  const [regimen, setRegimen] = useState('');
+  const [name, setName] = useState('');
+  const [weight, setWeight] = useState('');
 
   // Fetch case name when the component mounts
    useEffect(() => {
@@ -36,8 +35,6 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
       
   }, [caseId]);
 
-  // New state hook for weight
-  const [weight, setWeight] = useState('');
   // Fetch the weight of the child when the component mounts
   useEffect(() => {
     const q = query(collection(db, "patientsinfo"), where("caseNumber", "==", caseNumber));
@@ -60,19 +57,34 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
         "IIa. 2HRZES/1HRZE/9HRE": 11,
       };
 
-      // const treatmentMedications = {
-      //   "I. 2HRZE/4HR": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol"],
-      //   "Ia. 2HRZE/10HR": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol"],
-      //   "II. 2HRZES/1HRZE/5HRE": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol, ", "[S] Streptomycin"], 
-      //   "IIa. 2HRZES/1HRZE/9HRE": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol, ", "[S] Streptomycin"],
-      // };
+      const intensiveDurations = {
+        "I. 2HRZE/4HR": 2,
+        "Ia. 2HRZE/10HR": 2,
+        "II. 2HRZES/1HRZE/5HRE": 2,
+        "IIa. 2HRZES/1HRZE/9HRE": 2,
+      };
 
-      const treatmentMedication = ["[H] Isoniazid, [R] Rifampicin, [Z] Pyrazinamide, [E] Ethambutol"];
+      const continuationDurations = {
+        "I. 2HRZE/4HR": 4,
+        "Ia. 2HRZE/10HR": 10,
+        "II. 2HRZES/1HRZE/5HRE": 5,
+        "IIa. 2HRZES/1HRZE/9HRE": 9,
+      };
+
+      const treatmentMedications = {
+        "I. 2HRZE/4HR": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol"],
+        "Ia. 2HRZE/10HR": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol"],
+        "II. 2HRZES/1HRZE/5HRE": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol, ", "[S] Streptomycin"], 
+        "IIa. 2HRZES/1HRZE/9HRE": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol, ", "[S] Streptomycin"],
+      };
+
       //start date of treatment plan
       const startDateTP = new Date().toLocaleDateString();
       const duration = treatmentDurations[regimen]; // duration in months
-      const medication = treatmentMedication;
-
+      const durationI = intensiveDurations[regimen]; //intensive months
+      const durationC = continuationDurations[regimen]; //continuation months
+      const medication = treatmentMedications[regimen];
+      const dosage = calculateDosage(weight);
       //calculate new month number
       const dateObject = new Date(startDateTP);
       const monthNumber = dateObject.getMonth();
@@ -101,7 +113,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
       };
     
       const followUpDates = calculateFollowUpDates();
-
+ 
       //Fixed-dose combinations for each weight band
       function calculateDosage(weight) {
         const fdc = {
@@ -123,8 +135,6 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
         
         return fdc[weightBand];
       }
-
-      console.log(calculateDosage(weight));
 
   //Submit form
     const handleSubmit = async (event) => {
@@ -164,8 +174,8 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
                     Treatment Plan Information of {name}
                 </Typography>
                 <Grid container spacing={3}>
-
-                <Grid item xs={3}>
+{/* TP Regimen */}
+                <Grid item xs={4}>
                 <FormControl fullWidth required margin="dense">
                     <InputLabel id="regimen-label">Treatment Regimen</InputLabel>
                     <Select
@@ -183,35 +193,58 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
                     </Select>
                 </FormControl>
                 </Grid>
-
-                <Grid item xs={3}>
+{/* Duration */}
+                <Grid item xs={4}>
                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
                     <strong>Duration:</strong> {duration} <light> months</light>
                  </Typography>
+                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                 <strong>Intensive Phase:</strong> {durationI} <light> months</light>
+                 </Typography>
+                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                 <strong>Continuation Phase:</strong> {durationC} <light> months</light>
+                 </Typography>
                 </Grid>
-
-                <Grid item xs={3}>
+{/* Start date and End date */}
+                <Grid item xs={4}>
                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
                     <strong>Start Date:</strong> {startDateTP}
                  </Typography>
-                </Grid>
-
-                <Grid item xs={3}>
-                <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
                 <strong>End Date:</strong> {endDateTP}
                  </Typography>
                 </Grid>
-
-                <Grid item xs={3}>
+{/* Medications */}
+<Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
+            {medication ? (
+                <Grid item xs={4}>
                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-                <strong>Medications: </strong> {medication}
-                
+                <strong>Medications: </strong>
                  </Typography>
-                 <Typography variant="body1" sx={{ fontSize: '1.0rem', marginBottom: '0.5rem',  color: colors.greenAccent[500] }}>
+                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                {medication}
+                 </Typography>
+
+                 <Typography variant="body1" sx={{ fontSize: '1rem', marginBottom: '0.5rem',  color: colors.greenAccent[500] }}>
                  <light>The weight of the child is {weight} kg. </light>
                  </Typography>
-                </Grid>
+                 </Grid>
+                 ) : (
+                  <Grid item xs={4}>
+                  <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                  <strong>Medications: </strong>
+                   </Typography>
+                   <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                  [H] Isoniazid, [R] Rifampicin, [Z] Pyrazinamide, [E] Ethambutol
+                   </Typography>
 
+                   <Typography variant="body1" sx={{ fontSize: '1rem', marginBottom: '0.5rem',  color: colors.greenAccent[500] }}>
+                 <light>The weight of the child is {weight} kg. </light>
+                 </Typography>
+                   </Grid>
+                )}
+              
+{/* Dosage/Tablets */}
                 {weight ? (
                   <Grid item xs={3}>
                    
@@ -219,7 +252,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
                       <strong>The number of tablets for each drug is:</strong>
                     </Typography>
                     <ul>
-                      {Object.entries(calculateDosage(weight)).map(([drug, dose]) => (
+                      {Object.entries(dosage).map(([drug, dose]) => (
                         <li key={drug}>
                           {drug}: {dose}
                         </li>
@@ -227,9 +260,9 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
                     </ul>
                   </Grid>
                 ) : (
-                  <p>Loading...</p>
+                <p></p>
                 )}
-
+{/* Follow up dates */}
                 <Grid item xs={3}>
                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
                     <strong>Follow-Up Dates: </strong>
