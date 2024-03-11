@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { tokens } from "../../theme";
 import { db } from '../../firebase.config';
-import { doc, collection, getDoc, addDoc } from 'firebase/firestore';
+import { doc, collection, getDoc, addDoc, query, where, getDocs } from 'firebase/firestore';
 
 // Sample data for dropdowns
 const regimens = ["I. 2HRZE/4HR", "Ia. 2HRZE/10HR", "II. 2HRZES/1HRZE/5HRE", "IIa. 2HRZES/1HRZE/9HRE"];
@@ -17,9 +17,9 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
    const [regimen, setRegimen] = useState('');
 
   // New state hook for name
-  const [name, setName] = useState('');
+ const [name, setName] = useState('');
 
-   // Fetch case name when the component mounts
+  // Fetch case name when the component mounts
    useEffect(() => {
     const fetchName = async () => {
 
@@ -33,8 +33,23 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
     };
 
     fetchName();
+      
   }, [caseId]);
 
+  // New state hook for weight
+  const [weight, setWeight] = useState('');
+  // Fetch the weight of the child when the component mounts
+  useEffect(() => {
+    const q = query(collection(db, "patientsinfo"), where("caseNumber", "==", caseNumber));
+
+    getDocs(q).then((querySnapshot) => {
+      querySnapshot.forEach((doc) => {
+        setWeight(doc.data().weight);
+      });
+    });
+  }, [caseNumber]);
+
+   
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
 
@@ -45,16 +60,18 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
         "IIa. 2HRZES/1HRZE/9HRE": 11,
       };
 
-      const treatmentMedications = {
-        "I. 2HRZE/4HR": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol"],
-        "Ia. 2HRZE/10HR": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol"],
-        "II. 2HRZES/1HRZE/5HRE": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol, ", "[S] Streptomycin"], 
-        "IIa. 2HRZES/1HRZE/9HRE": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol, ", "[S] Streptomycin"],
-      };
+      // const treatmentMedications = {
+      //   "I. 2HRZE/4HR": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol"],
+      //   "Ia. 2HRZE/10HR": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol"],
+      //   "II. 2HRZES/1HRZE/5HRE": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol, ", "[S] Streptomycin"], 
+      //   "IIa. 2HRZES/1HRZE/9HRE": ["[H] Isoniazid, ", "[R] Rifampicin, ", "[Z] Pyrazinamide, ", "[E] Ethambutol, ", "[S] Streptomycin"],
+      // };
+
+      const treatmentMedication = ["[H] Isoniazid, [R] Rifampicin, [Z] Pyrazinamide, [E] Ethambutol"];
       //start date of treatment plan
       const startDateTP = new Date().toLocaleDateString();
       const duration = treatmentDurations[regimen]; // duration in months
-      const medication = treatmentMedications[regimen];
+      const medication = treatmentMedication;
 
       //calculate new month number
       const dateObject = new Date(startDateTP);
@@ -85,6 +102,31 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
     
       const followUpDates = calculateFollowUpDates();
 
+      //Fixed-dose combinations for each weight band
+      function calculateDosage(weight) {
+        const fdc = {
+          "4-7": { H: 1, R: 1, Z: 1, E: 1 },
+          "8-11": {  H: 2, R: 2, Z: 2, E: 2 },
+          "12-15": {  H: 3, R: 3, Z: 3, E: 3 },
+          "16-24": {  H: 4, R: 4, Z: 4, E: 4 },
+          "25-37": {  H: 2, R: 2, Z: 2, E: 2 },
+          "38-54": {  H: 3, R: 3, Z: 3, E: 3 },
+          "55-70": {  H: 4, R: 4, Z: 4, E: 4 },
+          "70-100": {  H: 5, R: 5, Z: 5, E: 5 },
+        };
+
+        // Find the weight band that matches the weight
+        const weightBand = Object.keys(fdc).find((band) => {
+          const [min, max] = band.split("-");
+          return weight >= min && weight <= max;
+        });
+        
+        return fdc[weightBand];
+      }
+
+      console.log(calculateDosage(weight));
+
+  //Submit form
     const handleSubmit = async (event) => {
         event.preventDefault();
 
@@ -118,7 +160,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
         }}>
             <form onSubmit={handleSubmit}>
                 {/* Start Section */}
-                <Typography variant="h5" gutterBottom sx={{ color: colors.greenAccent[500], fontWeight: 'bold' }}>
+                <Typography variant="h5" gutterBottom sx={{ color: colors.greenAccent[500], fontWeight: 'bold', fontSize: '1.5rem' }}>
                     Treatment Plan Information of {name}
                 </Typography>
                 <Grid container spacing={3}>
@@ -162,9 +204,31 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
 
                 <Grid item xs={3}>
                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-                    <strong>Medications: </strong> {medication}
+                <strong>Medications: </strong> {medication}
+                
+                 </Typography>
+                 <Typography variant="body1" sx={{ fontSize: '1.0rem', marginBottom: '0.5rem',  color: colors.greenAccent[500] }}>
+                 <light>The weight of the child is {weight} kg. </light>
                  </Typography>
                 </Grid>
+
+                {weight ? (
+                  <Grid item xs={3}>
+                   
+                    <Typography variant="body1" sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}>
+                      <strong>The number of tablets for each drug is:</strong>
+                    </Typography>
+                    <ul>
+                      {Object.entries(calculateDosage(weight)).map(([drug, dose]) => (
+                        <li key={drug}>
+                          {drug}: {dose}
+                        </li>
+                      ))}
+                    </ul>
+                  </Grid>
+                ) : (
+                  <p>Loading...</p>
+                )}
 
                 <Grid item xs={3}>
                 <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
