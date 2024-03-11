@@ -74,12 +74,11 @@ const TPDetail = () => {
 
       {treatmentPlan ? (
         <Container sx={{ padding: theme.spacing(3), marginTop: theme.spacing(3) }}>
-          
-    {/* Start of TP Information */}
+     
     <Card sx={{ marginBottom: theme.spacing(4), backgroundColor: colors.primary[400], padding: theme.spacing(2) }}>
       <CardContent>
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: colors.greenAccent[500] }}>
-          Start of TP Information
+          Treatment Plan Information of  {treatmentPlan.name}
         </Typography>
         <Divider sx={{ marginBottom: theme.spacing(2), bgcolor: colors.grey[500] }} />
         
@@ -90,29 +89,26 @@ const TPDetail = () => {
               <strong>Treatment Regimen:</strong> {treatmentPlan.regimen || 'N/A'}
             </Typography>
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-              <strong>Specify/Other Medicine:</strong> {treatmentPlan.otherDrug || 'N/A'}
+              <strong>Start of Treatment Plan:</strong> {formatDate(treatmentPlan.startDateTP)}
             </Typography>
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-              <strong>Dosage:</strong> {treatmentPlan.dosage || 'N/A'}
+              <strong>Duration of Treatment:</strong> {treatmentPlan.duration || 'N/A'}
             </Typography>
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-              <strong>Date Medication Started:</strong> {formatDate(treatmentPlan.sdateMed)}
+              <strong>End of Treatment Plan:</strong> {formatDate(treatmentPlan.endDateTP)}
             </Typography>
           </Grid>
 
           {/* Second Column */}
           <Grid item xs={12} md={6}>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-              <strong>Duration of Treatment:</strong> {treatmentPlan.duration || 'N/A'}
+          <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Medications/Type of Drug Intake:</strong> {treatmentPlan.medication || 'N/A'}
             </Typography>
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-              <strong>Medicine / Type of Drug Intake:</strong> {treatmentPlan.drug || 'N/A'}
+              <strong>Dosage:</strong> {treatmentPlan.dosage || 'N/A'}
             </Typography>
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
               <strong>Frequency:</strong> {treatmentPlan.frequency || 'N/A'}
-            </Typography>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-              <strong>Date Medication Ended:</strong> {formatDate(treatmentPlan.edateMed)}
             </Typography>
           </Grid>
         </Grid>
@@ -123,55 +119,38 @@ const TPDetail = () => {
     {/* Patient Progress TP Information */}
     <Card sx={{ marginBottom: theme.spacing(4), backgroundColor: colors.primary[400], padding: theme.spacing(2) }}>
       <CardContent>
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: colors.greenAccent[500] }}>
-          Patient Progress TP Information
-        </Typography>
+
         <Divider sx={{ marginBottom: theme.spacing(2), bgcolor: colors.grey[500] }} />
 
         <Grid container spacing={3}>
           {/* First Column */}
           <Grid item xs={12} md={6}>
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-              <strong>Follow Up Schedule Date:</strong> {formatDate(treatmentPlan.followUpSched)}
+              <strong>Follow Up Schedule Dates:</strong> 
+              <ul>
+              {treatmentPlan.followUpDates.map((date, index) => {
+                  // Convert Firestore timestamp to JavaScript Date object
+                  const jsDate = date.toDate();
+
+                  // Format date as a string
+                  const dateString = jsDate.toLocaleDateString();
+
+                  return <li key={index}>{dateString}</li>;
+                })}
+              </ul>
             </Typography>
           </Grid>
 
-          {/* Second Column */}
+          {/* Second Column
           <Grid item xs={12} md={6}>
           <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
               <strong>Notes:</strong> {treatmentPlan.notes || 'N/A'}
-            </Typography>
-          </Grid>
+            </Typography> 
+      </Grid> */}
         </Grid>
       </CardContent>
     </Card>
 
-
-    {/* End of Treatment Plan Information */}
-    <Card sx={{ marginBottom: theme.spacing(4), backgroundColor: colors.primary[400], padding: theme.spacing(2) }}>
-      <CardContent>
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: colors.greenAccent[500] }}>
-          End of Treatment Plan Information
-        </Typography>
-        <Divider sx={{ marginBottom: theme.spacing(2), bgcolor: colors.grey[500] }} />
-
-        <Grid container spacing={3}>
-          {/* Completion Date of Treatment Plan */}
-          <Grid item xs={12} md={6}>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-              <strong>Completion Date of Treatment Plan:</strong> {formatDate(treatmentPlan.edateTP)}
-            </Typography>
-          </Grid>
-
-          {/* Treatment Outcome */}
-          <Grid item xs={12} md={6}>
-            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-              <strong>Treatment Outcome:</strong> {treatmentPlan.outcome || 'N/A'}
-            </Typography>
-          </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
       {/* Back Button */}
       <Grid container spacing={2} justifyContent="center">
         <Grid item>

@@ -606,7 +606,7 @@ const viewDetails = (id) => {
               {/* Conditionally show edit and delete options */}
               {canEditOrDelete(userRole) && (
             <>
-              <Button
+              {/* <Button
                 startIcon={<EditIcon />}
                 onClick={() => navigate(`/treatmentPlan/edit/${params.id}`)}
                 variant="contained"
@@ -615,7 +615,7 @@ const viewDetails = (id) => {
                 style={{ marginRight: 8 }}
               >
                 Edit
-              </Button>
+              </Button> */}
               <Button
                 startIcon={<DeleteIcon />}
                 onClick={() => handleClickOpenDeleteDialog(params.id)}
