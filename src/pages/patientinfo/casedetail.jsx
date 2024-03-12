@@ -1187,8 +1187,7 @@ const viewDetails = (id) => {
                 aria-labelledby="add-treatment-modal-title"
                 aria-describedby="add-treatment-modal-description"
               >
-                <Box sx={modalStyle} 
-                    sx={{width:'100%', height:'100vh', overflow:'auto'}}>
+                <Box sx={modalStyle} >
                   {/* Pass the case details as props to TPForm */}
                   <TPForm
                     caseId={caseId}
