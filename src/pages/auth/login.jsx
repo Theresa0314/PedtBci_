@@ -48,7 +48,7 @@ const Login = () => {
         const userData = userDoc.data();
         // Check if the role is Parent and open the dialog
         if (userData.role === "Parent") {
-          setOpenCaseDialog(true);
+          setOpenChildDialog(true);
         } else {
           navigate("/"); // Redirect non-parent users to dashboard
         }
