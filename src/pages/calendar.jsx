@@ -193,7 +193,7 @@ const Calendar = () => {
             selectMirror={true}
             dayMaxEvents={true}
             select={handleDateClick}
-            eventClick={handleEventClick}
+          //  eventClick={handleEventClick}
             eventsSet={(events) => setCurrentEvents(events)}
           />
         </Box>
