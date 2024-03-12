@@ -51,10 +51,10 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
     const colors = tokens(theme.palette.mode);
 
     const treatmentDurations = {
-        "I. 2HRZE/4HR": 6,
-        "Ia. 2HRZE/10HR": 12,
-        "II. 2HRZES/1HRZE/5HRE": 7,
-        "IIa. 2HRZES/1HRZE/9HRE": 11,
+        "I. 2HRZE/4HR": 1, //6
+        "Ia. 2HRZE/10HR": 2, //12
+        "II. 2HRZES/1HRZE/5HRE": 3, //7
+        "IIa. 2HRZES/1HRZE/9HRE": 4, //11
       };
 
       const intensiveDurations = {
