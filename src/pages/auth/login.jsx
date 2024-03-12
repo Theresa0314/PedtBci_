@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { auth } from '../../firebase.config';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth, apiCalendar } from '../../firebase.config';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { Link, useNavigate } from 'react-router-dom';
 
 import * as yup from "yup";
@@ -8,11 +8,12 @@ import {Button, TextField, Grid,
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
   Container, useTheme } from "@mui/material";
 import { collection, query, where, getDocs, getDoc, doc} from "firebase/firestore";
-import { db } from '../../firebase.config';
+import { db, config } from '../../firebase.config';
 import { Formik, ErrorMessage } from "formik";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import { usePatientInfo } from '../../PatientInfoContext';
+import GoogleIcon from '@mui/icons-material/Google';
 
 const Login = () => {
   const theme = useTheme();
@@ -26,7 +27,34 @@ const Login = () => {
 
   const { setPatientInfoId } = usePatientInfo();
   const navigate = useNavigate();
-
+  
+  const handleGoogleSubmit = async () => {
+     try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+      localStorage.setItem('token', user.accessToken);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+        await apiCalendar.handleAuthClick();
+      
+      // Fetch the user's role from the database
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        // Check if the role is Parent and open the dialog
+        if (userData.role === "Parent") {
+          setOpenCaseDialog(true);
+        } else {
+          navigate("/"); // Redirect non-parent users to dashboard
+        }
+      } else {
+        console.error("User document not found!");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -34,7 +62,6 @@ const Login = () => {
       const user = userCredential.user;
       localStorage.setItem('token', user.accessToken);
       localStorage.setItem('user', JSON.stringify(user));
-      
       // Fetch the user's role from the database
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
@@ -116,12 +143,20 @@ const Login = () => {
                 sx={{ gridColumn: "span 4" }}/>
               </Grid>
             </Grid>
-              {/* submit button */}
+            {/* google button */}
             <Grid container justifyContent="right" sx={{ mt: 4 }}>
-              <Button type="submit" color="secondary" variant="contained">
-                LOGIN
+            <Button type="submit" color="primary" variant="contained" startIcon={<GoogleIcon />} onClick={handleGoogleSubmit}>
+                Continue with Google
               </Button>
             </Grid>
+            {/* submit button */}
+            <Grid container justifyContent="right"sx={{ mt: 4 }}>
+            <Button type="submit" color="secondary" variant="contained" >
+                LOGIN
+              </Button>
+
+            </Grid>
+
           </form>
       </Formik>
       <div style={{ width: '100%', marginTop: '5vh' }}>

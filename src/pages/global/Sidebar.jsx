@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {db, auth } from '../../firebase.config';
+import {db, auth, apiCalendar } from '../../firebase.config';
 import { doc, getDoc } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
 import { signOut } from 'firebase/auth';
@@ -8,6 +8,7 @@ import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
 import { usePatientInfo } from '../../PatientInfoContext';
+import ApiCalendar from 'react-google-calendar-api';
 
 // Import Icons
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
@@ -64,6 +65,7 @@ const Sidebar = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      apiCalendar.handleSignoutClick();
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       navigate("/login");
