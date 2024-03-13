@@ -4,7 +4,7 @@ import {
 //TextField,
 } from '@mui/material';
 import { tokens } from "../../theme";
-import { db } from '../../firebase.config';
+import { db, apiCalendar } from '../../firebase.config';
 import { doc, collection, getDoc, addDoc, query, where, getDocs } from 'firebase/firestore';
 
 // Sample data for dropdowns
@@ -51,10 +51,10 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
     const colors = tokens(theme.palette.mode);
 
     const treatmentDurations = {
-        "I. 2HRZE/4HR": 1, //6
-        "Ia. 2HRZE/10HR": 2, //12
-        "II. 2HRZES/1HRZE/5HRE": 3, //7
-        "IIa. 2HRZES/1HRZE/9HRE": 4, //11
+        "I. 2HRZE/4HR": 6,
+        "Ia. 2HRZE/10HR": 12,
+        "II. 2HRZES/1HRZE/5HRE": 7,
+        "IIa. 2HRZES/1HRZE/9HRE": 11, 
       };
 
       const intensiveDurations = {
@@ -113,18 +113,20 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
       };
     
       const followUpDates = calculateFollowUpDates();
+      console.log(followUpDates);
  
       //Fixed-dose combinations for each weight band
       function calculateDosage(weight) {
         const fdc = {
+          "1-3":{ H: 1, R: 1, Z: 1, E: 1},
           "4-7": { H: 1, R: 1, Z: 1, E: 1 },
           "8-11": {  H: 2, R: 2, Z: 2, E: 2 },
           "12-15": {  H: 3, R: 3, Z: 3, E: 3 },
           "16-24": {  H: 4, R: 4, Z: 4, E: 4 },
-          "25-37": {  H: 2, R: 2, Z: 2, E: 2 },
-          "38-54": {  H: 3, R: 3, Z: 3, E: 3 },
-          "55-70": {  H: 4, R: 4, Z: 4, E: 4 },
-          "70-100": {  H: 5, R: 5, Z: 5, E: 5 },
+          "25-37": {  H: 5, R: 5, Z: 5, E: 5 },
+          "38-54": {  H: 6, R: 6, Z: 6, E: 6 },
+          "55-70": {  H: 7, R: 7, Z: 7, E: 7 },
+          "70-100": {  H: 8, R: 8, Z: 8, E: 8 },
         };
 
         // Find the weight band that matches the weight
@@ -157,6 +159,31 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
             const newTP = { ...TPData, id: docRef.id };
             handleUpdateTP(newTP); // Call the function to update the treatment plan list
             handleCloseForm(); // Close the form after submission
+
+            //Add followUpDates to Google Calendar
+            followUpDates.forEach((date, index) => {
+              const event = {
+                summary: `Follow Up for ${name}`,
+                start: {
+                  dateTime: date.toISOString(),
+                  timeZone: 'Asia/Manila', 
+                },
+                end: {
+                  dateTime: date.toISOString(),
+                  timeZone: 'Asia/Manila',
+                },
+              };
+      
+            // Use the apiCalendar to add the event to Google Calendar
+            apiCalendar.createEvent(event)
+                .then(response => {
+                  console.log(response);
+                })
+                .catch(error => {
+                  console.error(error);
+                });
+              });
+
           } catch (e) {
             console.error("Error adding document: ", e);
           }

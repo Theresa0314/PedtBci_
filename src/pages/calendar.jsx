@@ -20,46 +20,6 @@ const Calendar = () => {
   const [currentEvents, setCurrentEvents] = useState([]);
   const [followUpevents, setfollowUpevents] = useState([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const treatmentPlanCollection = collection(db, "treatmentPlan");
-      const treatmentPlanSnapshot = await getDocs(treatmentPlanCollection);
-      const newEvents = [];
-  
-      treatmentPlanSnapshot.docs.forEach(doc => {
-        const followUpDates = doc.data().followUpDates;
-        const name = doc.data().name;
-  
-        if (followUpDates && Array.isArray(followUpDates)) {
-          followUpDates.forEach(schedule => {
-            const event = {
-              summary: `Follow Up for ${name}`,
-              start: {
-                dateTime: schedule.toDate().toISOString(),
-                timeZone: 'Asia/Manila' // Adjust the time zone if necessary
-              },
-              end: {
-                dateTime: new Date(schedule.toDate().getTime() + 1 * 60 * 60 * 1000).toISOString(), // Assuming 1 hour duration
-                timeZone: 'Asia/Manila' // Adjust the time zone if necessary
-              }
-            };
-  
-            // Use the API to create the event
-            apiCalendar.createEvent(event)
-              .then(response => {
-                console.log(response);
-              })
-              .catch(error => {
-                console.error(error);
-              });
-          });
-        }
-      });
-    };
-  
-    fetchData();
-  }, []);
-
 // Helper function to check if two dates are on the same day
 const isSameDay = (d1, d2) => {
   return d1.getFullYear() === d2.getFullYear() &&
