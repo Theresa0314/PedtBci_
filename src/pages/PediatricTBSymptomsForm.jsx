@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Checkbox,
+  Container,
   FormControl,
   FormControlLabel,
   FormGroup,
@@ -8,13 +9,20 @@ import {
   TextField,
   Typography,
   Button,
+  useTheme,
+  Radio, RadioGroup
 } from '@mui/material';
+import { tokens } from "../theme";
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase.config'; // Import your Firebase configuration
 
 
 const PediatricTBSymptomsForm = () => {
+
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+
   // State to manage symptom checkboxes
   const [symptoms, setSymptoms] = useState({
     PersistentCough: false,
@@ -44,6 +52,7 @@ const PediatricTBSymptomsForm = () => {
 
   const navigate = useNavigate();
 
+
   // Handler for updating symptom checkboxes
   const handleSymptomChange = (symptom) => {
     setSymptoms((prevSymptoms) => ({
@@ -65,6 +74,17 @@ const PediatricTBSymptomsForm = () => {
 
   // State for table data
   const [tableData, setTableData] = useState([]);
+
+  // Function to generate a random ID
+const generateRandomID = () => {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+  let result = 'A-';
+  for (let i = 0; i < 10; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+};
 
   // Handler for form submission
   const handleSubmit = async (event) => {
@@ -98,16 +118,15 @@ const PediatricTBSymptomsForm = () => {
           );
           return updatedData;
         });
-        window.location.href = '/symptoms';
         console.log(`Row with ID ${formData.id} updated in the database`);
       } catch (error) {
         console.error('Error updating document: ', error);
         // Handle error display or logging as needed
       }
     } else {
-      // If `id` doesn't exist in formData, it means we are adding a new record
-      // Create a new data object with the form values
+      const newID = generateRandomID();
       const newData = {
+        id: newID,
         symptomsReviewDate,
         symptoms: { ...symptoms },
         otherSymptoms,
@@ -119,19 +138,19 @@ const PediatricTBSymptomsForm = () => {
         closeContactWithTB,
       };
   
-      // Save the data to Firebase
+      // Use the setDoc function to create a new document with a custom ID
       try {
-        const symptomsCollection = collection(db, 'symptoms');
-        const docRef = await addDoc(symptomsCollection, newData);
+        await setDoc(doc(db, 'symptoms', newID), newData); // Use the custom ID as the document reference
+        console.log(`New record with ID ${newID} added to the database`);
   
         // Update the local table data
-        setTableData([...tableData, { id: docRef.id, ...newData }]);
+        setTableData([...tableData, { ...newData, id: newID }]);
+        // This is where the page will be refreshed, after a new record is added
+      window.location.reload(); 
   
-        console.log(`Row with ID ${docRef.id} added to the database`);
-        window.location.href = '/symptoms';
+        // Redirect or handle the UI update
       } catch (error) {
         console.error('Error adding document: ', error);
-        // Handle error display or logging as needed
       }
     }
   
@@ -150,7 +169,11 @@ const PediatricTBSymptomsForm = () => {
   
 
   return (
-    <div>
+    <Container component="main" maxWidth="md" sx={{
+      backgroundColor: colors.blueAccent[800], 
+      padding: theme.spacing(6), 
+      borderRadius: theme.shape.borderRadius
+  }}>
     <div style={{ textAlign: 'center' }}>
       <h1>Pediatric TB - Symptoms Review</h1>
     </div>
@@ -207,114 +230,104 @@ const PediatricTBSymptomsForm = () => {
         </Grid>
 
         {/* Additional Relevant Fields */}
-        <Grid item xs={6}>
-          <FormControl component="fieldset">
+        <Grid item xs={12}>
+        <FormControl component="fieldset">
             <Typography variant="subtitle1">Immunization Status:</Typography>
-            <FormGroup row>
+            <RadioGroup
+              row
+              aria-label="immunizationStatus"
+              name="immunizationStatus"
+              value={immunizationStatus.status}
+              onChange={(e) => setImmunizationStatus({
+                ...immunizationStatus,
+                status: e.target.value,
+                noImmunization: e.target.value === 'No Immunization',
+              })}
+            >
               <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={immunizationStatus.status === 'Up-to-date'}
-                    onChange={() => setImmunizationStatus({ status: 'Up-to-date', monthRange: 'Within the last 6 months', noImmunization: false })}
-                    color="primary"
-                  />
-                }
+                value="Up-to-date"
+                control={<Radio color="primary" />}
                 label="Up-to-date (Within the last 6 months)"
               />
               <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={immunizationStatus.status === 'Not up-to-date'}
-                    onChange={() => setImmunizationStatus({ status: 'Not up-to-date', monthRange: 'More than 6 months ago', noImmunization: false })}
-                    color="primary"
-                  />
-                }
+                value="Not up-to-date"
+                control={<Radio color="primary" />}
                 label="Not up-to-date (More than 6 months ago)"
               />
               <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={immunizationStatus.noImmunization}
-                    onChange={() => setImmunizationStatus({ noImmunization: !immunizationStatus.noImmunization, status: 'No Immunization', monthRange: '' })}
-                    color="primary"
-                  />
-                }
+                value="No Immunization"
+                control={<Radio color="primary" />}
                 label="No Immunization"
               />
-            </FormGroup>
+            </RadioGroup>
           </FormControl>
         </Grid>
         <Grid item xs={6}>
-          <FormControl component="fieldset">
-            <Typography variant="subtitle1">Does your family have a history of TB?</Typography>
-            <FormGroup row>
+        <FormControl component="fieldset">
+          <Typography variant="subtitle1">Does your family have a history of TB?</Typography>
+          <RadioGroup
+            row
+            aria-label="familyHistory"
+            name="familyHistory"
+            value={familyHistory.hasFamilyHistory.toString()}
+            onChange={(event) => {
+              const hasHistory = event.target.value === 'true';
+              setFamilyHistory({
+                hasFamilyHistory: hasHistory,
+                family: hasHistory ? familyHistory.family : ''
+              });
+            }}
+          >
             <FormControlLabel
-              control={
-              <Checkbox
-                checked={familyHistory.hasFamilyHistory}
-                onChange={() => setFamilyHistory({ hasFamilyHistory: !familyHistory.hasFamilyHistory, family: familyHistory.family || '' })}
-                color="primary"
-              />
-              }
-               label="Yes"
+              value="true"
+              control={<Radio color="primary" />}
+              label="Yes"
             />
-              {familyHistory.hasFamilyHistory && (
-                <div>
-                <Typography variant="subtitle1">Indicate the Family Member/s or Relative/s with TB History:</Typography>
-                <TextField
-                  fullWidth
-                  label="Family Member/s or Relative/s"
-                  variant="outlined"
-                  value={familyHistory.family}
-                  onChange={(e) => setFamilyHistory((prev) => ({
-                  ...prev,
-                  family: e.target.value,
-                }))}
-                  margin="normal"
-                  required={familyHistory.hasFamilyHistory} // Make this required only if family history is indicated
-                  disabled={!familyHistory.hasFamilyHistory} // Disable input if family history is not indicated
-                />
-                </div>
-)}
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={!familyHistory.hasFamilyHistory}
-                    onChange={() => setFamilyHistory({ hasFamilyHistory: false, family: '' })}
-                    color="primary"
-                  />
-                }
-                label="No"
-              />
-            </FormGroup>
-          </FormControl>
+            <FormControlLabel
+              value="false"
+              control={<Radio color="primary" />}
+              label="No"
+            />
+          </RadioGroup>
+          {familyHistory.hasFamilyHistory && (
+            <TextField
+              fullWidth
+              label="Indicate the Family Member/s or Relative/s with TB History"
+              variant="outlined"
+              value={familyHistory.family}
+              onChange={(e) => setFamilyHistory((prev) => ({
+                ...prev,
+                family: e.target.value,
+              }))}
+              margin="normal"
+            />
+          )}
+        </FormControl>
+
         </Grid>
         <Grid item xs={6}>
-          <FormControl component="fieldset">
-            <Typography variant="subtitle1">Close Contact with TB Patient:</Typography>
-            <FormGroup row>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={closeContactWithTB}
-                    onChange={() => setCloseContactWithTB(!closeContactWithTB)}
-                    color="primary"
-                  />
-                }
-                label="Yes"
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={!closeContactWithTB}
-                    onChange={() => setCloseContactWithTB(false)}
-                    color="primary"
-                  />
-                }
-                label="No"
-              />
-            </FormGroup>
-          </FormControl>
+        <FormControl component="fieldset">
+          <Typography variant="subtitle1">Close Contact with TB Patient:</Typography>
+          <RadioGroup
+            row
+            aria-label="closeContactWithTB"
+            name="closeContactWithTB"
+            value={closeContactWithTB.toString()}
+            onChange={(event) => setCloseContactWithTB(event.target.value === 'true')}
+          >
+            <FormControlLabel
+              value="true"
+              control={<Radio color="primary" />}
+              label="Yes"
+            />
+            <FormControlLabel
+              value="false"
+              control={<Radio color="primary" />}
+              label="No"
+            />
+          </RadioGroup>
+        </FormControl>
+
         </Grid>
       </Grid>
 
@@ -324,7 +337,7 @@ const PediatricTBSymptomsForm = () => {
           Submit
         </Button>
       </Grid>
-    </div>
+    </Container>
   );
 };
 

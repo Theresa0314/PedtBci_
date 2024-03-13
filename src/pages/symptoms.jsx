@@ -72,7 +72,6 @@ const SymptomsReview = () => {
   };
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [isAddSymptomsDisabled, setIsAddTPDisabled] = useState(false);
   const handleCloseDeleteDialog = () => {
     setOpenDeleteDialog(false);
   };
@@ -252,33 +251,24 @@ const handleViewClick = (id) => {
 };
 
   const columns = [
-    { field: 'id', headerName: 'ID', flex: 3 },
+    { field: 'id', headerName: 'ID', flex: 2 },
     {
-      field: 'view',
-      headerName: '',
+      field: 'immunizationStatus',
+      headerName: 'Immunization Status',
       flex: 3,
-      sortable: false,
-      renderCell: (params) => (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <Button
-                startIcon={<PageviewIcon />}
-                onClick={() => handleViewClick(params.row.id)}
-                variant="contained"
-                color="primary"
-                size="small"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginRight: 30,
-                  width: '100%', // Ensure the button takes the full width of the cell
-                }}
-                
-              >
-                View Details
-              </Button>
-        </div>
-      ),
+      valueGetter: (params) => {
+        const immunization = params.row.immunizationStatus;
+        if (immunization && typeof immunization === 'object') {
+          // Check if the immunization status is 'No Immunization'
+          if (immunization.noImmunization) {
+            return 'No Immunization';
+          } else {
+            // Check if there is a status, otherwise return an empty string
+            return immunization.status || '';
+          }
+        }
+        return '';
+      },
     },
     {
       field: 'symptomsReviewDate',
@@ -295,32 +285,45 @@ const handleViewClick = (id) => {
     {
       field: 'action',
       headerName: 'Action',
-      flex: 3,
+      flex: 2.5,
+      headerAlign: 'left',
       sortable: false,
       renderCell: (params) => (
-        <div>
-         {canModifySymptoms && (
-          <>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+
+          {/* View Details Button */}
           <Button
-                startIcon={<EditIcon />}
-                onClick={() => handleEditClick(params.row.id)}
-                variant="contained"
-                color="secondary"
-                size="small"
-                style={{ marginRight: 8 }}
-              >
-                Edit
-              </Button>
-          <Button
-                startIcon={<DeleteIcon />}
-                onClick={() => handleDeleteClick(params.row.id)}
-                variant="contained"
-                color="error"
-                size="small"
-              >
-                Delete
-              </Button>
-               </> 
+            startIcon={<PageviewIcon />}
+            onClick={() => handleViewClick(params.row.id)}
+            variant="contained"
+            color="primary"
+            size="small"
+          >
+            View
+          </Button>
+          {/* Edit Button */}
+          {canModifySymptoms && (
+            <Button
+              startIcon={<EditIcon />}
+              onClick={() => handleEditClick(params.row.id)}
+              variant="contained"
+              color="secondary"
+              size="small"
+            >
+              Edit
+            </Button>
+          )}
+          {/* Delete Button */}
+          {canModifySymptoms && (
+            <Button
+              startIcon={<DeleteIcon />}
+              onClick={() => handleDeleteClick(params.row.id)}
+              variant="contained"
+              color="error"
+              size="small"
+            >
+              Delete
+            </Button>
           )}
         </div>
       ),
@@ -331,11 +334,6 @@ const handleViewClick = (id) => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Container component="div" maxWidth="lg">
-        <Header
-          title="Pediatric TB - Symptoms Review"
-          subtitle="List of Symptoms Reviews"
-        />
 
 <Box m="20px">
       {/* Search and Add Symptoms */}
@@ -398,7 +396,7 @@ const handleViewClick = (id) => {
       <Box
         sx={{
           width: "100%",
-          height: "70vh", // Set the height to 70% of the viewport height or adjust as needed
+          height: "50vh", // Set the height to 70% of the viewport height or adjust as needed
           overflow: "auto", // Enable scrolling if content overflows
           "& .MuiDataGrid-root": {
             border: `1px solid ${colors.primary[700]}`,
@@ -473,7 +471,7 @@ const handleViewClick = (id) => {
             <PediatricTBSymptomsForm setAddFormOpen={setAddFormOpen} formData={formData} setFormData={setFormData} handleSubmit={handleSubmit} />
           </DialogContent>
         </Dialog>
-      </Container>
+
 
       <Dialog
   open={viewDetailsOpen}

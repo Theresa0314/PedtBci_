@@ -206,16 +206,6 @@ const Sidebar = () => {
             />
             )}
 
-        {canView('Symptoms') && (
-            <Item
-              title="Symptoms"
-              to="/symptoms"
-              icon={<ReceiptOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            )}
-
 
             {canView('Clinical Inventory') && (
               <Item

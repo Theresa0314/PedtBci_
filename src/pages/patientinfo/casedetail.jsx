@@ -27,6 +27,8 @@ import DSTGenForm from '../laboratorytest/dstgenform';
 import LabTestTable from '../laboratorytest/labtesttable';
 import DiagnosisDetail from '../laboratorytest/diagnosisdetail';
 
+import SymptomsReview from '../symptoms';
+
 
 
 
@@ -1136,7 +1138,7 @@ const viewDetails = (id) => {
     {currentTab === 3 && (
          <  Box m="20px">
            {/* Your Assessment tab content here */}
-          
+          <SymptomsReview />
         </Box>
       )}
 
