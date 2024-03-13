@@ -9,12 +9,25 @@ import { tokens } from "../../theme";
 import { db } from '../../firebase.config';
 import { collection, addDoc } from 'firebase/firestore';
 
-// Sample data for dropdowns
-const provinces = ["Metro Manila", "Cavite", "Laguna", "Batangas"];
-const cities = ["Manila", "Quezon City", "Caloocan", "Dasmariñas"];
-const barangays = ["Barangay 1", "Barangay 2", "Barangay 3", "Barangay 4"];
-
 const PatientGenForm = ({ handleUpdatePatients }) => {
+    // State hooks for referring facility information
+
+    // State hooks for dots Staff facility information
+    const [dotsStaffName, setdotsStaffName] = useState('');
+    const [dotsStaffContact, setdotsStaffContact] = useState('');
+    const [dotsStaffDesignation, setdotsStaffDesignation] = useState('');
+    //State hooks for patient reasons for referral
+    const [reasonForReferral, setReasonForReferral] = useState('');
+    const [referralError, setReferralError] = useState('');
+    const [otherReason, setOtherReason] = useState('');
+    const [subReason, setSubReason] = useState('');
+
+    const [bacteriologicalStatus, setBacteriologicalStatus] = useState('');
+    const [anatomicalSite, setAnatomicalSite] = useState('');
+    const [drugSusceptibility, setDrugSusceptibility] = useState('');
+    const [treatmentHistory, setTreatmentHistory] = useState('');
+
+
     // State hooks for patient information
     const [fullName, setFullName] = useState('');
     const [alias, setAlias] = useState('');
@@ -49,12 +62,85 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
     const [formErrors, setFormErrors] = useState({});
     const [openConsentDialog, setOpenConsentDialog] = useState(true); // Opens the dialog by default
 
-
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     
     const navigate = useNavigate();
 
+    // Sample data for dropdowns
+    const provinces = ["Metro Manila", "Cavite", "Laguna", "Batangas"];
+    const cities = ["Manila", "Quezon City", "Caloocan", "Dasmariñas"];
+    const barangays = ["Barangay 1", "Barangay 2", "Barangay 3", "Barangay 4"];
+
+    const facilities = [
+        {
+            name: 'Caridad Health Center',
+            contact: 464357838,
+            email: 'caridadhc@gmail.com',
+            address: 'Barangay 39 (Jasmin), Cavite City'
+          },
+          {
+            name: 'Cavite East Asia Medical Center',
+            contact: 9452259136,
+            email: 'info@ceamci.com',
+            address: 'Molino Road, Molino 3, Bacoor, Cavite City'
+          },
+          {
+            name: 'Medluck Diagnostic Clinic',
+            contact: 9256562662,
+            email: 'medluck@gmail.com',
+            address: '73 C. Jose Street, Malibay, Pasay City'
+          },
+        ];
+
+        const reasons = [
+            'For Screening',
+            'For Start of TB Treatment',
+            'For start of TPT',
+            'For Continuation of Treatment/Transfer Out',
+            'For Continuation of Treatment/Decentralize',
+            'Other/s, Specify'
+        ];
+    
+        const subReasons = {
+            "For Screening": [
+            "Tuberculin Skin Test (TST)",
+            "TB Blood Tests",
+            "High-Risk Clinical Group Screening",
+            "High-Risk Population Screening",
+            "Noninvasive Sample Tests"
+            ],
+        };
+
+//Handles
+const handleOtherReasonChange = (event) => {
+    setOtherReason(event.target.value);
+  };
+
+  const handleReasonChange = (event) => {
+    setReasonForReferral(event.target.value);
+    setSubReason(''); // Reset sub-reason when main reason changes
+    
+  };
+
+  const handleSubReasonChange = (event) => {
+    setSubReason(event.target.value);
+  };
+
+  const [selectedFacility, setSelectedFacility] = useState(facilities[0]);
+
+  const handleSelectChange = (e) => {
+      const selected = facilities.find(facility => facility.name === e.target.value);
+      setSelectedFacility(selected);
+    };
+
+const handleInputChange = (e) => {
+    setSelectedFacility({
+        ...selectedFacility,
+        [e.target.name]: e.target.value
+        });
+    };
+console.log(selectedFacility);
     const validateForm = () => {
         const errors = {};
 
@@ -107,38 +193,51 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
         const dateAdded = new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' });
       
         const patientData = {
-          fullName,
-          alias,
-          birthdate,
-          height,
-          weight,
-          gender,
-          houseNameBlockStreet,
-          province,
-          city,
-          barangay,
-          consent,
-          parentName,
-          parentEmail,
-          parentContactNumber,
-          relationshipToPatient,
-          secondaryContactName,
-          secondaryContactEmail,
-          secondaryContactNumber,
-          emergencyContactName,
-          emergencyContactNumber,
-          secondaryRelationshipToPatient,
-          chestXrayAvailable,
-          tbDrugHistory,
-          symptomsLastTwoWeeks,
-          caseNumber, // Add the generated case number
-          dateAdded,  // Add the generated date added
-          caseStatus: 'Open', 
+        //referral info
+            selectedFacility,
+            dotsStaffName,
+            dotsStaffContact,
+            dotsStaffDesignation,
+
+        //reason
+            reasonForReferral,
+            subReason,
+            bacteriologicalStatus,
+            anatomicalSite,
+            drugSusceptibility,
+            treatmentHistory,
+            otherReason,
+        
+        //patientData
+            fullName,
+            alias,
+            birthdate,
+            height,
+            weight,
+            gender,
+            houseNameBlockStreet,
+            province,
+            city,
+            barangay,
+            consent,
+            parentName,
+            parentEmail,
+            parentContactNumber,
+            relationshipToPatient,
+            secondaryContactName,
+            secondaryContactEmail,
+            secondaryContactNumber,
+            emergencyContactName,
+            emergencyContactNumber,
+            secondaryRelationshipToPatient,
+            chestXrayAvailable,
+            tbDrugHistory,
+            symptomsLastTwoWeeks,
+            caseNumber, // Add the generated case number
+            dateAdded,  // Add the generated date added
+            caseStatus: 'Open', 
         };
 
-       
-        
-      
         try {
             const docRef = await addDoc(collection(db, "patientsinfo"), patientData);
             console.log("Document written with ID: ", docRef.id);
@@ -154,8 +253,6 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
             }
           };
 
-          const drawerWidth = 240;
-
     return (
     <Container
     component="main"
@@ -163,8 +260,9 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
         backgroundColor: colors.blueAccent[800],
         padding: theme.spacing(5),
         borderRadius: theme.shape.borderRadius,
-        marginLeft: { sm: `${drawerWidth}px` }, // Use the drawerWidth here
-        width: { sm: `calc(100% - ${drawerWidth}px)` }, // Use the drawerWidth here
+        height: '90vh', 
+        width: "80%",
+        overflow: 'auto', 
         boxSizing: 'border-box',
         transition: theme.transitions.create(['margin', 'width'], {
           easing: theme.transitions.easing.sharp,
@@ -225,6 +323,238 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
             </Typography>
 
             <form onSubmit={handleSubmit}>
+                {/* Referral Section */}
+                <Typography variant="h5" gutterBottom sx={{ color: colors.greenAccent[500], fontWeight: 'bold' }}>
+                    Referring Facility Information
+                </Typography>
+                <Grid container spacing={3}>
+                <Grid item xs={6}>
+
+                <FormControl fullWidth >
+                    <InputLabel id="referringFacilityName">Name of Referring Facility/Unit</InputLabel>
+                    <Select
+                        name="referringFacilityName"
+                        value={selectedFacility.name}
+                        label="Referring Facility Name"
+                        onChange={handleSelectChange}
+                        >
+                        {facilities.map((facility, index) => (
+                            <MenuItem key={index} value={facility.name}>
+                                {facility.name}
+                            </MenuItem>
+                        ))}
+                        </Select>
+                </FormControl> 
+
+                </Grid>
+                <Grid item xs={6}>
+                <TextField
+                    required
+                    fullWidth
+                    label="Contact Number"
+                    name="referringFacilityContactNumber"
+                    margin="dense"
+                    value={selectedFacility.contact}
+                    onChange={handleInputChange}
+                    disabled={selectedFacility.name !== 'Other'}
+                />
+                </Grid>
+                <Grid item xs={6}>
+                <TextField
+                    required
+                    fullWidth
+                    label="Email"
+                    name="referringFacilityEmail"
+                    margin="dense"
+                    value={selectedFacility.email}
+                    onChange={handleInputChange}
+                    disabled={selectedFacility.name !== 'Other'}
+                />
+                </Grid>
+                <Grid item xs={6}>
+                <TextField
+                    required
+                    fullWidth
+                    label="Address of Referring Facility/Unit"
+                    name="referringFacilityAddress"
+                    margin="dense"
+                    value={selectedFacility.address}
+                    onChange={handleInputChange}
+                    disabled={selectedFacility.name !== 'Other'}
+                />
+                </Grid>
+                </Grid>
+                <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
+
+                 {/* Referring DOTS Staff Information Inputs */}
+     
+                    <Typography variant="h5" gutterBottom sx={{ color: colors.greenAccent[500], fontWeight: 'bold' }}>
+                         Referring DOTS Staff Information
+                    </Typography>
+                    <Grid container spacing={3}>
+                    <Grid item xs={4}>
+                        <TextField
+                        fullWidth
+                        required
+                        name="dotsStaffName"
+                        label="Name"
+                        value={dotsStaffName}
+                        onChange={(e) => setdotsStaffName(e.target.value)}
+                        />
+                    </Grid>
+                    <Grid item xs={4}>
+                        <TextField
+                        fullWidth
+                        required
+                        name="dotsStaffContact"
+                        label="Contact Number/Email"
+                        value={dotsStaffContact}
+                        onChange={(e) => setdotsStaffContact(e.target.value)}
+                        />
+                    </Grid>
+                    <Grid item xs={4}>
+                        <TextField
+                        fullWidth
+                        required
+                        name="dotsStaffDesignation"
+                        label="Designation"
+                        value={dotsStaffDesignation}
+                        onChange={(e) => setdotsStaffDesignation(e.target.value)}
+                        />
+                    </Grid>
+                    </Grid>
+                    <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
+
+
+                    <Typography variant="h5" gutterBottom sx={{ color: colors.greenAccent[500], fontWeight: 'bold' }}>
+                    Reason for Referral
+                    </Typography>
+                <Grid container spacing={3}>
+                <Grid item xs={12} >
+                    {/* Reason for Referral Section */}
+                    <FormControl fullWidth error={!!referralError}>
+                        <InputLabel id="reason-for-referral-label">Reason for Referral</InputLabel>
+                        <Select
+                        labelId="reason-for-referral-label"
+                        id="reason-for-referral"
+                        value={reasonForReferral}
+                        label="Reason for Referral"
+                        onChange={handleReasonChange}
+                        >
+                        {reasons.map((reason, index) => (
+                            <MenuItem key={index} value={reason}>{reason}</MenuItem>
+                        ))}
+                        </Select>
+                        <FormHelperText>{referralError}</FormHelperText>
+                    </FormControl>
+                </Grid>
+                </Grid>
+                {reasonForReferral === "For Screening" && (
+                    <Grid item xs={12}>
+                    <FormControl fullWidth>
+                        <InputLabel id="sub-reason-label">Additional Screening Details</InputLabel>
+                        <Select
+                        labelId="sub-reason-label"
+                        id="sub-reason"
+                        value={subReason}
+                        label="Additional Screening Details"
+                        onChange={handleSubReasonChange}
+                        >
+                        {subReasons[reasonForReferral].map((option, index) => (
+                            <MenuItem key={index} value={option}>{option}</MenuItem>
+                        ))}
+                        </Select>
+                    </FormControl>
+                    </Grid>
+                    
+                )}
+                {reasonForReferral === "For Continuation of Treatment/Decentralize" && (
+                        <>
+                        <Grid item xs={12}>
+                        <Typography variant="h5" gutterBottom sx={{ color: colors.greenAccent[500]}}>
+                            Additional Information Required
+                            </Typography>
+                        </Grid>
+                        <Grid container spacing={3}>
+                        <Grid item xs={7}>
+                            <FormControl component="fieldset">
+                            <Typography>Bacteriological Status</Typography>
+                            <RadioGroup
+                                row
+                                name="bacteriologicalStatus"
+                                value={bacteriologicalStatus}
+                                onChange={(e) => setBacteriologicalStatus(e.target.value)}
+                            >
+                                <FormControlLabel value="BC" control={<Radio />} label="Bacteriologically Confirmed" />
+                                <FormControlLabel value="CD" control={<Radio />} label="Clinically Diagnosed" />
+                            </RadioGroup>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid item xs={5}>
+                            <FormControl component="fieldset">
+                            <Typography>Anatomical Site</Typography>
+                            <RadioGroup
+                                row
+                                name="anatomicalSite"
+                                value={anatomicalSite}
+                                onChange={(e) => setAnatomicalSite(e.target.value)}
+                            >
+                                <FormControlLabel value="P" control={<Radio />} label="Pulmonary" />
+                                <FormControlLabel value="EP" control={<Radio />} label="Extrapulmonary" />
+                            </RadioGroup>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid item xs={7}>
+                            <FormControl component="fieldset">
+                            <Typography>Drug-susceptibility</Typography>
+                            <RadioGroup
+                                row
+                                name="drugSusceptibility"
+                                value={drugSusceptibility}
+                                onChange={(e) => setDrugSusceptibility(e.target.value)}
+                            >
+                                <FormControlLabel value="DS" control={<Radio />} label="Drug-susceptible" />
+                                <FormControlLabel value="DR" control={<Radio />} label="Drug-resistant" />
+                                <FormControlLabel value="Unk" control={<Radio />} label="Unknown" />
+                            </RadioGroup>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid item xs={5}>
+                            <FormControl component="fieldset">
+                            <Typography>Treatment History</Typography>
+                            <RadioGroup
+                                row
+                                name="treatmentHistory"
+                                value={treatmentHistory}
+                                onChange={(e) => setTreatmentHistory(e.target.value)}
+                            >
+                                <FormControlLabel value="New" control={<Radio />} label="New" />
+                                <FormControlLabel value="Retreatment" control={<Radio />} label="Retreatment" />
+                            </RadioGroup>
+                            </FormControl>
+                        </Grid>
+                        </Grid>
+                        </>
+                    )}  
+                    {reasonForReferral === "Other/s, Specify" && (
+                    <Grid item xs={12}>
+                        <TextField
+                        fullWidth
+                        required
+                        name="otherReason"
+                        label="Please specify other reason"
+                        margin="dense"
+                        value={otherReason}
+                        onChange={handleOtherReasonChange}
+                        />
+                    </Grid>
+                    )}           
+                <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
+
+
                 {/* Personal Information Section */}
                 <Typography variant="h5" gutterBottom sx={{ color: colors.greenAccent[500], fontWeight: 'bold' }}>
                     Personal Information

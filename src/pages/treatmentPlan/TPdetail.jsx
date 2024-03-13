@@ -47,6 +47,7 @@ const TPDetail = () => {
     }
   }, [treatmentPlanId]);
 
+
   const formatDate = (date) => {
     return date ? new Date(date).toLocaleDateString() : 'N/A';
   };
@@ -106,17 +107,11 @@ const TPDetail = () => {
             </Typography>
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
               <strong>Dosage:</strong>
-              {treatmentPlan.weight ? (
               <ul>
-                      {Object.entries(treatmentPlan.dosage).map(([drug, dose]) => (
-                        <li key={drug}>
-                          {drug}: {dose}
-                        </li>
-                      ))}
+              {Object.entries(treatmentPlan.dosage).map(([drug, dose], index) => {
+                  return <li key={drug}> {drug}: {dose}</li>;
+                })}
                 </ul>
-             ) : (
-            <p></p>
-            )}
             </Typography>
           </Grid>
         </Grid>
