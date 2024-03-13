@@ -78,7 +78,7 @@ const isSameDay = (d1, d2) => {
 //List upcoming events from Google Calendar
   useEffect(() => {
     if (apiCalendar.sign) {
-      apiCalendar.listUpcomingEvents(10).then(({ result }) => {
+      apiCalendar.listUpcomingEvents(50).then(({ result }) => {
         const fetchedEvents = result.items.map(event => {
           return {
             title: event.summary,
