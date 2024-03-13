@@ -201,8 +201,9 @@ const ReferralForm = () => {
         backgroundColor: colors.blueAccent[800],
         padding: theme.spacing(5),
         borderRadius: theme.shape.borderRadius,
-        marginLeft: { sm: `${drawerWidth}px` }, 
-        width: { sm: `calc(100% - ${drawerWidth}px)` }, 
+        height: '90vh', 
+              width: "80%",
+              overflow: 'auto', 
         boxSizing: 'border-box',
         transition: theme.transitions.create(['margin', 'width'], {
           easing: theme.transitions.easing.sharp,
