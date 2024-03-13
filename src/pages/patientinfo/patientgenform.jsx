@@ -10,13 +10,16 @@ import { db } from '../../firebase.config';
 import { collection, addDoc } from 'firebase/firestore';
 
 const PatientGenForm = ({ handleUpdatePatients }) => {
-    // State hooks for referring facility information
+    // State hooks for referral information
+    const [referringFacilityName, setReferringFacilityName] = useState('');
+    const [referringFacilityContactNumber, setReferringFacilityContactNumber] = useState('');
+    const [referringFacilityEmail, setReferringFacilityEmail] = useState('');
+    const [referringFacilityAddress, setReferringFacilityAddress] = useState('');
 
-    // State hooks for dots Staff facility information
     const [dotsStaffName, setdotsStaffName] = useState('');
     const [dotsStaffContact, setdotsStaffContact] = useState('');
     const [dotsStaffDesignation, setdotsStaffDesignation] = useState('');
-    //State hooks for patient reasons for referral
+  
     const [reasonForReferral, setReasonForReferral] = useState('');
     const [referralError, setReferralError] = useState('');
     const [otherReason, setOtherReason] = useState('');
@@ -27,6 +30,13 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
     const [drugSusceptibility, setDrugSusceptibility] = useState('');
     const [treatmentHistory, setTreatmentHistory] = useState('');
 
+    const receivingFacilityName = 'De La Salle Medical and Health Science Institute';
+    const receivingFacilityContact = 464818000;
+    const receivingFacilityAddress = 'Governor, D. Mangubat St, Avenue, Dasmariñas, Cavite';
+    const receivingFacilityDateReceived = new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' });
+    const receivingStaffName = 'Ava Santiago';
+    const receivingStaffContact = 927564836;
+    const receivingStaffDesignation = 'Nurse';
 
     // State hooks for patient information
     const [fullName, setFullName] = useState('');
@@ -72,27 +82,6 @@ const PatientGenForm = ({ handleUpdatePatients }) => {
     const cities = ["Manila", "Quezon City", "Caloocan", "Dasmariñas"];
     const barangays = ["Barangay 1", "Barangay 2", "Barangay 3", "Barangay 4"];
 
-    const facilities = [
-        {
-            name: 'Caridad Health Center',
-            contact: 464357838,
-            email: 'caridadhc@gmail.com',
-            address: 'Barangay 39 (Jasmin), Cavite City'
-          },
-          {
-            name: 'Cavite East Asia Medical Center',
-            contact: 9452259136,
-            email: 'info@ceamci.com',
-            address: 'Molino Road, Molino 3, Bacoor, Cavite City'
-          },
-          {
-            name: 'Medluck Diagnostic Clinic',
-            contact: 9256562662,
-            email: 'medluck@gmail.com',
-            address: '73 C. Jose Street, Malibay, Pasay City'
-          },
-        ];
-
         const reasons = [
             'For Screening',
             'For Start of TB Treatment',
@@ -127,20 +116,6 @@ const handleOtherReasonChange = (event) => {
     setSubReason(event.target.value);
   };
 
-  const [selectedFacility, setSelectedFacility] = useState(facilities[0]);
-
-  const handleSelectChange = (e) => {
-      const selected = facilities.find(facility => facility.name === e.target.value);
-      setSelectedFacility(selected);
-    };
-
-const handleInputChange = (e) => {
-    setSelectedFacility({
-        ...selectedFacility,
-        [e.target.name]: e.target.value
-        });
-    };
-console.log(selectedFacility);
     const validateForm = () => {
         const errors = {};
 
@@ -194,7 +169,10 @@ console.log(selectedFacility);
       
         const patientData = {
         //referral info
-            selectedFacility,
+            referringFacilityName,
+            referringFacilityContactNumber,
+            referringFacilityEmail,
+            referringFacilityAddress,
             dotsStaffName,
             dotsStaffContact,
             dotsStaffDesignation,
@@ -207,6 +185,15 @@ console.log(selectedFacility);
             drugSusceptibility,
             treatmentHistory,
             otherReason,
+
+        //receiving info
+            receivingFacilityName,
+            receivingFacilityContact,
+            receivingFacilityAddress,
+            receivingFacilityDateReceived,
+            receivingStaffName,
+            receivingStaffContact,
+            receivingStaffDesignation,
         
         //patientData
             fullName,
@@ -329,23 +316,15 @@ console.log(selectedFacility);
                 </Typography>
                 <Grid container spacing={3}>
                 <Grid item xs={6}>
-
-                <FormControl fullWidth >
-                    <InputLabel id="referringFacilityName">Name of Referring Facility/Unit</InputLabel>
-                    <Select
-                        name="referringFacilityName"
-                        value={selectedFacility.name}
-                        label="Referring Facility Name"
-                        onChange={handleSelectChange}
-                        >
-                        {facilities.map((facility, index) => (
-                            <MenuItem key={index} value={facility.name}>
-                                {facility.name}
-                            </MenuItem>
-                        ))}
-                        </Select>
-                </FormControl> 
-
+                    <TextField
+                    required
+                    fullWidth
+                    label="Name of Referring Facility/Unit"
+                    name="referringFacilityName"
+                    margin="dense"
+                    value={referringFacilityName}
+                    onChange={(e) => setReferringFacilityName(e.target.value)}
+                    />
                 </Grid>
                 <Grid item xs={6}>
                 <TextField
@@ -354,9 +333,8 @@ console.log(selectedFacility);
                     label="Contact Number"
                     name="referringFacilityContactNumber"
                     margin="dense"
-                    value={selectedFacility.contact}
-                    onChange={handleInputChange}
-                    disabled={selectedFacility.name !== 'Other'}
+                    value={referringFacilityContactNumber}
+                    onChange={(e) => setReferringFacilityContactNumber(e.target.value)}
                 />
                 </Grid>
                 <Grid item xs={6}>
@@ -366,9 +344,8 @@ console.log(selectedFacility);
                     label="Email"
                     name="referringFacilityEmail"
                     margin="dense"
-                    value={selectedFacility.email}
-                    onChange={handleInputChange}
-                    disabled={selectedFacility.name !== 'Other'}
+                    value={referringFacilityEmail}
+                    onChange={(e) => setReferringFacilityEmail(e.target.value)}
                 />
                 </Grid>
                 <Grid item xs={6}>
@@ -378,9 +355,8 @@ console.log(selectedFacility);
                     label="Address of Referring Facility/Unit"
                     name="referringFacilityAddress"
                     margin="dense"
-                    value={selectedFacility.address}
-                    onChange={handleInputChange}
-                    disabled={selectedFacility.name !== 'Other'}
+                    value={referringFacilityAddress}
+                    onChange={(e) => setReferringFacilityAddress(e.target.value)}
                 />
                 </Grid>
                 </Grid>
