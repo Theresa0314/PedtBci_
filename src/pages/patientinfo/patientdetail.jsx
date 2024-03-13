@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { db, auth } from '../../firebase.config';
 import PageviewIcon from '@mui/icons-material/Pageview';
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import { doc, collection, getDoc, getDocs, addDoc } from "firebase/firestore";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import {  Box,  Typography,  CircularProgress,  Paper,  Grid,  Container,  useTheme, Card,  CardContent,  Divider,  Tab,  Tabs,  Button,  TextField,  InputAdornment} from "@mui/material";
@@ -9,6 +10,9 @@ import Header from "../../components/Header";
 import { tokens } from "../../theme";
 import { DataGrid } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+
 
 const PatientDetail = () => {
   const { caseNumber } = useParams();
@@ -29,6 +33,7 @@ const PatientDetail = () => {
 
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const pdfRef = useRef();
 
   // Function to directly add a new case
   const handleAddNewCaseDirectly = async () => {
@@ -190,6 +195,43 @@ const PatientDetail = () => {
       const ageDate = new Date(difference);
       return Math.abs(ageDate.getUTCFullYear() - 1970);
     };
+// download referral report in pdf (must download in bright setting)
+    const downloadPDF = () => {
+      const input = pdfRef.current;
+      html2canvas(input).then((canvas) =>{
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4', true);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+        const imgX = (pdfWidth - imgWidth * ratio) / 2;
+        const imgY = 30;
+        pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+        pdf.save('ReferralReport.pdf');
+      });
+    }
+console.log(patientData);
+  // download data in csv
+  const downloadCSV = () => {
+    // const csvRows = [];
+    // const headers = Object.keys(patientData[0]);
+    // csvRows.push(headers.join(','));
+
+    // for (const row of patientData) {
+    //   csvRows.push(Object.values(row).join(','));
+    // }
+
+    // const csvString = csvRows.join('\r\n');
+    // const blob = new Blob([csvString], { type: 'text/csv' });
+    // const url = URL.createObjectURL(blob);
+
+    // const link = document.createElement('a');
+    // link.download = 'referraldata.csv';
+    // link.href = url;
+    // link.click();
+  };
 
   if (loading) {
     return (
@@ -468,6 +510,26 @@ const PatientDetail = () => {
 
     {/* Referral Form */}
     {currentTab === 1 && patientData && (
+      <Grid>
+        <Grid container spacing={1} justifyContent="right" sx={{marginTop: "20px"}}>
+       <Box>
+          <Button
+            onClick={downloadPDF}
+            sx={{backgroundColor: colors.blueAccent[700], color: colors.grey[100], fontSize: "14px", fontWeight: "bold", padding: "10px 20px",}}
+          >
+            <DownloadOutlinedIcon sx={{ mr: "10px" }} />
+            Download Referral Report
+          </Button>
+        </Box>
+        {/* <Box>
+          <Button
+            onClick={downloadCSV}
+            sx={{marginLeft: "20px", backgroundColor: colors.blueAccent[700], color: colors.grey[100], fontSize: "14px", fontWeight: "bold", padding: "10px 20px",}}
+          >
+            Download CSV
+          </Button>
+        </Box> */}
+      </Grid>
         <Container
           component={Paper}
           elevation={3}
@@ -485,7 +547,7 @@ const PatientDetail = () => {
               backgroundColor: colors.primary[400],
             }}
           >
-            <CardContent>
+            <CardContent  ref={pdfRef}>
               <Typography
                 variant="h6"
                 gutterBottom
@@ -668,6 +730,7 @@ const PatientDetail = () => {
             </CardContent>
           </Card>
         </Container>
+      </Grid>
       )}
 
     {/* Cases tab */}
