@@ -196,7 +196,7 @@ const Sidebar = () => {
               />
             )}
             
-          {canView('Referrals') && (
+          {/* {canView('Referrals') && (
             <Item
               title="Referrals"
               to="/referralinfo"
@@ -204,7 +204,7 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
-            )}
+            )} */}
 
         {canView('Symptoms') && (
             <Item

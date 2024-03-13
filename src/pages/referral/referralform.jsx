@@ -192,7 +192,6 @@ const ReferralForm = () => {
   const handleCancel = () => {
     navigate("/referralinfo");
 };
-  const drawerWidth = 240;
 
   return (
 <Container
