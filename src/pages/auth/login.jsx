@@ -27,6 +27,7 @@ const Login = () => {
     // Add state for child's name and birthdate
   const [childName, setChildName] = useState('');
   const [childBirthdate, setChildBirthdate] = useState('');
+  const [dates, setDates] = useState([]);
   const [error, setError] = useState('');
 
   const { setPatientInfoId } = usePatientInfo();
@@ -99,6 +100,40 @@ const Login = () => {
       setPatientInfoId(patientDoc.id); // Update the context with the patient info ID
       navigate(`/patientinfo/${patientDoc.id}`);
       setOpenChildDialog(false);
+
+      //Add events to calendar
+      const childTP = query(
+        collection(db, "treatmentPlan"),
+        where("name", "==", childName)
+      );
+      const querySnapshotTP = await getDocs(childTP);
+      const followUpDates = [];
+
+      querySnapshotTP.forEach((doc) => {
+        followUpDates.push(...doc.data().followUpDates);
+      });
+
+      setDates(followUpDates);
+
+      // Add events to Google Calendar
+      followUpDates.forEach((date) => {
+        const event = {
+          summary: `Follow Up for ${childName}`,
+          start: {
+            dateTime: date.toDate().toISOString(),
+            timeZone: "Asia/Manila",
+          },
+          end: {
+            dateTime: date.toDate().toISOString(),
+            timeZone: "Asia/Manila",
+          },
+        };
+
+        apiCalendar.createEvent(event).then((result) => {
+          console.log(result);
+        });
+      });
+
     } else {
       setError("No records found with the provided child's name and birthdate.");
       // Here you can set an error state and display it to the user
