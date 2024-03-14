@@ -19,7 +19,6 @@ import { useTheme } from '@mui/material';
 import { Box } from '@mui/material';
 import { GridToolbar, DataGrid } from '@mui/x-data-grid';
 import { tokens } from '../theme'; 
-import Header from '../components/Header';
 import { db, auth } from '../firebase.config';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -40,11 +39,11 @@ const Contacts = ({ caseId })=> {
   const colors = tokens(theme.palette.mode);
 
   const [isAddFormOpen, setAddFormOpen] = useState(false);
+  const relationships = ["Sibling", "Cousin", "Parent", "Grandparent", "Aunt/Uncle", "Non-relative"];
+
 
   const [formData, setFormData] = useState({
-    firstName: '',
-    middleName: '',
-    lastName: '',
+    fullName: '',
     birthday: '',
     gender: '',
     relationship: '',
@@ -87,6 +86,17 @@ const Contacts = ({ caseId })=> {
     // Log the formData to check if all fields are correct before attempting to update
     console.log('Form data on submit:', formData);
 
+
+  // Check for existing patient matching the contact's full name, birthdate, and gender
+  const patientsQuery = query(
+    collection(db, 'patientsinfo'), 
+    where('fullName', '==', formData.fullName),
+    where('gender', '==', formData.gender),
+    where('birthdate', '==', formData.birthday)
+  );
+      const patientsSnapshot = await getDocs(patientsQuery);
+      let existingPatientId = patientsSnapshot.docs.length > 0 ? patientsSnapshot.docs[0].id : null;
+
     if (formData.id) {
       try {
         const contactRef = doc(db, 'contactTracing', formData.id);
@@ -116,6 +126,7 @@ const Contacts = ({ caseId })=> {
             ...formData,
             caseId: caseId,
             caseNumber: caseData.caseNumber,
+            relatedPatientId: existingPatientId
           };
           
           const docRef = await addDoc(collection(db, 'contactTracing'), newData);
@@ -132,9 +143,7 @@ const Contacts = ({ caseId })=> {
     // Close the form and reset form data
     setAddFormOpen(false);
     setFormData({
-      firstName: '',
-      middleName: '',
-      lastName: '',
+      fullName: '',
       birthday: '',
       gender: '',
       relationship: '',
@@ -147,7 +156,7 @@ const Contacts = ({ caseId })=> {
 
   
   
-  const handleEditClick = (id) => {
+  const handleEditClick = async (id) => {
     const selectedRow = tableData.find((row) => row.id === id);
   
     if (selectedRow) {
@@ -165,9 +174,7 @@ const Contacts = ({ caseId })=> {
   
       setFormData({
         id: selectedRow.id,
-        firstName: selectedRow.firstName,
-        middleName: selectedRow.middleName,
-        lastName: selectedRow.lastName,
+        fullName: selectedRow.fullName ,
         birthday: formattedBirthday,
         gender: selectedRow.gender,
         relationship: selectedRow.relationship,
@@ -175,12 +182,33 @@ const Contacts = ({ caseId })=> {
         email: selectedRow.email,
       });
   
+      try {
+        const patientsQuery = query(
+          collection(db, 'patientsinfo'),
+          where('fullName', '==', selectedRow.fullName),
+          where('gender', '==', selectedRow.gender),
+          where('birthdate', '==', formattedBirthday) // Use the formatted string date
+        );
+        const patientsSnapshot = await getDocs(patientsQuery);
+        const relatedPatientId = patientsSnapshot.docs.length > 0 ? patientsSnapshot.docs[0].id : null;
+  
+        // Update the state to reflect the found related patient ID
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          relatedPatientId: relatedPatientId,
+        }));
+  
+        // If you need to update the relatedPatientId in the data grid, you may need to
+        // trigger a state update for the tableData as well, similar to what you do in handleSubmit
+      } catch (error) {
+        console.error('Error fetching related patient:', error);
+      }
+  
       setAddFormOpen(true);
     } else {
       console.error(`Row with ID ${id} not found`);
     }
   };
-  
   
     const [userRole, setUserRole] = useState(null); // State to store user role
 
@@ -226,16 +254,12 @@ const Contacts = ({ caseId })=> {
   
 
   const columns = [
-    { field: 'id', headerName: 'ID', flex: 0.1 },
+    { field: 'id', headerName: 'ID', flex: 1 },
     {
-      field: 'name',
-      headerName: 'Name',
+      field: 'fullName', // Use the 'fullName' field directly
+      headerName: 'Full Name',
       flex: 1,
-      valueGetter: (params) => {
-        // Concatenate first, middle, and last names
-        const { firstName, middleName, lastName } = params.row;
-        return `${firstName} ${middleName} ${lastName}`;
-      },
+      valueGetter: (params) => params.row.fullName, // Directly return the fullName
     },
     {
       field: 'birthday',
@@ -258,14 +282,10 @@ const Contacts = ({ caseId })=> {
       flex: 1,
     },
     {
-      field: 'contact',
-      headerName: 'Contact Number',
-      flex: 0.7,
-    },
-    {
-      field: 'email',
-      headerName: 'Email Address',
+      field: 'relatedPatient',
+      headerName: 'Record Match',
       flex: 1,
+      valueGetter: (params) => params.row.relatedPatientId ? 'Yes' : 'No',
     },
     {
       field: 'action',
@@ -368,45 +388,17 @@ const Contacts = ({ caseId })=> {
                 <div className="form-row">
                   <Typography variant="subtitle1">Full Name:</Typography>
                   <Grid container spacing={2}>
-                    <Grid item xs={4}>
-                      <TextField
+                    <Grid item xs={8}>
+                    <TextField
                         type="text"
-                        id="firstName"
-                        name="firstName"
-                        label="First Name"
+                        id="fullName"
+                        name="fullName"
+                        label="Full Name"
                         variant="outlined"
                         margin="dense"
                         fullWidth
-                        value={formData.firstName}
-                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                        required
-                      />
-                    </Grid>
-                    <Grid item xs={4}>
-                      <TextField
-                        type="text"
-                        id="middleName"
-                        name="middleName"
-                        label="Middle Name"
-                        variant="outlined"
-                        margin="dense"
-                        fullWidth
-                        value={formData.middleName}
-                        onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
-                        required
-                      />
-                    </Grid>
-                    <Grid item xs={4}>
-                      <TextField
-                        type="text"
-                        id="lastName"
-                        name="lastName"
-                        label="Last Name"
-                        variant="outlined"
-                        margin="dense"
-                        fullWidth
-                        value={formData.lastName}
-                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                        value={formData.fullName}
+                        onChange={handleFormChange}
                         required
                       />
                     </Grid>
@@ -432,7 +424,7 @@ const Contacts = ({ caseId })=> {
                     <Grid item xs={4}>
                     <Typography variant="subtitle3">Gender:</Typography>
                       <FormControl variant="outlined" fullWidth margin="dense">
-                        <InputLabel id="gender-label"></InputLabel>
+                        <InputLabel id="gender-label">Gender</InputLabel>
                         <Select
                           labelId="gender-label"
                           id="gender"
@@ -442,27 +434,33 @@ const Contacts = ({ caseId })=> {
                           required
                         >
                           <MenuItem value="">Choose...</MenuItem>
-                          <MenuItem value="Male">Male</MenuItem>
-                          <MenuItem value="Female">Female</MenuItem>
+                          <MenuItem value="male">Male</MenuItem>
+                          <MenuItem value="female">Female</MenuItem>
                           <MenuItem value="Other">Other</MenuItem>
                         </Select>
                       </FormControl>
                     </Grid>
                     <Grid item xs={4}>
-                    <Typography variant="subtitle4">Relationship to Patient:</Typography>
-                      <TextField
-                        type="text"
-                        id="relationship"
-                        name="relationship"
-                        label="Relationship to Patient"
-                        variant="outlined"
-                        margin="dense"
-                        fullWidth
-                        value={formData.relationship}
-                        onChange={handleFormChange}
-                        required
-                      />
-                    </Grid>
+                        <Typography variant="subtitle4">Relationship to Patient:</Typography>
+                        <FormControl variant="outlined" fullWidth margin="dense">
+                          <InputLabel id="relationship-label">Relationship</InputLabel>
+                          <Select
+                            labelId="relationship-label"
+                            id="relationship"
+                            name="relationship"
+                            value={formData.relationship}
+                            onChange={handleFormChange}
+                            label="Relationship to Patient"
+                            required
+                          >
+                            {relationships.map((relationship) => (
+                              <MenuItem key={relationship} value={relationship}>
+                                {relationship}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Grid>
                   </Grid>
                 </div>
                 {/* Contact Number and Email Address Fields */}
