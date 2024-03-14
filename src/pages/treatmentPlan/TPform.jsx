@@ -10,7 +10,7 @@ import {
   Container,
   useTheme,
   Divider,
-  //TextField,
+  TextField,
 } from "@mui/material";
 import { tokens } from "../../theme";
 import { db, apiCalendar } from "../../firebase.config";
@@ -31,14 +31,15 @@ const regimens = [
   "II. 2HRZES/1HRZE/5HRE",
   "IIa. 2HRZES/1HRZE/9HRE",
 ];
-//const statuses = ["Ongoing", "End"];
-//const outcomes = ["Cured/Treatment Completed", "Treatment Failed", "Died", "Lost to Follow up", "Not Evaluated"];
 
 const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
   // State hooks for form data
   const [regimen, setRegimen] = useState("");
   const [name, setName] = useState("");
   const [weight, setWeight] = useState("");
+  const [startDateTP, setStartDateTP] = useState('');
+  const status = 'Pending';
+  const outcome = 'Not Evaluated';
 
   // Fetch case name when the component mounts
   useEffect(() => {
@@ -73,7 +74,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
   const colors = tokens(theme.palette.mode);
 
   const treatmentDurations = {
-    "I. 2HRZE/4HR": 1, //6
+    "I. 2HRZE/4HR": 6,
     "Ia. 2HRZE/10HR": 12,
     "II. 2HRZES/1HRZE/5HRE": 7,
     "IIa. 2HRZES/1HRZE/9HRE": 11,
@@ -122,8 +123,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
     ],
   };
 
-  //start date of treatment plan
-  const startDateTP = new Date().toLocaleDateString();
+  //Related to treatment plan regimens
   const duration = treatmentDurations[regimen]; // duration in months
   const durationI = intensiveDurations[regimen]; //intensive months
   const durationC = continuationDurations[regimen]; //continuation months
@@ -164,7 +164,6 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
   //Fixed-dose combinations for each weight band
   function calculateDosage(weight) {
     const fdc = {
-      "1-3": { H: 1, R: 1, Z: 1, E: 1 },
       "4-7": { H: 1, R: 1, Z: 1, E: 1 },
       "8-11": { H: 2, R: 2, Z: 2, E: 2 },
       "12-15": { H: 3, R: 3, Z: 3, E: 3 },
@@ -191,7 +190,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
   //Submit form
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+    //Treatment plan data / TPData
     const TPData = {
       caseId, // Directly used from props
       caseNumber, // Directly used from props
@@ -201,7 +200,10 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
       endDateTP,
       duration,
       medication,
+      dosage,
       followUpDates,
+      status,
+      outcome
     };
 
     try {
@@ -225,32 +227,32 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
         };
 
         //Send SMS to number
-        const apikey = '1b35ebc5f7671828c3c6e76c04437c4e';
-        const number = ['09760682065','09276397317'];
-        const message = `${name}'s TP follow-up dates are confirmed! Check your google calendar for more information.`
+        // const apikey = '1b35ebc5f7671828c3c6e76c04437c4e';
+        // const number = ['09760682065','09276397317'];
+        // const message = `${name}'s TP follow-up dates are confirmed! Check your google calendar for more information.`
 
-        const parameters = {
-          apikey,
-          number,
-          message,
-        };
+        // const parameters = {
+        //   apikey,
+        //   number,
+        //   message,
+        // };
 
-        console.log(JSON.stringify(parameters))
+        // console.log(JSON.stringify(parameters))
 
-        fetch("https://api.semaphore.co/api/v4/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams(parameters),
-        })
-          .then((res) => res.text())
-          .then((output) => {
-            console.log(`Success: ${JSON.stringify(output)}`);
-          })
-          .catch((err) => {
-            console.error(err);
-          });
+        // fetch("https://api.semaphore.co/api/v4/messages", {
+        //   method: "POST",
+        //   headers: {
+        //     "Content-Type": "application/x-www-form-urlencoded",
+        //   },
+        //   body: new URLSearchParams(parameters),
+        // })
+        //   .then((res) => res.text())
+        //   .then((output) => {
+        //     console.log(`Success: ${JSON.stringify(output)}`);
+        //   })
+        //   .catch((err) => {
+        //     console.error(err);
+        //   });
 
         // Use the apiCalendar to add the event to Google Calendar
         apiCalendar
@@ -292,7 +294,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
         </Typography>
         <Grid container spacing={3}>
           {/* TP Regimen */}
-          <Grid item xs={4}>
+          <Grid item xs={5}>
             <FormControl fullWidth required margin="dense">
               <InputLabel id="regimen-label">Treatment Regimen</InputLabel>
               <Select
@@ -312,7 +314,32 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
               </Select>
             </FormControl>
           </Grid>
+
+          <Grid item xs={3}>
+            <TextField
+              required
+              fullWidth
+              id="startDateTP"
+              label="startDateTP"
+              name="startDateTP"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              variant="outlined"
+              margin="dense"
+              value={startDateTP}
+              onChange={(e) => setStartDateTP(e.target.value)}
+              />
+          </Grid>
+          <Grid item xs={3} marginTop="2vh">
+          <Typography
+              variant="body1"
+              sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
+          >
+              <strong>End Date:</strong> {endDateTP}
+            </Typography>
+          </Grid>  
           {/* Duration */}
+        
           <Grid item xs={4}>
             <Typography
               variant="body1"
@@ -320,6 +347,8 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
             >
               <strong>Duration:</strong> {duration} <light> months</light>
             </Typography>
+            </Grid>
+            <Grid item xs={4}>
             <Typography
               variant="body1"
               sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
@@ -327,6 +356,8 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
               <strong>Intensive Phase:</strong> {durationI}{" "}
               <light> months</light>
             </Typography>
+            </Grid>
+            <Grid item xs={4}>
             <Typography
               variant="body1"
               sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
@@ -334,22 +365,8 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
               <strong>Continuation Phase:</strong> {durationC}{" "}
               <light> months</light>
             </Typography>
-          </Grid>
-          {/* Start date and End date */}
-          <Grid item xs={4}>
-            <Typography
-              variant="body1"
-              sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
-            >
-              <strong>Start Date:</strong> {startDateTP}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
-            >
-              <strong>End Date:</strong> {endDateTP}
-            </Typography>
-          </Grid>
+            </Grid>
+          
           {/* Medications */}
           <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
           {medication ? (
@@ -366,8 +383,13 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
               >
                 {medication}
               </Typography>
-
               <Typography
+                variant="body1" 
+                sx={{ fontSize: "1rem", marginBottom: "0.5rem", color: colors.greenAccent[500], }}
+              >
+                <light>HRZE Dosage:  50/75/150/100 mg/tab</light>
+              </Typography>
+              {/* <Typography
                 variant="body1"
                 sx={{
                   fontSize: "1rem",
@@ -376,7 +398,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
                 }}
               >
                 <light>The weight of the child is {weight} kg. </light>
-              </Typography>
+              </Typography> */}
             </Grid>
           ) : (
             <Grid item xs={4}>
@@ -392,8 +414,13 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
               >
                 [H] Isoniazid, [R] Rifampicin, [Z] Pyrazinamide, [E] Ethambutol
               </Typography>
-
               <Typography
+                variant="body1" 
+                sx={{ fontSize: "1rem", marginBottom: "0.5rem", color: colors.greenAccent[500], }}
+              >
+                <light>HRZE Dosage:  50/75/150/100 mg/tab</light>
+              </Typography>
+              {/* <Typography
                 variant="body1"
                 sx={{
                   fontSize: "1rem",
@@ -402,10 +429,9 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
                 }}
               >
                 <light>The weight of the child is {weight} kg. </light>
-              </Typography>
+              </Typography> */}
             </Grid>
           )}
-
           {/* Dosage/Tablets */}
           {weight ? (
             <Grid item xs={3}>
@@ -413,7 +439,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
                 variant="body1"
                 sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
               >
-                <strong>The number of tablets for each drug is:</strong>
+                <strong>Tablets each day:</strong>
               </Typography>
               <ul>
                 {Object.entries(dosage).map(([drug, dose]) => (
@@ -426,6 +452,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
           ) : (
             <p></p>
           )}
+
           {/* Follow up dates */}
           <Grid item xs={3}>
             <Typography

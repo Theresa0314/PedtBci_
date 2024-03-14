@@ -68,7 +68,7 @@ const TPDetail = () => {
       </Box>
     );
   }
-
+console.log(treatmentPlan.dosage);
   return (
     <Box padding={3} bgcolor="background.default" color="text.primary">
       <Header title="Treatment Plan Details" />
@@ -78,7 +78,7 @@ const TPDetail = () => {
      
     <Card sx={{ marginBottom: theme.spacing(4), backgroundColor: colors.primary[400], padding: theme.spacing(2) }}>
       <CardContent>
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: colors.greenAccent[500] }}>
+        <Typography variant="h3" gutterBottom sx={{ fontWeight: 'bold', color: colors.greenAccent[500] }}>
           Treatment Plan Information of  {treatmentPlan.name}
         </Typography>
         <Divider sx={{ marginBottom: theme.spacing(2), bgcolor: colors.grey[500] }} />
@@ -99,32 +99,58 @@ const TPDetail = () => {
               <strong>End of Treatment Plan:</strong> {formatDate(treatmentPlan.endDateTP)}
             </Typography>
           </Grid>
-
-          {/* Second Column */}
           <Grid item xs={12} md={6}>
           <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
               <strong>Medications/Type of Drug Intake:</strong> {treatmentPlan.medication || 'N/A'}
             </Typography>
+            <Typography
+                variant="body1" 
+                sx={{ fontSize: "1rem", marginBottom: "0.5rem", color: colors.greenAccent[500], }}
+              >
+                <light>HRZE Dosage:  50/75/150/100 mg/tab</light>
+              </Typography>
+              <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Treatment Outcome:</strong> {treatmentPlan.outcome}
+            </Typography>
+          </Grid>
+        </Grid>
+        <Divider sx={{ marginBottom: theme.spacing(2), bgcolor: colors.grey[500] }} />
+{/* Dosages */}
+<Grid container spacing={3}>
+          <Grid item xs={12} md={4}>
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-              <strong>Dosage:</strong>
+              <strong>Dosages for Intensive Phase:</strong>
               <ul>
-              {Object.entries(treatmentPlan.dosage).map(([drug, dose], index) => {
+              {Object.entries(treatmentPlan.dosage).map(([drug, dose]) => {
                   return <li key={drug}> {drug}: {dose}</li>;
                 })}
                 </ul>
             </Typography>
           </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
-
-
-    {/* Patient Progress TP Information */}
-    <Card sx={{ marginBottom: theme.spacing(4), backgroundColor: colors.primary[400], padding: theme.spacing(2) }}>
-      <CardContent>
-
+          <Grid item xs={12} md={4}>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Dosages for Continuation Phase:</strong>
+              <ul>
+              {Object.entries(treatmentPlan.dosage).map(([drug, dose]) => {
+                  return <li key={drug}> {drug}: {dose}</li>;
+                })}
+                </ul>
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <strong>Total Dosages for TP:</strong>
+              <ul>
+              {Object.entries(treatmentPlan.dosage).map(([drug, dose]) => {
+                  return <li key={drug}> {drug}: {dose}</li>;
+                })}
+              </ul>
+            </Typography>
+          </Grid>
+            
+           </Grid> 
         <Divider sx={{ marginBottom: theme.spacing(2), bgcolor: colors.grey[500] }} />
-
+{/* Follow up dates */}
         <Grid container spacing={3}>
           {/* First Column */}
           <Grid item xs={12} md={6}>
@@ -143,14 +169,8 @@ const TPDetail = () => {
               </ul>
             </Typography>
           </Grid>
-
-          {/* Second Column
-          <Grid item xs={12} md={6}>
-          <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-              <strong>Notes:</strong> {treatmentPlan.notes || 'N/A'}
-            </Typography> 
-      </Grid> */}
         </Grid>
+
       </CardContent>
     </Card>
 
