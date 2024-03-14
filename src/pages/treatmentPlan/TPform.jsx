@@ -73,7 +73,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
   const colors = tokens(theme.palette.mode);
 
   const treatmentDurations = {
-    "I. 2HRZE/4HR": 6,
+    "I. 2HRZE/4HR": 1, //6
     "Ia. 2HRZE/10HR": 12,
     "II. 2HRZES/1HRZE/5HRE": 7,
     "IIa. 2HRZES/1HRZE/9HRE": 11,
@@ -223,12 +223,11 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
             timeZone: "Asia/Manila",
           },
         };
-        // API KEY: 1b35ebc5f7671828c3c6e76c04437c4e
-        const apikey = "1b35ebc5f7671828c3c6e76c04437c4e";
-        const number = '09064525156';
-        const message = `Your treatment plan follow-up dates are confirmed! 📅 Kindly check your google calendar:\n${followUpDates
-          .map((date) => formatDate(date))
-          .join("\n")}`;
+
+        //Send SMS to number
+        const apikey = '1b35ebc5f7671828c3c6e76c04437c4e';
+        const number = ['09760682065','09276397317'];
+        const message = `${name}'s TP follow-up dates are confirmed! Check your google calendar for more information.`
 
         const parameters = {
           apikey,
