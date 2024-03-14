@@ -128,7 +128,9 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
   const durationI = intensiveDurations[regimen]; //intensive months
   const durationC = continuationDurations[regimen]; //continuation months
   const medication = treatmentMedications[regimen];
-  const dosage = calculateDosage(weight);
+  const dosageI = calculateDosageIntensive(weight, durationI); //dosages in intensive
+  const dosageC = calculateDosageContinuation(weight, durationC); //dosages in continuation
+  const dosageT = calculateTotalDosage(weight,duration);
   //calculate new month number
   const dateObject = new Date(startDateTP);
   const monthNumber = dateObject.getMonth();
@@ -161,8 +163,9 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
 
   const followUpDates = calculateFollowUpDates();
 
-  //Fixed-dose combinations for each weight band
-  function calculateDosage(weight) {
+  //Dosages for Intensive Phase
+  function calculateDosageIntensive(weight, months) {
+    //Fixed-dose combinations for each weight band
     const fdc = {
       "4-7": { H: 1, R: 1, Z: 1, E: 1 },
       "8-11": { H: 2, R: 2, Z: 2, E: 2 },
@@ -180,9 +183,61 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
       return weight >= min && weight <= max;
     });
 
-    return fdc[weightBand];
+    const dosages = fdc[weightBand];
+
+    // Compute the new dosages
+    const newDosages = {};
+    for (const drug in dosages) {
+      newDosages[drug] = dosages[drug] * 28 * months;
+    }
+
+    return newDosages;
   }
 
+  //Dosages for Continuation Phase
+  function calculateDosageContinuation(weight, months) {
+    const fdc = {
+      "4-7": { H: 1, R: 1 },
+      "8-11": { H: 2, R: 2 },
+      "12-15": { H: 3, R: 3 },
+      "16-24": { H: 4, R: 4 },
+      "25-37": { H: 5, R: 5 },
+      "38-54": { H: 6, R: 6 },
+      "55-70": { H: 7, R: 7 },
+      "70-100": { H: 8, R: 8 },
+    };
+  
+    // Find the weight band that matches the weight
+    const weightBand = Object.keys(fdc).find((band) => {
+      const [min, max] = band.split("-");
+      return weight >= min && weight <= max;
+    });
+  
+    // Get the dosages for the weight band
+    const dosages = fdc[weightBand];
+  
+    // Compute the new dosages
+    const newDosages = {};
+    for (const drug in dosages) {
+      newDosages[drug] = dosages[drug] * 28 * months;
+    }
+  
+    return newDosages;
+  }
+
+//Compute for total number of dosages for the whole duration
+function calculateTotalDosage(weight, months) {
+  const totalDosage = {};
+
+  // Compute the total dosage for each drug
+  for (const drug in dosageI) {
+    totalDosage[drug] = (dosageC[drug] || 0) + dosageI[drug];
+  }
+
+  return totalDosage;
+}
+
+//Format date
   const formatDate = (date) => {
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
   };
@@ -200,7 +255,9 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
       endDateTP,
       duration,
       medication,
-      dosage,
+      dosageI,
+      dosageC,
+      dosageT,
       followUpDates,
       status,
       outcome
@@ -277,6 +334,9 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
         backgroundColor: colors.blueAccent[800],
         padding: theme.spacing(6),
         borderRadius: theme.shape.borderRadius,
+        width: '100%',
+        height: '70vh', 
+        overflow: 'auto', 
       }}
     >
       <form onSubmit={handleSubmit}>
@@ -389,7 +449,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
               >
                 <light>HRZE Dosage:  50/75/150/100 mg/tab</light>
               </Typography>
-              {/* <Typography
+              <Typography
                 variant="body1"
                 sx={{
                   fontSize: "1rem",
@@ -398,7 +458,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
                 }}
               >
                 <light>The weight of the child is {weight} kg. </light>
-              </Typography> */}
+              </Typography>
             </Grid>
           ) : (
             <Grid item xs={4}>
@@ -420,7 +480,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
               >
                 <light>HRZE Dosage:  50/75/150/100 mg/tab</light>
               </Typography>
-              {/* <Typography
+              <Typography
                 variant="body1"
                 sx={{
                   fontSize: "1rem",
@@ -429,20 +489,59 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
                 }}
               >
                 <light>The weight of the child is {weight} kg. </light>
-              </Typography> */}
+              </Typography>
             </Grid>
           )}
-          {/* Dosage/Tablets */}
+          {/* Dosages*/}
           {weight ? (
-            <Grid item xs={3}>
+            <Grid item xs={4}>
               <Typography
                 variant="body1"
                 sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
               >
-                <strong>Tablets each day:</strong>
+                <strong>Doses during Intensive Phase:</strong>
               </Typography>
               <ul>
-                {Object.entries(dosage).map(([drug, dose]) => (
+                {Object.entries(dosageI).map(([drug, dose]) => (
+                  <li key={drug}>
+                    {drug}: {dose}
+                  </li>
+                ))}
+              </ul>
+            </Grid>
+          ) : (
+            <p></p>
+          )}
+
+          {weight ? (
+            <Grid item xs={4}>
+              <Typography
+                variant="body1"
+                sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
+              >
+                <strong>Doses during Continuation Phase:</strong>
+              </Typography>
+              <ul>
+                {Object.entries(dosageC).map(([drug, dose]) => (
+                  <li key={drug}>
+                    {drug}: {dose}
+                  </li>
+                ))}
+              </ul>
+            </Grid>
+          ) : (
+            <p></p>
+          )}
+          {weight ? (
+            <Grid item xs={5}>
+              <Typography
+                variant="body1"
+                sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
+              >
+                <strong>Total Doses for the whole duration:</strong>
+              </Typography>
+              <ul>
+                {Object.entries(dosageT).map(([drug, dose]) => (
                   <li key={drug}>
                     {drug}: {dose}
                   </li>

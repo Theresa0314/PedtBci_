@@ -121,7 +121,7 @@ console.log(treatmentPlan.dosage);
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
               <strong>Dosages for Intensive Phase:</strong>
               <ul>
-              {Object.entries(treatmentPlan.dosage).map(([drug, dose]) => {
+              {Object.entries(treatmentPlan.dosageI).map(([drug, dose]) => {
                   return <li key={drug}> {drug}: {dose}</li>;
                 })}
                 </ul>
@@ -131,7 +131,7 @@ console.log(treatmentPlan.dosage);
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
               <strong>Dosages for Continuation Phase:</strong>
               <ul>
-              {Object.entries(treatmentPlan.dosage).map(([drug, dose]) => {
+              {Object.entries(treatmentPlan.dosageC).map(([drug, dose]) => {
                   return <li key={drug}> {drug}: {dose}</li>;
                 })}
                 </ul>
@@ -141,7 +141,7 @@ console.log(treatmentPlan.dosage);
             <Typography variant="body1" sx={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
               <strong>Total Dosages for TP:</strong>
               <ul>
-              {Object.entries(treatmentPlan.dosage).map(([drug, dose]) => {
+              {Object.entries(treatmentPlan.dosageT).map(([drug, dose]) => {
                   return <li key={drug}> {drug}: {dose}</li>;
                 })}
               </ul>
