@@ -285,7 +285,7 @@ function calculateTotalDosage(weight, months) {
 
         //Send SMS to number
         const apikey = '1b35ebc5f7671828c3c6e76c04437c4e';
-        const number = ['09760682065','09276397317'];
+        const number = '09760682065';//['09760682065','09276397317'];
         const message = `${name}'s TP follow-up dates are confirmed! Check your google calendar for more information.`
 
         const parameters = {
