@@ -19,12 +19,10 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
-//import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
-//import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
-//import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import InventoryIcon from '@mui/icons-material/Inventory';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
+import RecentActorsIcon from '@mui/icons-material/RecentActors';
 
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
@@ -206,6 +204,15 @@ const Sidebar = () => {
             />
             )} */}
 
+            {canView('TB Masterlist') && (
+              <Item
+              title="TB Masterlist"
+              to="/tbmasterlist"
+              icon={<RecentActorsIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            )}
 
             {canView('Clinical Inventory') && (
               <Item
