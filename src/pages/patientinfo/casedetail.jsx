@@ -757,7 +757,6 @@ const viewDetails = (id) => {
         <Tab label='Close Contacts' />
         <Tab label='Assessment' />
         <Tab label='Treatment Plan' />
-        <Tab label='Similar Cases' />
         {/* Add other tabs as needed */}
       </Tabs>
 
@@ -1268,11 +1267,6 @@ const viewDetails = (id) => {
         </Box>
       )}
 
-      {currentTab === 5 && (
-         <  Box m="20px">
-           {/* Your Similar Cases content here */}
-        </Box>
-      )}
     </Box>
   );
 };

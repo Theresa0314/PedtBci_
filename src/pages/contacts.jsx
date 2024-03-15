@@ -499,11 +499,20 @@ const Contacts = ({ caseId })=> {
                   </Grid>
                 </div>
                 <div className="d-flex justify-content-center align-items-center mt-3">
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '20px'}}>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '20px'}}>
                     <Button type="submit" variant="contained" color="secondary">
                       Submit
                     </Button>
+                    <Button 
+                      variant="outlined" 
+                      color="primary" 
+                      onClick={() => setAddFormOpen(false)}
+                      style={{ marginLeft: '8px' }}
+                    >
+                      Cancel
+                    </Button>
                   </div>
+        
                 </div>
               </form>
             </div>

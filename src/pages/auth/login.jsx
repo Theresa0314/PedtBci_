@@ -21,6 +21,7 @@ const Login = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   const [openChildDialog, setOpenChildDialog] = useState(false);
 
@@ -81,9 +82,10 @@ const Login = () => {
         console.error("User document not found!");
       }
     } catch (error) {
+      setLoginError('Login Failed. Invalid email or password.');
       console.error(error);
-  
     }
+    
   };
   
   // This function gets called when the parent submits the case number
@@ -186,6 +188,20 @@ const Login = () => {
                 value={password}
                 sx={{ gridColumn: "span 4" }}/>
               </Grid>
+
+          {/* Display login error message */}
+          {loginError && (
+                <Typography 
+                color="error" 
+                sx={{ 
+                  textAlign: 'center', 
+                  marginTop: '20px', 
+                  marginBottom: '20px',
+                }}>
+                  {loginError}
+                </Typography>
+              )}
+
             </Grid>
             {/* google button */}
             <Grid container justifyContent="right" sx={{ mt: 4 }}>
