@@ -17,11 +17,11 @@ const Dashboard = () => {
   const pdfRef = useRef();
 
   const [patientCount, setPatientCount]= useState(null);
-  const [sTreatmentCount, setsTreatmentCount]= useState(null); //start Treatment
+  const [sTreatmentCount, setsTreatmentCount] = useState(null); //not started on Treatment
   const [oTreatmentCount, setoTreatmentCount]= useState(null); //ongoing Treatment
   const [eTreatmentCount, seteTreatmentCount]= useState(null); //end Treatment
   const [treatment, setTreatment]= useState([]);
-  const [inventory, setInventory]= useState([]);
+  const [doses, setDoses] = useState({});;
   const [patients, setPatients]= useState([]);
 
   const [mtbrif, setMTBRIF]= useState([]);
@@ -38,13 +38,14 @@ const Dashboard = () => {
   const loadData = async () => {
 // ROW 1
     //# of patients
-    const patientRef = await getCountFromServer(query(collection(db, "treatmentPlan")));
-    const patientCounter = patientRef.data().count;
-    setPatientCount(patientCounter);
+    const patientRefCases = await getCountFromServer(query(collection(db, "cases")));
+    const patientCounterCases = patientRefCases.data().count;
+    setPatientCount(patientCounterCases);
     //# of started treatment
-    const sTreatmentRef = await getDocs(query(collection(db, "treatmentPlan"), where("status", "==", "Start")));
-    const sTreatmentCounter = sTreatmentRef.size
-    setsTreatmentCount(sTreatmentCounter);
+    const patientRefTP = await getCountFromServer(query(collection(db, "treatmentPlan")));
+    const patientCounterTP = patientRefTP.data().count;
+    const calculateDifference = setsTreatmentCount(Math.abs(patientCounterCases - patientCounterTP));
+    
     //# of ongoing treatment
     const oTreatmentRef = await getDocs(query(collection(db, "treatmentPlan"), where("status", "==", "Ongoing")));
     const oTreatmentCounter = oTreatmentRef.size
@@ -59,11 +60,27 @@ const Dashboard = () => {
     let treatmentData = treatmentRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
     setPatients(treatmentData);
     //inventory
-    const inventoryRef = await getDocs(collection(db, "inventory"));
-    let inventoryData = inventoryRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-    setInventory(inventoryData);
+    const inventoryRef = await getDocs(collection(db, "treatmentPlan"));
+    const uniqueDrugs = new Set();
+    let tempDoses = {};
+
+    inventoryRef.docs.forEach(doc => {
+      const data = doc.data();
+      if (data.dosageT) {
+        for (const [drug, dose] of Object.entries(data.dosageT)) {
+          if (!uniqueDrugs.has(drug)) {
+            uniqueDrugs.add(drug);
+            tempDoses[drug] = dose;
+          } else {
+            tempDoses[drug] += dose;
+          }
+        }
+      }
+    });
+    setDoses(tempDoses);
+  
     //referred patients
-    const patientsRef = await getDocs(collection(db, "referralform"));
+    const patientsRef = await getDocs(collection(db, "cases"));
     let patientsData = patientsRef.docs.map(doc => ({ ...doc.data(), id: doc.id }));
     setPatients(patientsData);
     //MTB/RIF tests
@@ -154,7 +171,7 @@ const Dashboard = () => {
           alignItems="center"
           justifyContent="center"
         >
-          <StatBox title={sTreatmentCount} subtitle="Started Treatment" />
+          <StatBox title={sTreatmentCount} subtitle="Not Started on Treatment" />
         </Box>
         <Box
           gridColumn="span 3"
@@ -196,7 +213,7 @@ const Dashboard = () => {
           <Box height="220px" minHeight="150px" marginTop="8px">
             <Doughnut
               data={{
-                labels: ["Start", "Ongoing", "End"],
+                labels: ["Not Started", "Ongoing", "End"],
                 datasets: [
                   {
                     label: "Count",
@@ -237,11 +254,11 @@ const Dashboard = () => {
           >
             <Bar
               data={{
-                labels: inventory.map((doc) => doc.name),
+                labels: Object.entries(doses).map(([drug, dose], index) => (drug)),
                 datasets: [
                   {
                     label: "Quantity",
-                    data: inventory.map((doc) => doc.quantity),
+                    data: Object.entries(doses).map(([drug, dose], index) => (dose)),
                     backgroundColor: [
                       "rgb(208, 162, 247)",
                       "aqua",
@@ -296,7 +313,7 @@ const Dashboard = () => {
                   {doc.caseNumber}
                 </Typography>
                 <Typography color={colors.grey[100]}>
-                  {doc.dotsStaffName}
+                  {doc.fullName}
                 </Typography>
               </Box>
               {/* date referred */}
