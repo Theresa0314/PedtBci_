@@ -10,7 +10,7 @@ import {
   Container,
   useTheme,
   Divider,
-  //TextField,
+  TextField,
 } from "@mui/material";
 import { tokens } from "../../theme";
 import { db, apiCalendar } from "../../firebase.config";
@@ -31,14 +31,15 @@ const regimens = [
   "II. 2HRZES/1HRZE/5HRE",
   "IIa. 2HRZES/1HRZE/9HRE",
 ];
-//const statuses = ["Ongoing", "End"];
-//const outcomes = ["Cured/Treatment Completed", "Treatment Failed", "Died", "Lost to Follow up", "Not Evaluated"];
 
 const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
   // State hooks for form data
   const [regimen, setRegimen] = useState("");
   const [name, setName] = useState("");
   const [weight, setWeight] = useState("");
+  const [startDateTP, setStartDateTP] = useState('');
+  const status = 'Pending';
+  const outcome = 'Not Evaluated';
 
   // Fetch case name when the component mounts
   useEffect(() => {
@@ -122,13 +123,14 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
     ],
   };
 
-  //start date of treatment plan
-  const startDateTP = new Date().toLocaleDateString();
+  //Related to treatment plan regimens
   const duration = treatmentDurations[regimen]; // duration in months
   const durationI = intensiveDurations[regimen]; //intensive months
   const durationC = continuationDurations[regimen]; //continuation months
   const medication = treatmentMedications[regimen];
-  const dosage = calculateDosage(weight);
+  const dosageI = calculateDosageIntensive(weight, durationI); //dosages in intensive
+  const dosageC = calculateDosageContinuation(weight, durationC); //dosages in continuation
+  const dosageT = calculateTotalDosage(weight,duration);
   //calculate new month number
   const dateObject = new Date(startDateTP);
   const monthNumber = dateObject.getMonth();
@@ -161,10 +163,10 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
 
   const followUpDates = calculateFollowUpDates();
 
-  //Fixed-dose combinations for each weight band
-  function calculateDosage(weight) {
+  //Dosages for Intensive Phase
+  function calculateDosageIntensive(weight, months) {
+    //Fixed-dose combinations for each weight band
     const fdc = {
-      "1-3": { H: 1, R: 1, Z: 1, E: 1 },
       "4-7": { H: 1, R: 1, Z: 1, E: 1 },
       "8-11": { H: 2, R: 2, Z: 2, E: 2 },
       "12-15": { H: 3, R: 3, Z: 3, E: 3 },
@@ -181,9 +183,61 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
       return weight >= min && weight <= max;
     });
 
-    return fdc[weightBand];
+    const dosages = fdc[weightBand];
+
+    // Compute the new dosages
+    const newDosages = {};
+    for (const drug in dosages) {
+      newDosages[drug] = dosages[drug] * 28 * months;
+    }
+
+    return newDosages;
   }
 
+  //Dosages for Continuation Phase
+  function calculateDosageContinuation(weight, months) {
+    const fdc = {
+      "4-7": { H: 1, R: 1 },
+      "8-11": { H: 2, R: 2 },
+      "12-15": { H: 3, R: 3 },
+      "16-24": { H: 4, R: 4 },
+      "25-37": { H: 5, R: 5 },
+      "38-54": { H: 6, R: 6 },
+      "55-70": { H: 7, R: 7 },
+      "70-100": { H: 8, R: 8 },
+    };
+  
+    // Find the weight band that matches the weight
+    const weightBand = Object.keys(fdc).find((band) => {
+      const [min, max] = band.split("-");
+      return weight >= min && weight <= max;
+    });
+  
+    // Get the dosages for the weight band
+    const dosages = fdc[weightBand];
+  
+    // Compute the new dosages
+    const newDosages = {};
+    for (const drug in dosages) {
+      newDosages[drug] = dosages[drug] * 28 * months;
+    }
+  
+    return newDosages;
+  }
+
+//Compute for total number of dosages for the whole duration
+function calculateTotalDosage(weight, months) {
+  const totalDosage = {};
+
+  // Compute the total dosage for each drug
+  for (const drug in dosageI) {
+    totalDosage[drug] = (dosageC[drug] || 0) + dosageI[drug];
+  }
+
+  return totalDosage;
+}
+
+//Format date
   const formatDate = (date) => {
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
   };
@@ -191,7 +245,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
   //Submit form
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+    //Treatment plan data / TPData
     const TPData = {
       caseId, // Directly used from props
       caseNumber, // Directly used from props
@@ -201,7 +255,12 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
       endDateTP,
       duration,
       medication,
+      dosageI,
+      dosageC,
+      dosageT,
       followUpDates,
+      status,
+      outcome
     };
 
     try {
@@ -223,35 +282,34 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
             timeZone: "Asia/Manila",
           },
         };
-        // API KEY: 1b35ebc5f7671828c3c6e76c04437c4e
-        const apikey = "1b35ebc5f7671828c3c6e76c04437c4e";
-        const number = '09064525156';
-        const message = `Your treatment plan follow-up dates are confirmed! 📅 Kindly check your google calendar:\n${followUpDates
-          .map((date) => formatDate(date))
-          .join("\n")}`;
 
-        const parameters = {
-          apikey,
-          number,
-          message,
-        };
+        //Send SMS to number
+        // const apikey = '1b35ebc5f7671828c3c6e76c04437c4e';
+        // const number = ['09760682065','09276397317'];
+        // const message = `${name}'s TP follow-up dates are confirmed! Check your google calendar for more information.`
 
-        console.log(JSON.stringify(parameters))
+        // const parameters = {
+        //   apikey,
+        //   number,
+        //   message,
+        // };
 
-        fetch("https://api.semaphore.co/api/v4/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams(parameters),
-        })
-          .then((res) => res.text())
-          .then((output) => {
-            console.log(`Success: ${JSON.stringify(output)}`);
-          })
-          .catch((err) => {
-            console.error(err);
-          });
+        // console.log(JSON.stringify(parameters))
+
+        // fetch("https://api.semaphore.co/api/v4/messages", {
+        //   method: "POST",
+        //   headers: {
+        //     "Content-Type": "application/x-www-form-urlencoded",
+        //   },
+        //   body: new URLSearchParams(parameters),
+        // })
+        //   .then((res) => res.text())
+        //   .then((output) => {
+        //     console.log(`Success: ${JSON.stringify(output)}`);
+        //   })
+        //   .catch((err) => {
+        //     console.error(err);
+        //   });
 
         // Use the apiCalendar to add the event to Google Calendar
         apiCalendar
@@ -276,6 +334,9 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
         backgroundColor: colors.blueAccent[800],
         padding: theme.spacing(6),
         borderRadius: theme.shape.borderRadius,
+        width: '100%',
+        height: '70vh', 
+        overflow: 'auto', 
       }}
     >
       <form onSubmit={handleSubmit}>
@@ -293,7 +354,7 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
         </Typography>
         <Grid container spacing={3}>
           {/* TP Regimen */}
-          <Grid item xs={4}>
+          <Grid item xs={5}>
             <FormControl fullWidth required margin="dense">
               <InputLabel id="regimen-label">Treatment Regimen</InputLabel>
               <Select
@@ -313,7 +374,32 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
               </Select>
             </FormControl>
           </Grid>
+
+          <Grid item xs={3}>
+            <TextField
+              required
+              fullWidth
+              id="startDateTP"
+              label="startDateTP"
+              name="startDateTP"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              variant="outlined"
+              margin="dense"
+              value={startDateTP}
+              onChange={(e) => setStartDateTP(e.target.value)}
+              />
+          </Grid>
+          <Grid item xs={3} marginTop="2vh">
+          <Typography
+              variant="body1"
+              sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
+          >
+              <strong>End Date:</strong> {endDateTP}
+            </Typography>
+          </Grid>  
           {/* Duration */}
+        
           <Grid item xs={4}>
             <Typography
               variant="body1"
@@ -321,6 +407,8 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
             >
               <strong>Duration:</strong> {duration} <light> months</light>
             </Typography>
+            </Grid>
+            <Grid item xs={4}>
             <Typography
               variant="body1"
               sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
@@ -328,6 +416,8 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
               <strong>Intensive Phase:</strong> {durationI}{" "}
               <light> months</light>
             </Typography>
+            </Grid>
+            <Grid item xs={4}>
             <Typography
               variant="body1"
               sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
@@ -335,22 +425,8 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
               <strong>Continuation Phase:</strong> {durationC}{" "}
               <light> months</light>
             </Typography>
-          </Grid>
-          {/* Start date and End date */}
-          <Grid item xs={4}>
-            <Typography
-              variant="body1"
-              sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
-            >
-              <strong>Start Date:</strong> {startDateTP}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
-            >
-              <strong>End Date:</strong> {endDateTP}
-            </Typography>
-          </Grid>
+            </Grid>
+          
           {/* Medications */}
           <Divider sx={{ bgcolor: colors.grey[500], my: 2 }} />
           {medication ? (
@@ -367,7 +443,12 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
               >
                 {medication}
               </Typography>
-
+              <Typography
+                variant="body1" 
+                sx={{ fontSize: "1rem", marginBottom: "0.5rem", color: colors.greenAccent[500], }}
+              >
+                <light>HRZE Dosage:  50/75/150/100 mg/tab</light>
+              </Typography>
               <Typography
                 variant="body1"
                 sx={{
@@ -393,7 +474,12 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
               >
                 [H] Isoniazid, [R] Rifampicin, [Z] Pyrazinamide, [E] Ethambutol
               </Typography>
-
+              <Typography
+                variant="body1" 
+                sx={{ fontSize: "1rem", marginBottom: "0.5rem", color: colors.greenAccent[500], }}
+              >
+                <light>HRZE Dosage:  50/75/150/100 mg/tab</light>
+              </Typography>
               <Typography
                 variant="body1"
                 sx={{
@@ -406,18 +492,17 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
               </Typography>
             </Grid>
           )}
-
-          {/* Dosage/Tablets */}
+          {/* Dosages*/}
           {weight ? (
-            <Grid item xs={3}>
+            <Grid item xs={4}>
               <Typography
                 variant="body1"
                 sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
               >
-                <strong>The number of tablets for each drug is:</strong>
+                <strong>Doses during Intensive Phase:</strong>
               </Typography>
               <ul>
-                {Object.entries(dosage).map(([drug, dose]) => (
+                {Object.entries(dosageI).map(([drug, dose]) => (
                   <li key={drug}>
                     {drug}: {dose}
                   </li>
@@ -427,6 +512,46 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
           ) : (
             <p></p>
           )}
+
+          {weight ? (
+            <Grid item xs={4}>
+              <Typography
+                variant="body1"
+                sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
+              >
+                <strong>Doses during Continuation Phase:</strong>
+              </Typography>
+              <ul>
+                {Object.entries(dosageC).map(([drug, dose]) => (
+                  <li key={drug}>
+                    {drug}: {dose}
+                  </li>
+                ))}
+              </ul>
+            </Grid>
+          ) : (
+            <p></p>
+          )}
+          {weight ? (
+            <Grid item xs={5}>
+              <Typography
+                variant="body1"
+                sx={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}
+              >
+                <strong>Total Doses for the whole duration:</strong>
+              </Typography>
+              <ul>
+                {Object.entries(dosageT).map(([drug, dose]) => (
+                  <li key={drug}>
+                    {drug}: {dose}
+                  </li>
+                ))}
+              </ul>
+            </Grid>
+          ) : (
+            <p></p>
+          )}
+
           {/* Follow up dates */}
           <Grid item xs={3}>
             <Typography

@@ -575,22 +575,23 @@ const viewDetails = (id) => {
          renderCell: (params) => (
           <Typography
             style={{
-              color: params.value === 'End' ? 'lightcoral' : 'lightgreen', 
+              color: params.value === 'End' ? 'lightcoral' : 'orange', 
             }}
           >
             {params.value}
           </Typography>
         ),
         },
-        { field: 'regimen', headerName: 'Treatment Regimen', flex: 1 },
-        { field: 'startDateTP', headerName: 'TP Start Date', flex: 1 },
+        { field: 'regimen', headerName: 'Regimen', flex: 1 },
+        { field: 'startDateTP', headerName: 'Start Date', flex: 1 },
         { field: 'duration', headerName: 'Duration', flex: 1 },
-        { field: 'endDateTP', headerName: 'TP End Date', flex: 1 },
+        { field: 'endDateTP', headerName: 'End Date', flex: 1 },
+        { field: 'outcome', headerName: 'Outcome', flex: 1 },
         {
           field: 'action',
           headerName: 'Action',
           sortable: false,
-          flex: 2, 
+          flex: 3, 
           // Hide edit/delete actions based on user role
            hide: isAddTPDisabled,
           renderCell: (params) => (
@@ -608,7 +609,7 @@ const viewDetails = (id) => {
               {/* Conditionally show edit and delete options */}
               {canEditOrDelete(userRole) && (
             <>
-              {/* <Button
+              <Button
                 startIcon={<EditIcon />}
                 onClick={() => navigate(`/treatmentPlan/edit/${params.id}`)}
                 variant="contained"
@@ -617,7 +618,7 @@ const viewDetails = (id) => {
                 style={{ marginRight: 8 }}
               >
                 Edit
-              </Button> */}
+              </Button>
               <Button
                 startIcon={<DeleteIcon />}
                 onClick={() => handleClickOpenDeleteDialog(params.id)}

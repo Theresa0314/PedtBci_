@@ -213,24 +213,18 @@ const PatientDetail = () => {
       });
     }
 console.log(patientData);
-  // download data in csv
-  const downloadCSV = () => {
-    // const csvRows = [];
-    // const headers = Object.keys(patientData[0]);
-    // csvRows.push(headers.join(','));
 
-    // for (const row of patientData) {
-    //   csvRows.push(Object.values(row).join(','));
-    // }
+  // download data in json
+  const downloadJSON = () => {
+    const dataStr = JSON.stringify(patientData);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
 
-    // const csvString = csvRows.join('\r\n');
-    // const blob = new Blob([csvString], { type: 'text/csv' });
-    // const url = URL.createObjectURL(blob);
+    let exportFileDefaultName = 'referraldata.json';
 
-    // const link = document.createElement('a');
-    // link.download = 'referraldata.csv';
-    // link.href = url;
-    // link.click();
+    let linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
   };
 
   if (loading) {
@@ -521,14 +515,14 @@ console.log(patientData);
             Download Referral Report
           </Button>
         </Box>
-        {/* <Box>
+        <Box>
           <Button
-            onClick={downloadCSV}
+            onClick={downloadJSON}
             sx={{marginLeft: "20px", backgroundColor: colors.blueAccent[700], color: colors.grey[100], fontSize: "14px", fontWeight: "bold", padding: "10px 20px",}}
           >
-            Download CSV
+            Download json
           </Button>
-        </Box> */}
+        </Box>
       </Grid>
         <Container
           component={Paper}

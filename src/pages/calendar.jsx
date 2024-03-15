@@ -76,21 +76,19 @@ const isSameDay = (d1, d2) => {
   };  
 
 //List upcoming events from Google Calendar
-  useEffect(() => {
-    if (apiCalendar.sign) {
-      apiCalendar.listUpcomingEvents(50).then(({ result }) => {
-        const fetchedEvents = result.items.map(event => {
-          return {
-            title: event.summary,
-            start: event.start.dateTime || event.start.date, // If it's an all day event, it will be in the date property
-            end: event.end.dateTime || event.end.date,
-            url: event.htmlLink
-          };
-        });
-        setEvents(fetchedEvents);
+useEffect(() => {
+  if (apiCalendar.sign) {
+    apiCalendar.listUpcomingEvents()
+      .then(({ result }) => {
+        setEvents(result.items.map(event => ({
+          title: event.summary,
+          start: event.start.dateTime || event.start.date, // If it's an all-day event, it will be in the date property
+          end: event.end.dateTime || event.end.date,
+          allDay: event.start.date ? true : false,
+        })));
       });
-    }
-  }, []);
+  }
+}, []);
 
   return (
     <Box m="20px">
@@ -153,7 +151,7 @@ const isSameDay = (d1, d2) => {
             selectable={true}
             selectMirror={true}
             dayMaxEvents={true}
-          //  select={handleDateClick}
+            select={handleDateClick}
             eventsSet={(events) => setCurrentEvents(events)}
           />
         </Box>
