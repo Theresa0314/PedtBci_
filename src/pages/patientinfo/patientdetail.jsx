@@ -28,7 +28,7 @@ const PatientDetail = () => {
   const [isAddCaseDisabled, setIsAddCaseDisabled] = useState(false);
     // State to determine if the user is a parent
     const [isParent, setIsParent] = useState(false);
-
+    const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
   const theme = useTheme();
@@ -135,6 +135,7 @@ const PatientDetail = () => {
           const role = docSnap.data().role;
           setUserRole(role);
           setIsParent(role === 'Parent');
+          setIsAdmin(role === 'Admin');
         }
       });
     }
@@ -253,8 +254,10 @@ console.log(patientData);
         fixed
       >
         <Tab label="Patient Profile" />
-        <Tab label="Referral Report" />
         <Tab label="Cases" />
+        {!isParent && (
+        <Tab label="Referral Report" />
+        )}
       </Tabs>
 
     {/* Patient Profile Tab */}
@@ -503,7 +506,7 @@ console.log(patientData);
       )}
 
     {/* Referral Form */}
-    {currentTab === 1 && patientData && (
+    {currentTab === 2 && patientData && (
       <Grid>
         <Grid container spacing={1} justifyContent="right" sx={{marginTop: "20px"}}>
        <Box>
@@ -515,6 +518,7 @@ console.log(patientData);
             Download Referral Report
           </Button>
         </Box>
+        {isAdmin && (
         <Box>
           <Button
             onClick={downloadJSON}
@@ -523,6 +527,7 @@ console.log(patientData);
             Download json
           </Button>
         </Box>
+        )}
       </Grid>
         <Container
           component={Paper}
@@ -728,7 +733,7 @@ console.log(patientData);
       )}
 
     {/* Cases tab */}
-      {currentTab === 2 && (
+      {currentTab === 1 && (
         <Box mt={3}>
           {/* Your Cases tab content here */}
           <Box
