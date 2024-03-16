@@ -42,44 +42,54 @@ const TBMasterlist = () => {
 useEffect(() => {
     const fetchData = async () => {
       const querySnapshot = await getDocs(collection(db, "patientsinfo"));
-      const sputumData = await fetchMTBData(); // Fetch MTB/sputum data
+      const mtbrifSnapshot = await getDocs(collection(db, "mtbrif"));
+      const xraySnapshot = await getDocs(collection(db, "xray"));
+      const tstSnapshot = await getDocs(collection(db, "tst"));
+      const diagnosisSnapshot = await getDocs(collection(db, "diagnosis"));
 
+      const mtbrifData = mtbrifSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const xrayData = xraySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const tstData = tstSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const diagnosisData = diagnosisSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       const rows = querySnapshot.docs.map((doc, index) => {
-        const consultDate = new Date(doc.data().dateAdded).toLocaleDateString();
-        const dob = doc.data().birthdate;
+        const docData = doc.data();
+        const consultDate = new Date(docData.dateAdded).toLocaleDateString();
+        const dob = docData.birthdate;
+        const caseNumber = docData.caseNumber;
         const age = calculateAge(dob); // Calculate age
-        const fullAddress = combineAddress(doc.data().houseNameBlockStreet, doc.data().barangay, doc.data().city, doc.data().province, doc.data().parentContactNumber);
-        const referringDetails = combineReferring(doc.data().referringFacilityName, doc.data().dotsStaffName);
+        
+
+        const fullAddress = combineAddress(docData.houseNameBlockStreet, doc.data().barangay, doc.data().city, doc.data().province, doc.data().parentContactNumber);
+        const referringDetails = combineReferring(docData.referringFacilityName, doc.data().dotsStaffName);
         const screeningValue = screening[index % screening.length];
         const presumptiveTBValue = index % 9 === 0 ? presumptiveTB[1] : presumptiveTB[0];
-        const sputumValue = sputumData[index % sputumData.length]; // Assign a sputum value to each row
+        const mtbrifItem = mtbrifData.find(mtbrif => mtbrif.caseNumber === docData.caseNumber);
+        const xrayItem = xrayData.find(xray => xray.caseNumber === docData.caseNumber);
+        const tstItem = tstData.find(tst => tst.caseNumber === docData.caseNumber);
+        const diagnosisItem = diagnosisData.find(diagnosis => diagnosis.caseNumber === docData.caseNumber);
 
         return {
           id: doc.id,
-          ...doc.data(),
+          ...docData,
           consultDate,
           age, 
           fullAddress,
           referringDetails,
           screening: screeningValue,
           presumptiveTB: presumptiveTBValue,
-          sputum: sputumValue
+          mtbInfo: mtbrifItem ? `${mtbrifItem.testResult}, ${mtbrifItem.testDate}` : 'N/A',
+          xrayInfo: xrayItem ? `${xrayItem.testResult}, ${xrayItem.testDate}` : 'N/A',
+          tstInfo: tstItem ? `${tstItem.testResult}, ${tstItem.testDate}` : 'N/A',
+          diagnosisDate: diagnosisItem ? `${diagnosisItem.testDate}` : 'N/A',
+
+          diagnosisRemark: diagnosisItem ? `${diagnosisItem.remarks}` : 'N/A',
         };
       });
       setRows(rows);
     };
     fetchData();
   }, []);
-
-//Fetch MTB/Sputum data
-const fetchMTBData = async () => {
-    const querySnapshot = await getDocs(collection(db, "mtbrif"));
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-  };
 
   const calculateAge = (dob) => {
     const birthDate = new Date(dob);
@@ -95,6 +105,7 @@ const fetchMTBData = async () => {
   const combineReferring = (referringFacilityName, dotsStaffName) => {
     return `${referringFacilityName}, ${dotsStaffName}`;
   };
+
 
   const columns = [
     {
@@ -138,32 +149,32 @@ const fetchMTBData = async () => {
         flex: 0.5,
     },
     {
-        field: 'sputum',
+        field: 'mtbInfo',
         headerName: "Sputum Examination",
         flex: 0.5,
     },
     {
-        field: 'chestX',
+        field: 'xrayInfo',
         headerName: "Chest X-ray",
         flex: 0.5,
     },
     {
-        field: 'tst',
+        field: 'tstInfo',
         headerName: "Turbelin Skin Test",
         flex: 0.5,
     },
     {
-        field: 'diagnosis',
+        field: 'diagnosisDate',
         headerName: "Diagnosis",
         flex: 0.5,
     },
     {
-        field: 'actionT',
+        field: 'reasonForReferral',
         headerName: "Action Taken/ Referred To and Status",
-        flex: 0.5,
+        flex: 1,
     },
     {
-        field: 'remarks',
+        field: 'diagnosisRemark',
         headerName: "Remarks",
         flex: 0.5,
     },
