@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Grid,
   DialogActions,
@@ -30,6 +30,9 @@ import SearchIcon from "@mui/icons-material/Search";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import PageviewIcon from "@mui/icons-material/Pageview";
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const TBMasterlist = () => {
   const theme = useTheme();
@@ -39,20 +42,40 @@ const TBMasterlist = () => {
   const [userRole, setUserRole] = useState(''); // Define setUserRole to update user's role
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const pdfRef = useRef();
+
   const [rows, setRows] = useState([]);
   const screening = ['P', 'A', 'I', 'E'];
   const presumptiveTB = ['DS-TB', 'DR-TB'];
   const diagnosisRemarks = ['No further evaluation needed'];
 
-        //Download json file
-        const downloadJSON = () => {
-            const blob = new Blob([JSON.stringify(rows)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'tbmasterlist.json';
-            link.click();
-          };
+//Download json file
+    const downloadJSON = () => {
+        const blob = new Blob([JSON.stringify(rows)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'tbmasterlist.json';
+        link.click();
+    };
+
+//Download report in pdf file
+const downloadPDF = () => {
+    const input = pdfRef.current;
+    html2canvas(input).then((canvas) =>{
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4', true);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 30;
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      pdf.save('TBMasterlist.pdf');
+    });
+  }
   
 // Load data from Firebase when the component mounts
 useEffect(() => {
@@ -212,17 +235,28 @@ useEffect(() => {
       <Header
         title="Presumptive TB Masterlist"
       />
-       {isAdmin && (
+       
        <Grid container spacing={1} justifyContent="right">
+               <Box>
+          <Button
+            onClick={downloadPDF}
+            sx={{backgroundColor: colors.blueAccent[700], color: colors.grey[100], fontSize: "14px", fontWeight: "bold", padding: "10px 20px",}}
+          >
+            <DownloadOutlinedIcon sx={{ mr: "10px" }} />
+            Download TB Masterlist Report
+          </Button>
+        </Box>
+        {isAdmin && (
         <Button
             onClick={downloadJSON}
-            sx={{backgroundColor: colors.blueAccent[700], color: colors.grey[100], fontSize: "14px", fontWeight: "bold", padding: "10px",}}
+            sx={{marginLeft: "20px", backgroundColor: colors.blueAccent[700], color: colors.grey[100], fontSize: "14px", fontWeight: "bold", padding: "10px",}}
           >
             Download json
           </Button>
+        )}
         </Grid>
-       )}
-      <Box
+
+      <Box 
         sx={{
           display: "flex",
           justifyContent: "space-between",
@@ -231,7 +265,7 @@ useEffect(() => {
         }}
       >
       </Box> 
-      <Box
+      <Box ref={pdfRef}
         sx={{
           width: "100%",
           height: "70vh", // Set the height to 70% of the viewport height or adjust as needed
