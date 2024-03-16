@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
+  Grid,
   DialogActions,
   Typography,
   TextField,
@@ -14,6 +15,7 @@ import { GridToolbar, DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../theme";
 import Header from "../components/Header";
 import { db, auth } from "../firebase.config";
+import { useAuthState } from 'react-firebase-hooks/auth';
 import {
   collection,
   addDoc,
@@ -33,13 +35,38 @@ const TBMasterlist = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
+  const [currentUser] = useAuthState(auth); // Use the hook to get the current user
+  const [userRole, setUserRole] = useState(''); // Define setUserRole to update user's role
+  const [isAdmin, setIsAdmin] = useState(false);
+
   const [rows, setRows] = useState([]);
   const screening = ['P', 'A', 'I', 'E'];
   const presumptiveTB = ['DS-TB', 'DR-TB'];
+  const diagnosisRemarks = ['No further evaluation needed'];
 
-
+        //Download json file
+        const downloadJSON = () => {
+            const blob = new Blob([JSON.stringify(rows)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'tbmasterlist.json';
+            link.click();
+          };
+  
 // Load data from Firebase when the component mounts
 useEffect(() => {
+    if (currentUser) {
+        const userRef = doc(db, 'users', currentUser.uid);
+        getDoc(userRef).then((docSnap) => {
+          if (docSnap.exists()) {
+            const role = docSnap.data().role;
+            setUserRole(role);
+            setIsAdmin(role === 'Admin');
+          }
+        });
+      }
+
     const fetchData = async () => {
       const querySnapshot = await getDocs(collection(db, "patientsinfo"));
       const mtbrifSnapshot = await getDocs(collection(db, "mtbrif"));
@@ -67,7 +94,8 @@ useEffect(() => {
         const mtbrifItem = mtbrifData.find(mtbrif => mtbrif.caseNumber === docData.caseNumber);
         const xrayItem = xrayData.find(xray => xray.caseNumber === docData.caseNumber);
         const tstItem = tstData.find(tst => tst.caseNumber === docData.caseNumber);
-        const diagnosisItem = diagnosisData.find(diagnosis => diagnosis.caseNumber === docData.caseNumber);
+       // const diagnosisItem = diagnosisData.find(diagnosis => diagnosis.caseNumber === docData.caseNumber);
+        const diagnosisDate = new Date(docData.dateAdded).toLocaleDateString();
 
         return {
           id: doc.id,
@@ -81,9 +109,8 @@ useEffect(() => {
           mtbInfo: mtbrifItem ? `${mtbrifItem.testResult}, ${mtbrifItem.testDate}` : 'N/A',
           xrayInfo: xrayItem ? `${xrayItem.testResult}, ${xrayItem.testDate}` : 'N/A',
           tstInfo: tstItem ? `${tstItem.testResult}, ${tstItem.testDate}` : 'N/A',
-          diagnosisDate: diagnosisItem ? `${diagnosisItem.testDate}` : 'N/A',
-
-          diagnosisRemark: diagnosisItem ? `${diagnosisItem.remarks}` : 'N/A',
+          diagnosisDate, //diagnosisDate: diagnosisItem ? `${diagnosisItem.testDate}` : 'N/A',
+          diagnosisRemark: diagnosisRemarks, //diagnosisRemark: diagnosisItem ? `${diagnosisItem.remarks}` : 'N/A',
         };
       });
       setRows(rows);
@@ -103,7 +130,7 @@ useEffect(() => {
   };
 
   const combineReferring = (referringFacilityName, dotsStaffName) => {
-    return `${referringFacilityName}, ${dotsStaffName}`;
+    return `${referringFacilityName}`;
   };
 
 
@@ -135,7 +162,7 @@ useEffect(() => {
     },
     {
         field: 'referringDetails',
-        headerName: "Name of Referring Facility/ Health worker",
+        headerName: "Name of Referring Facility/ Unit",
         flex: 1,
     },
     {
@@ -185,7 +212,16 @@ useEffect(() => {
       <Header
         title="Presumptive TB Masterlist"
       />
-
+       {isAdmin && (
+       <Grid container spacing={1} justifyContent="right">
+        <Button
+            onClick={downloadJSON}
+            sx={{backgroundColor: colors.blueAccent[700], color: colors.grey[100], fontSize: "14px", fontWeight: "bold", padding: "10px",}}
+          >
+            Download json
+          </Button>
+        </Grid>
+       )}
       <Box
         sx={{
           display: "flex",
@@ -194,7 +230,6 @@ useEffect(() => {
           p: 2,
         }}
       >
-    
       </Box> 
       <Box
         sx={{
