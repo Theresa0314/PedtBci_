@@ -242,6 +242,39 @@ function calculateTotalDosage(weight, months) {
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
   };
 
+// New function to create alerts for the treatment plan
+const createAlertsForTreatmentPlan = async (treatmentPlanId, startDate, endDate, medication, regimen, caseNumber) => {
+  
+  // Create the alert with a unique ID
+  const alertRef = await addDoc(collection(db, 'alerts'), {
+    treatmentPlanId: treatmentPlanId,
+    caseNumber: caseNumber 
+    // ... additional alert metadata if necessary
+  });
+
+  // For simplicity, create one notification per day as a reminder to take all medications
+  let currentDate = new Date(startDate);
+  while (currentDate <= new Date(endDate)) {
+    const notificationData = {
+      date: currentDate,
+      message: `Take your daily medications: ${medication.join(', ')} for regimen ${regimen}`,
+      title: 'Medication Reminder',
+      type: 'medication_reminder',
+      // ... additional notification fields
+    };
+    
+    // Save each notification to the sub-collection under the alert
+    await addDoc(collection(db, `alerts/${alertRef.id}/notifications`), notificationData);
+    
+    // Increment the date by one day
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return alertRef.id; // Return the alert ID to be stored in the treatment plan
+};
+
+
+
   //Submit form
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -268,6 +301,9 @@ function calculateTotalDosage(weight, months) {
       const newTP = { ...TPData, id: docRef.id };
       handleUpdateTP(newTP); // Call the function to update the treatment plan list
       handleCloseForm(); // Close the form after submission
+        // Call the function to create alerts for the new treatment plan
+        await createAlertsForTreatmentPlan(docRef.id, TPData.startDateTP, TPData.endDateTP, TPData.medication, TPData.regimen, TPData.caseNumber);
+
 
       //Add followUpDates to Google Calendar
       followUpDates.forEach((date, index) => {
@@ -284,7 +320,7 @@ function calculateTotalDosage(weight, months) {
         };
 
         //Send SMS to number
-        const apikey = '1b35ebc5f7671828c3c6e76c04437c4e';
+     /*   const apikey = '1b35ebc5f7671828c3c6e76c04437c4e';
         const number = '09760682065';//['09760682065','09276397317'];
         const message = `${name}'s TP follow-up dates are confirmed! Check your google calendar for more information.`
 
@@ -309,9 +345,11 @@ function calculateTotalDosage(weight, months) {
           })
           .catch((err) => {
             console.error(err);
-          });
+          }); */
 
         // Use the apiCalendar to add the event to Google Calendar
+
+        
         apiCalendar
           .createEvent(event)
           .then((response) => {

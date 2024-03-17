@@ -15,6 +15,7 @@ import Signup from "./pages/auth/signup";
 import Dashboard from "./pages/dashboard";
 import UserList from "./pages/users/userlist";
 import TBMasterlist from "./pages/tbmasterlist";
+import Alerts from "./pages/global/Alerts";
 
 import Symptoms from "./pages/symptoms";
 import Contacts from "./pages/contacts";
@@ -53,6 +54,10 @@ const router = createBrowserRouter(
         <Route path="/userlist" element={< UserList/>} />
         <Route path="/tbmasterlist" element={< TBMasterlist/>} />
         <Route path="/calendar" element={<Calendar />} />
+
+        <Route path="/patientInfo/:caseNumber" element={<PatientDetail />} />
+        <Route path="/alerts/:caseNumber" element={<Alerts />} />
+
 
         <Route path="/patientInfo" element={<PatientInfo />} />
         <Route path="/patientgenform" element={<PatientGenForm />} />
