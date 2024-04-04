@@ -23,6 +23,7 @@ import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import InventoryIcon from '@mui/icons-material/Inventory';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import RecentActorsIcon from '@mui/icons-material/RecentActors';
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'; 
 
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
@@ -204,15 +205,6 @@ const Sidebar = () => {
             />
             )} */}
 
-            {canView('TB Masterlist') && (
-              <Item
-              title="TB Masterlist"
-              to="/tbmasterlist"
-              icon={<RecentActorsIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            )}
 
             {canView('Clinical Inventory') && (
               <Item
@@ -223,6 +215,27 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
             )}
+
+        {canView('TB Masterlist') && (
+              <Item
+              title="TB Masterlist"
+              to="/tbmasterlist"
+              icon={<RecentActorsIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            )}
+
+            {canView('Report') && (
+                <Item
+                  title="Reports"
+                  to="/report" 
+                  icon={<AssessmentOutlinedIcon />}
+                  selected={selected}
+                  setSelected={setSelected}
+                />
+              )}
+
 
             <Typography
               variant="h6"

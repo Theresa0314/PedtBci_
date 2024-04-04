@@ -18,6 +18,7 @@ import TBMasterlist from "./pages/tbmasterlist";
 
 import Symptoms from "./pages/symptoms";
 import Contacts from "./pages/contacts";
+import ReportPage from "./pages/reports/ReportPage";
 
 import Calendar from "./pages/calendar";
 
@@ -40,6 +41,7 @@ import TPEdit from "./pages/treatmentPlan/TPedit";
 
 import { Form } from "react-router-dom";
 import { Bar, Pie, Line } from "react-chartjs-2";
+import ReportPage from "./pages/reports/ReportPage";
 
 
 const router = createBrowserRouter(
@@ -53,6 +55,7 @@ const router = createBrowserRouter(
         <Route path="/userlist" element={< UserList/>} />
         <Route path="/tbmasterlist" element={< TBMasterlist/>} />
         <Route path="/calendar" element={<Calendar />} />
+        <Route path="/report" element={<ReportPage/>} />
 
         <Route path="/patientInfo" element={<PatientInfo />} />
         <Route path="/patientgenform" element={<PatientGenForm />} />
