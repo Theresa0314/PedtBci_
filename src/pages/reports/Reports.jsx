@@ -23,93 +23,140 @@ const SummaryTable = () => {
     console.log('Download or print the report');
   };
 
-  const initialSummaryStructure = {
-    totalPatients: 0,
-    totalLabTests: 0,
-    totalOngoingTreatments: 0,
-    totalTreatmentOutcomes: {
-      'Not Evaluated': 0,
-      'Cured/Treatment Completed': 0,
-      'Treatment Failed': 0,
-      'Died': 0,
-      'Lost to Follow up': 0
-    },
-  };
-  
-  const fetchAndProcessData = async (selectedTimePeriod) => {
-    const casesSnapshot = await getDocs(collection(db, 'cases'));
-    let summary = {};
-  
-    // Define the lab test types we want to count
-    const labTestTypes = ['igra', 'mtbrif', 'xray', 'tst', 'dst'];
-  
-    for (const caseDoc of casesSnapshot.docs) {
-      const caseData = caseDoc.data();
-      const caseStartDate = new Date(caseData.startDate);
-      let key;
-      let readableDate;
-  
-      // Your switch statement for generating the key and readableDate
-      switch (selectedTimePeriod) {
-        case 'monthly':
-          readableDate = caseStartDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-          key = `${caseStartDate.getMonth() + 1}-${caseStartDate.getFullYear()}`;
-          break;
-        case 'quarterly':
-          const quarter = Math.floor((caseStartDate.getMonth() / 3)) + 1;
-          readableDate = `Q${quarter} - ${caseStartDate.getFullYear()}`;
-          key = `Q${quarter}-${caseStartDate.getFullYear()}`;
-          break;
-        case 'yearly':
-          readableDate = caseStartDate.getFullYear().toString();
-          key = caseStartDate.getFullYear().toString();
-          break;
-        default:
-          readableDate = caseStartDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-          key = `${caseStartDate.getMonth() + 1}-${caseStartDate.getFullYear()}`;
-      }
-  
-      // Initialize the summary object for the new key if it doesn't exist
-      if (!summary[key]) {
-        summary[key] = {
-          id: key,
-          timePeriod: readableDate,
-          ...initialSummaryStructure
-        };
-      }
-  
-      // This loop will iterate over each treatment plan related to the current case
-      const treatmentPlansQuery = query(collection(db, 'treatmentPlan'), where('caseNumber', '==', caseData.caseNumber));
-      const treatmentPlansSnapshot = await getDocs(treatmentPlansQuery);
-  
-      treatmentPlansSnapshot.forEach((treatmentDoc) => {
-        const treatmentData = treatmentDoc.data();
-        // Increment the patient count for this specific time period based on treatment start date
-        summary[key].totalPatients++;
-  
-        // Count ongoing treatments and categorize outcomes
-        if (treatmentData.status === 'Ongoing') {
-          summary[key].totalOngoingTreatments++;
-        }
-  
-        const outcome = treatmentData.outcome || 'Not Evaluated';
-        summary[key].totalTreatmentOutcomes[outcome]++;
-      });
-  
-      // Now, handle the lab test count
-      for (const testType of labTestTypes) {
-        const labTestSnapshot = await getDocs(query(collection(db, testType), where('caseNumber', '==', caseData.caseNumber)));
-        summary[key].totalLabTests += labTestSnapshot.size;
-      }
+// Helper function to generate a key based on the selected time period and a date
+function generatePeriodKey(date, selectedTimePeriod) {
+  switch (selectedTimePeriod) {
+    case 'monthly':
+      return `${date.getMonth() + 1}-${date.getFullYear()}`;
+    case 'quarterly':
+      const quarter = Math.floor(date.getMonth() / 3) + 1;
+      return `Q${quarter}-${date.getFullYear()}`;
+    case 'yearly':
+      return date.getFullYear().toString();
+    default:
+      return `${date.getMonth() + 1}-${date.getFullYear()}`;
+  }
+}
+
+// Helper function to get a readable date string
+function getReadableDate(date, selectedTimePeriod) {
+  switch (selectedTimePeriod) {
+    case 'monthly':
+      return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+    case 'quarterly':
+      const quarter = Math.floor(date.getMonth() / 3) + 1;
+      return `Q${quarter} ${date.getFullYear()}`;
+    case 'yearly':
+      return date.getFullYear().toString();
+    default:
+      return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+  }
+}
+
+const fetchAndProcessData = async (selectedTimePeriod) => {
+  let summary = {};
+  const countedPatients = {};
+  const countedLabTests = {}
+  const treatmentPlansSnapshot = await getDocs(collection(db, 'treatmentPlan'));
+  // Function to ensure we count each lab test only once per period
+  const addLabTestToSummary = (labTestDate, caseNumber) => {
+    const periodKey = generatePeriodKey(labTestDate, selectedTimePeriod);
+    if (!countedLabTests[caseNumber]) {
+      countedLabTests[caseNumber] = {};
     }
-  
-    // Convert the summary object into an array for the DataGrid
-    setReportData(Object.values(summary).map((item, index) => ({ ...item, id: index })));
+    if (countedLabTests[caseNumber][periodKey]) {
+      return; // This lab test has already been counted for this period
+    }
+    countedLabTests[caseNumber][periodKey] = true;
+    if (!summary[periodKey]) {
+      summary[periodKey] = {
+        id: periodKey,
+        timePeriod: getReadableDate(labTestDate, selectedTimePeriod),
+        totalPatients: 0, 
+        totalLabTests: 0,
+        totalOngoingTreatments: 0, 
+        totalTreatmentOutcomes: {
+          'Not Evaluated': 0,
+          'Cured/Treatment Completed': 0,
+          'Treatment Failed': 0,
+          'Died': 0,
+          'Lost to Follow up': 0,
+        },
+      };
+    }
+    summary[periodKey].totalLabTests++;
   };
-  
-  useEffect(() => {
-    fetchAndProcessData(timePeriod);
-  }, [timePeriod]);
+
+  // Process lab tests
+  const labTestTypes = ['igra', 'mtbrif', 'xray', 'tst', 'dst'];
+  for (const testType of labTestTypes) {
+    const labTestsSnapshot = await getDocs(collection(db, testType));
+    labTestsSnapshot.forEach((doc) => {
+      const labTestData = doc.data();
+      const labTestDate = labTestData.testDate ? new Date(labTestData.testDate) : null;
+      if (labTestDate) {
+        addLabTestToSummary(labTestDate, labTestData.caseNumber);
+      }
+    });
+  }
+  // Process each treatment plan
+  treatmentPlansSnapshot.forEach((doc) => {
+    const treatmentData = doc.data();
+    // Ensure there is a start date to count the treatment plan
+    if (!treatmentData.startDateTP) {
+      return; // Skip this treatment plan as it has no start date
+    }
+    
+    const treatmentStartDate = new Date(treatmentData.startDateTP);
+    const periodKey = generatePeriodKey(treatmentStartDate, selectedTimePeriod);
+
+    // Mark the patient as counted for this period to avoid double counting
+    if (!countedPatients[treatmentData.caseNumber]) {
+      countedPatients[treatmentData.caseNumber] = {};
+    }
+    if (countedPatients[treatmentData.caseNumber][periodKey]) {
+      return; // This patient has already been counted for this period
+    }
+    countedPatients[treatmentData.caseNumber][periodKey] = true;
+
+    // Initialize the summary object for this period if it doesn't exist
+    if (!summary[periodKey]) {
+      summary[periodKey] = {
+        id: periodKey,
+        timePeriod: getReadableDate(treatmentStartDate, selectedTimePeriod),
+        totalPatients: 0,
+        totalLabTests: 0,
+        totalOngoingTreatments: 0,
+        totalTreatmentOutcomes: {
+          'Not Evaluated': 0,
+          'Cured/Treatment Completed': 0,
+          'Treatment Failed': 0,
+          'Died': 0,
+          'Lost to Follow up': 0,
+        },
+      };
+    }
+
+    // Increment the patient count for this period
+    summary[periodKey].totalPatients++;
+
+    // Update the counts for ongoing treatments and outcomes
+    if (treatmentData.status === 'Ongoing') {
+      summary[periodKey].totalOngoingTreatments++;
+    }
+    const outcome = treatmentData.outcome || 'Not Evaluated';
+    summary[periodKey].totalTreatmentOutcomes[outcome] = (summary[periodKey].totalTreatmentOutcomes[outcome] || 0) + 1;
+  });
+
+  // Include logic for lab tests if necessary, ensuring each lab test is counted once per period based on its own date
+
+  // Convert the summary object into an array for the DataGrid
+  setReportData(Object.values(summary).map((item, index) => ({ ...item, id: index })));
+};
+
+useEffect(() => {
+  fetchAndProcessData(timePeriod);
+}, [timePeriod]);
 
   
   const columns = [
