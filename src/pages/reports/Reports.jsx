@@ -6,6 +6,8 @@ import { db } from '../../firebase.config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import { tokens } from '../../theme';
+import PatientDownload from './PatientDownload';
+import { pdf } from '@react-pdf/renderer';
 
 const SummaryTable = () => {
   const [reportData, setReportData] = useState([]);
@@ -19,10 +21,105 @@ const SummaryTable = () => {
     fetchAndProcessData(event.target.value);
   };
 
-  const handleDownload = () => {
-    console.log('Download or print the report');
+  function calculateAge(birthdate) {
+    const birthday = new Date(birthdate);
+    const today = new Date();
+    let age = today.getFullYear() - birthday.getFullYear();
+    const m = today.getMonth() - birthday.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthday.getDate())) {
+      age--;
+    }
+    return age;
+  }
+  
+  const fetchDataForReport = async () => {
+    const reportData = [];
+    const casesSnapshot = await getDocs(collection(db, 'cases'));
+  
+    for (const caseDoc of casesSnapshot.docs) {
+      const caseData = caseDoc.data();
+      const startDate = caseData.startDate ? new Date(caseData.startDate).toLocaleDateString() : 'No date';
+      
+      const patientInfoRef = collection(db, 'patientsinfo');
+      const patientInfoQuery = query(patientInfoRef, where('caseNumber', '==', caseData.caseNumber));
+      const patientInfoSnapshot = await getDocs(patientInfoQuery);
+      
+      const patientInfoData = patientInfoSnapshot.docs[0]?.data();
+      
+      if (patientInfoData) {
+        // Calculate age using the birthdate
+        const age = patientInfoData.birthdate ? calculateAge(patientInfoData.birthdate) : 'No age';
+        let totalLabTests = 0;
+  
+        // Aggregate the lab tests from different collections
+        const labTestTypes = ['igra', 'mtbrif', 'xray', 'tst', 'dst'];
+        for (const testType of labTestTypes) {
+          const labTestSnapshot = await getDocs(query(collection(db, testType), where('caseNumber', '==', caseData.caseNumber)));
+          totalLabTests += labTestSnapshot.size; // Sum up the lab tests
+        }
+        let ongoingTreatment = 0;
+        let treatmentOutcomes = {
+          'Not Evaluated': 0,
+          'Cured/Treatment Completed': 0,
+          'Treatment Failed': 0,
+          'Died': 0,
+          'Lost to Follow up': 0,
+        };
+      
+        // Fetch and count treatment outcomes and ongoing treatments
+        const treatmentPlansSnapshot = await getDocs(query(
+          collection(db, 'treatmentPlan'),
+          where('caseNumber', '==', caseData.caseNumber)
+        ));
+      
+        treatmentPlansSnapshot.forEach((doc) => {
+          const treatmentPlan = doc.data();
+          const outcome = treatmentPlan.outcome || 'Not Evaluated';
+          treatmentOutcomes[outcome] = (treatmentOutcomes[outcome] || 0) + 1;
+      
+          if (treatmentPlan.status === 'Ongoing') {
+            ongoingTreatment++;
+          }
+        });
+        reportData.push({
+          date: startDate,
+          age: age,
+          gender: patientInfoData.gender,
+          totalLabTests: totalLabTests,
+          ongoingTreatment: ongoingTreatment,
+          treatmentOutcome: treatmentOutcomes,
+        });
+      } else {
+        console.log('No patient info found for caseNumber:', caseData.caseNumber);
+      }
+    }
+    
+    // Sort by date after all data has been pushed
+    reportData.sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+    return reportData;
   };
-
+  
+  
+  
+  // Then use this function when triggering the PDF download
+  const handleDownload = async () => {
+    try {
+      const data = await fetchDataForReport();
+      console.log(data); // Check the data
+      const blob = await pdf(<PatientDownload reportData={data} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'total-patient-report.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Error downloading the report:", error);
+    }
+  };
+  
 // Helper function to generate a key based on the selected time period and a date
 function generatePeriodKey(date, selectedTimePeriod) {
   switch (selectedTimePeriod) {
@@ -222,7 +319,7 @@ useEffect(() => {
             }}
           >
             <DownloadOutlinedIcon sx={{ mr: '10px' }} />
-            DOWNLOAD REPORTS
+            DOWNLOAD FULL REPORT
           </Button>
         </Box>
 
