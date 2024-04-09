@@ -1,371 +1,351 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button,FormControl, InputLabel, Select, MenuItem, useTheme } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { Box, Grid, useTheme, Typography } from '@mui/material';
 import Header from '../../components/Header';
 import { db } from '../../firebase.config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
-import { tokens } from '../../theme';
-import PatientDownload from './PatientDownload';
-import { pdf } from '@react-pdf/renderer';
+import { collection, getDocs } from 'firebase/firestore';
+import { tokens } from "../../theme";
+import { Line, Bar } from 'react-chartjs-2';
 
-const SummaryTable = () => {
-  const [reportData, setReportData] = useState([]);
+const ReportsPage = () => {
+  const [lineChartData, setLineChartData] = useState({});
+  const [ageDistributionData, setAgeDistributionData] = useState({});
+  const [treatmentStatusChartData, setTreatmentStatusChartData] = useState({
+    labels: [],
+    datasets: []
+  });
+  
+  const [treatmentOutcomeChartData, setTreatmentOutcomeChartData] = useState({
+    labels: [],
+    datasets: []
+  });
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [timePeriod, setTimePeriod] = useState('monthly');
 
-  const handleTimePeriodChange = (event) => {
-    setTimePeriod(event.target.value);
-    // Call a function to refetch or reprocess the data based on the new time period
-    fetchAndProcessData(event.target.value);
-  };
-
-  function calculateAge(birthdate) {
-    const birthday = new Date(birthdate);
+  // Function to calculate age from birthdate
+  const calculateAge = (birthdateString) => {
+    const birthdate = new Date(birthdateString);
     const today = new Date();
-    let age = today.getFullYear() - birthday.getFullYear();
-    const m = today.getMonth() - birthday.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthday.getDate())) {
+    let age = today.getFullYear() - birthdate.getFullYear();
+    const m = today.getMonth() - birthdate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthdate.getDate())) {
       age--;
     }
     return age;
-  }
-  
-  const fetchDataForReport = async () => {
-    const reportData = [];
-    const casesSnapshot = await getDocs(collection(db, 'cases'));
-  
-    for (const caseDoc of casesSnapshot.docs) {
-      const caseData = caseDoc.data();
-      const startDate = caseData.startDate ? new Date(caseData.startDate).toLocaleDateString() : 'No date';
-      
-      const patientInfoRef = collection(db, 'patientsinfo');
-      const patientInfoQuery = query(patientInfoRef, where('caseNumber', '==', caseData.caseNumber));
-      const patientInfoSnapshot = await getDocs(patientInfoQuery);
-      
-      const patientInfoData = patientInfoSnapshot.docs[0]?.data();
-      
-      if (patientInfoData) {
-        // Calculate age using the birthdate
-        const age = patientInfoData.birthdate ? calculateAge(patientInfoData.birthdate) : 'No age';
-        let totalLabTests = 0;
-  
-        // Aggregate the lab tests from different collections
-        const labTestTypes = ['igra', 'mtbrif', 'xray', 'tst', 'dst'];
-        for (const testType of labTestTypes) {
-          const labTestSnapshot = await getDocs(query(collection(db, testType), where('caseNumber', '==', caseData.caseNumber)));
-          totalLabTests += labTestSnapshot.size; // Sum up the lab tests
+  };
+
+// Function to fetch data from Firebase and process for line chart and age distribution histogram
+const fetchReportsData = async () => {
+  const malePatientCounts = {};
+  const femalePatientCounts = {};
+  const ageDistribution = {
+    '0-5': { male: 0, female: 0 },
+    '6-10': { male: 0, female: 0 },
+    '11-15': { male: 0, female: 0 },
+    '16-20': { male: 0, female: 0 },
+    '21-25': { male: 0, female: 0 },
+  };
+  const totalPatientsOverTime = {};
+  const totalMalePatientsOverTime = {};
+  const totalFemalePatientsOverTime = {};
+
+  try {
+    const querySnapshot = await getDocs(collection(db, "patientsinfo"));
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const dateAdded = new Date(data.dateAdded);
+      const monthYearKey = `${dateAdded.getMonth() + 1}-${dateAdded.getFullYear()}`;
+      const gender = data.gender.toLowerCase(); // Normalize gender to lowercase
+      const age = calculateAge(data.birthdate);
+
+      // Update patient counts by gender
+      if (gender === 'male') {
+        if (!malePatientCounts[monthYearKey]) {
+          malePatientCounts[monthYearKey] = 0;
         }
-        let ongoingTreatment = 0;
-        let treatmentOutcomes = {
-          'Not Evaluated': 0,
-          'Cured/Treatment Completed': 0,
-          'Treatment Failed': 0,
-          'Died': 0,
-          'Lost to Follow up': 0,
-        };
-      
-        // Fetch and count treatment outcomes and ongoing treatments
-        const treatmentPlansSnapshot = await getDocs(query(
-          collection(db, 'treatmentPlan'),
-          where('caseNumber', '==', caseData.caseNumber)
-        ));
-      
-        treatmentPlansSnapshot.forEach((doc) => {
-          const treatmentPlan = doc.data();
-          const outcome = treatmentPlan.outcome || 'Not Evaluated';
-          treatmentOutcomes[outcome] = (treatmentOutcomes[outcome] || 0) + 1;
-      
-          if (treatmentPlan.status === 'Ongoing') {
-            ongoingTreatment++;
-          }
-        });
-        reportData.push({
-          date: startDate,
-          age: age,
-          gender: patientInfoData.gender,
-          totalLabTests: totalLabTests,
-          ongoingTreatment: ongoingTreatment,
-          treatmentOutcome: treatmentOutcomes,
-        });
-      } else {
-        console.log('No patient info found for caseNumber:', caseData.caseNumber);
+        malePatientCounts[monthYearKey]++;
+      } else if (gender === 'female') {
+        if (!femalePatientCounts[monthYearKey]) {
+          femalePatientCounts[monthYearKey] = 0;
+        }
+        femalePatientCounts[monthYearKey]++;
       }
-    }
-    
-    // Sort by date after all data has been pushed
-    reportData.sort((a, b) => new Date(a.date) - new Date(b.date));
-  
-    return reportData;
-  };
-  
-  
-  
-  // Then use this function when triggering the PDF download
-  const handleDownload = async () => {
-    try {
-      const data = await fetchDataForReport();
-      console.log(data); // Check the data
-      const blob = await pdf(<PatientDownload reportData={data} />).toBlob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'total-patient-report.pdf';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error("Error downloading the report:", error);
-    }
-  };
-  
-// Helper function to generate a key based on the selected time period and a date
-function generatePeriodKey(date, selectedTimePeriod) {
-  switch (selectedTimePeriod) {
-    case 'monthly':
-      return `${date.getMonth() + 1}-${date.getFullYear()}`;
-    case 'quarterly':
-      const quarter = Math.floor(date.getMonth() / 3) + 1;
-      return `Q${quarter}-${date.getFullYear()}`;
-    case 'yearly':
-      return date.getFullYear().toString();
-    default:
-      return `${date.getMonth() + 1}-${date.getFullYear()}`;
-  }
-}
 
-// Helper function to get a readable date string
-function getReadableDate(date, selectedTimePeriod) {
-  switch (selectedTimePeriod) {
-    case 'monthly':
-      return date.toLocaleString('default', { month: 'long', year: 'numeric' });
-    case 'quarterly':
-      const quarter = Math.floor(date.getMonth() / 3) + 1;
-      return `Q${quarter} ${date.getFullYear()}`;
-    case 'yearly':
-      return date.getFullYear().toString();
-    default:
-      return date.toLocaleString('default', { month: 'long', year: 'numeric' });
-  }
-}
+      // Update age distribution
+      if (age >= 0 && age <= 5) {
+        ageDistribution['0-5'][gender]++;
+      } else if (age >= 6 && age <= 10) {
+        ageDistribution['6-10'][gender]++;
+      } else if (age >= 11 && age <= 15) {
+        ageDistribution['11-15'][gender]++;
+      } else if (age >= 16 && age <= 20) {
+        ageDistribution['16-20'][gender]++;
+      } else if (age >= 21 && age <= 25) {
+        ageDistribution['21-25'][gender]++;
+      }
 
-const fetchAndProcessData = async (selectedTimePeriod) => {
-  let summary = {};
-  const countedPatients = {};
-  const countedLabTests = {}
-  const treatmentPlansSnapshot = await getDocs(collection(db, 'treatmentPlan'));
-  // Function to ensure we count each lab test only once per period
-  const addLabTestToSummary = (labTestDate, caseNumber) => {
-    const periodKey = generatePeriodKey(labTestDate, selectedTimePeriod);
-    if (!countedLabTests[caseNumber]) {
-      countedLabTests[caseNumber] = {};
-    }
-    if (countedLabTests[caseNumber][periodKey]) {
-      return; // This lab test has already been counted for this period
-    }
-    countedLabTests[caseNumber][periodKey] = true;
-    if (!summary[periodKey]) {
-      summary[periodKey] = {
-        id: periodKey,
-        timePeriod: getReadableDate(labTestDate, selectedTimePeriod),
-        totalPatients: 0, 
-        totalLabTests: 0,
-        totalOngoingTreatments: 0, 
-        totalTreatmentOutcomes: {
-          'Not Evaluated': 0,
-          'Cured/Treatment Completed': 0,
-          'Treatment Failed': 0,
-          'Died': 0,
-          'Lost to Follow up': 0,
-        },
-      };
-    }
-    summary[periodKey].totalLabTests++;
-  };
+      // Update total patients over time
+      if (!totalPatientsOverTime[monthYearKey]) {
+        totalPatientsOverTime[monthYearKey] = 0;
+      }
+      totalPatientsOverTime[monthYearKey]++;
 
-  // Process lab tests
-  const labTestTypes = ['igra', 'mtbrif', 'xray', 'tst', 'dst'];
-  for (const testType of labTestTypes) {
-    const labTestsSnapshot = await getDocs(collection(db, testType));
-    labTestsSnapshot.forEach((doc) => {
-      const labTestData = doc.data();
-      const labTestDate = labTestData.testDate ? new Date(labTestData.testDate) : null;
-      if (labTestDate) {
-        addLabTestToSummary(labTestDate, labTestData.caseNumber);
+      // Update total male patients over time
+      if (gender === 'male') {
+        if (!totalMalePatientsOverTime[monthYearKey]) {
+          totalMalePatientsOverTime[monthYearKey] = 0;
+        }
+        totalMalePatientsOverTime[monthYearKey]++;
+      }
+
+      // Update total female patients over time
+      if (gender === 'female') {
+        if (!totalFemalePatientsOverTime[monthYearKey]) {
+          totalFemalePatientsOverTime[monthYearKey] = 0;
+        }
+        totalFemalePatientsOverTime[monthYearKey]++;
       }
     });
-  }
-  // Process each treatment plan
-  treatmentPlansSnapshot.forEach((doc) => {
-    const treatmentData = doc.data();
-    // Ensure there is a start date to count the treatment plan
-    if (!treatmentData.startDateTP) {
-      return; // Skip this treatment plan as it has no start date
-    }
-    
-    const treatmentStartDate = new Date(treatmentData.startDateTP);
-    const periodKey = generatePeriodKey(treatmentStartDate, selectedTimePeriod);
 
-    // Mark the patient as counted for this period to avoid double counting
-    if (!countedPatients[treatmentData.caseNumber]) {
-      countedPatients[treatmentData.caseNumber] = {};
-    }
-    if (countedPatients[treatmentData.caseNumber][periodKey]) {
-      return; // This patient has already been counted for this period
-    }
-    countedPatients[treatmentData.caseNumber][periodKey] = true;
-
-    // Initialize the summary object for this period if it doesn't exist
-    if (!summary[periodKey]) {
-      summary[periodKey] = {
-        id: periodKey,
-        timePeriod: getReadableDate(treatmentStartDate, selectedTimePeriod),
-        totalPatients: 0,
-        totalLabTests: 0,
-        totalOngoingTreatments: 0,
-        totalTreatmentOutcomes: {
-          'Not Evaluated': 0,
-          'Cured/Treatment Completed': 0,
-          'Treatment Failed': 0,
-          'Died': 0,
-          'Lost to Follow up': 0,
+    // Prepare data for age distribution histogram
+    const ageDistributionChartData = {
+      labels: Object.keys(ageDistribution).filter(age => Object.values(ageDistribution[age]).some(count => count > 0)),
+      datasets: [
+        {
+          label: 'Male Patients',
+          backgroundColor: 'blue',
+          borderWidth: 1,
+          data: Object.keys(ageDistribution).filter(age => Object.values(ageDistribution[age]).some(count => count > 0)).map(age => ageDistribution[age].male),
         },
-      };
-    }
+        {
+          label: 'Female Patients',
+          backgroundColor: 'pink',
+          borderWidth: 1,
+          data: Object.keys(ageDistribution).filter(age => Object.values(ageDistribution[age]).some(count => count > 0)).map(age => ageDistribution[age].female),
+        },
+      ],
+    };
 
-    // Increment the patient count for this period
-    summary[periodKey].totalPatients++;
+    // Prepare data for line chart (total patients over time)
+    const lineChartData = {
+      labels: Object.keys(totalPatientsOverTime),
+      datasets: [
+        {
+          label: 'Total Patients',
+          data: Object.values(totalPatientsOverTime),
+          fill: false,
+          borderColor: 'green',
+          tension: 0.1
+        },
+        {
+          label: 'Male Patients',
+          data: Object.values(totalMalePatientsOverTime),
+          fill: false,
+          borderColor: 'blue',
+          tension: 0.1
+        },
+        {
+          label: 'Female Patients',
+          data: Object.values(totalFemalePatientsOverTime),
+          fill: false,
+          borderColor: 'pink',
+          tension: 0.1
+        }
+      ]
+    };
 
-    // Update the counts for ongoing treatments and outcomes
-    if (treatmentData.status === 'Ongoing') {
-      summary[periodKey].totalOngoingTreatments++;
-    }
-    const outcome = treatmentData.outcome || 'Not Evaluated';
-    summary[periodKey].totalTreatmentOutcomes[outcome] = (summary[periodKey].totalTreatmentOutcomes[outcome] || 0) + 1;
-  });
-
-  // Include logic for lab tests if necessary, ensuring each lab test is counted once per period based on its own date
-
-  // Convert the summary object into an array for the DataGrid
-  setReportData(Object.values(summary).map((item, index) => ({ ...item, id: index })));
+    setAgeDistributionData(ageDistributionChartData);
+    setLineChartData(lineChartData);
+  } catch (error) {
+    console.error("Error fetching reports data:", error);
+  }
 };
 
-useEffect(() => {
-  fetchAndProcessData(timePeriod);
-}, [timePeriod]);
 
+const fetchTreatmentData = async () => {
+  // Initialize status and outcome counts objects
+  const treatmentStatusCounts = {
+    'Pending': {},
+    'Ongoing': {},
+    'End': {}
+  };
   
-  const columns = [
-    { field: 'timePeriod', headerName: 'Time Period', width: 100 },
-    { field: 'totalPatients', headerName: 'Total Patients', width: 150 },
-    { field: 'totalLabTests', headerName: 'Total Lab Tests', width: 150 },
-    { field: 'totalOngoingTreatments', headerName: 'Total Ongoing Treatments', width: 200 },
-    {
-      field: 'totalTreatmentOutcomes',
-      headerName: 'Total Treatment Outcomes',
-      width: 550,
-      valueGetter: (params) => {
-        // Transform the outcomes object into a string representation
-        const outcomes = params.row.totalTreatmentOutcomes;
-        return Object.entries(outcomes)
-          .map(([key, value]) => `${key}: ${value}`)
-          .join(', ');
-      },
-    }
+  const treatmentOutcomeCounts = {
+    'Not Evaluated': {},
+    'Cured/Treatment Completed': {},
+    'Treatment Failed': {},
+    'Died': {},
+    'Lost to Follow up': {}
+  };
+
+  try {
+    const querySnapshotTreatment = await getDocs(collection(db, "treatmentPlan"));
+    querySnapshotTreatment.forEach((doc) => {
+      const data = doc.data();
+      const startDate = new Date(data.startDateTP);
+      const monthYearKey = `${startDate.getMonth() + 1}-${startDate.getFullYear()}`;
+
+      // Increment status count
+      if (!treatmentStatusCounts[data.status][monthYearKey]) {
+        treatmentStatusCounts[data.status][monthYearKey] = 0;
+      }
+      treatmentStatusCounts[data.status][monthYearKey]++;
+
+      // Always increment outcome count, regardless of the status
+      const outcomeKey = data.outcome || 'Not Evaluated';
+      if (!treatmentOutcomeCounts[outcomeKey][monthYearKey]) {
+        treatmentOutcomeCounts[outcomeKey][monthYearKey] = 0;
+      }
+      treatmentOutcomeCounts[outcomeKey][monthYearKey]++;
+    });
     
-  ];
+    // Combine all month-year keys from both status and outcomes
+    const combinedKeys = new Set([
+      ...Object.keys(treatmentStatusCounts['Pending']),
+      ...Object.keys(treatmentStatusCounts['Ongoing']),
+      ...Object.keys(treatmentStatusCounts['End']),
+      ...Object.keys(treatmentOutcomeCounts['Not Evaluated']),
+      ...Object.keys(treatmentOutcomeCounts['Cured/Treatment Completed']),
+      ...Object.keys(treatmentOutcomeCounts['Treatment Failed']),
+      ...Object.keys(treatmentOutcomeCounts['Died']),
+      ...Object.keys(treatmentOutcomeCounts['Lost to Follow up']),
+    ]);
+
+    // Sort the combined keys to create the labels
+    const labels = Array.from(combinedKeys).sort((a, b) => 
+      new Date(a.split('-')[1], a.split('-')[0]) - 
+      new Date(b.split('-')[1], b.split('-')[0])
+    );
+
+    // Create the datasets for the status chart
+    const statusChartData = createChartDataset(labels, treatmentStatusCounts, 'status');
+
+    // Create the datasets for the outcome chart
+    const outcomeChartData = createChartDataset(labels, treatmentOutcomeCounts, 'outcome');
+
+    // Update state with the new chart data
+    setTreatmentStatusChartData(statusChartData);
+    setTreatmentOutcomeChartData(outcomeChartData);
+
+  } catch (error) {
+    console.error("Error fetching treatment data:", error);
+  }
+};
+
+// Helper function to create the datasets for the chart
+function createChartDataset(labels, counts, type) {
+  const backgroundColors = {
+    'Pending': 'rgba(255, 206, 86, 1)',
+    'Ongoing': 'rgba(54, 162, 235, 1)',
+    'End': 'rgba(75, 192, 192, 1)',
+    'Not Evaluated': 'rgba(255, 159, 64, 1)',
+    'Cured/Treatment Completed': 'rgba(153, 102, 255, 1)',
+    'Treatment Failed': 'rgba(255, 99, 132, 1)',
+    'Died': 'rgba(201, 203, 207, 1)',
+    'Lost to Follow up': 'rgba(54, 162, 235, 1)',
+  };
+
+  return {
+    labels,
+    datasets: Object.keys(counts).map((key) => ({
+      label: key,
+      backgroundColor: backgroundColors[key],
+      data: labels.map(label => counts[key][label] || 0),
+    })),
+  };
+}
+
+
+// Define your colors outside of the function
+const outcomeColors = {
+  'Not Evaluated': 'rgba(255, 159, 64, 1)',
+  'Cured/Treatment Completed': 'rgba(153, 102, 255, 1)',
+  'Treatment Failed': 'rgba(255, 99, 132, 1)',
+  'Died': 'rgba(201, 203, 207, 1)',
+  'Lost to Follow up': 'rgba(54, 162, 235, 1)',
+  // Add any additional outcome colors here
+};
+
+// Call fetchTreatmentData inside useEffect
+useEffect(() => {
+  fetchReportsData();
+  fetchTreatmentData();
+}, []);
 
   return (
-    <Box m="20px">
+    <Box m={2}>
       <Header title="Report Generation" subtitle="Summary Report" />
-      {/* Container for filters and actions */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          p: 2,
-        }}
-      >
-        {/* Container for the time period select */}
-        <Box sx={{ minWidth: 120 }}>
-          <FormControl fullWidth>
-            <InputLabel id="time-period-label">Time Period</InputLabel>
-            <Select
-              labelId="time-period-label"
-              id="time-period-select"
-              value={timePeriod}
-              label="Time Period"
-              onChange={handleTimePeriodChange}
-            >
-              <MenuItem value="monthly">Monthly</MenuItem>
-              <MenuItem value="quarterly">Quarterly</MenuItem>
-              <MenuItem value="yearly">Yearly</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
 
-        {/* Container for the download button */}
-        <Box>
-          <Button
-            onClick={handleDownload}
-            sx={{
-              backgroundColor: colors.blueAccent[700],
-              color: colors.grey[100],
-              fontSize: '14px',
-              fontWeight: 'bold',
-              padding: '10px 20px',
-            }}
-          >
-            <DownloadOutlinedIcon sx={{ mr: '10px' }} />
-            DOWNLOAD FULL REPORT
-          </Button>
-        </Box>
+      <Grid container spacing={2}>
+      <Grid item xs={12} sx={{ textAlign: 'center', marginBottom: '10px' }}> {/* Add spacing */}
+        <Typography variant="h6" sx={{ fontSize: '25px', fontWeight: 'bold' }}> 
+        Overall Patient Trends and Age Distribution by Gender
+          </Typography>
+      </Grid>
+        <Grid item xs={12} md={6}>
+          {/* Line Chart */}
+          <div style={{ width: '100%', height: '300px', background:  colors.primary[400], padding: '5px' }}>
+            {lineChartData.labels ? (
+              <Line data={lineChartData} options={{ plugins: { legend: { position: 'bottom' } } }} />
+            ) : (
+              <p>Loading chart data...</p>
+            )}
+          </div>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          {/* Age Distribution Histogram */}
+          <div style={{ width: '100%', height: '300px', background:  colors.primary[400], padding: '5px' }}>
+            {ageDistributionData.labels ? (
+              <Bar data={ageDistributionData} options={{ plugins: { legend: { position: 'bottom' } } }} />
+            ) : (
+              <p>Loading age distribution data...</p>
+            )}
+          </div>
+        </Grid>
+     
+  
+      {/* Treatment Status Chart */}
+      <Grid item xs={12} md={6}>
+        <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
+          Treatment Status Overview
+        </Typography>
+        <div style={{ height: '300px', background: colors.primary[400], padding: '5px' }}>
+          <Bar 
+            data={treatmentStatusChartData}
+            options={{
+              plugins: { legend: { position: 'bottom' } },
+              scales: {
+                x: { stacked: true },
+                y: { stacked: true }
+              }
+            }} 
+          />
+        </div>
+      </Grid>
 
-      </Box>
+      {/* Treatment Outcome Chart */}
+      <Grid item xs={12} md={6}>
+        <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
+          Treatment Outcomes Overview
+        </Typography>
+        <div style={{ height: '300px', background: colors.primary[400], padding: '5px' }}>
+          <Bar 
+            data={treatmentOutcomeChartData}
+            options={{
+              plugins: { legend: { position: 'bottom' } },
+              scales: {
+                x: { stacked: true },
+                y: { stacked: true }
+              }
+            }} 
+          />
+        </div>
+      </Grid>
+    </Grid>
+      
 
-      <Box sx={{
-        width: "100%",
-        height: "35vh",
-        overflow: "auto",
-        "& .MuiDataGrid-root": {
-          border: `1px solid ${colors.primary[700]}`,
-          color: colors.grey[100],
-          backgroundColor: colors.primary[400],
-        },
-        "& .MuiDataGrid-columnHeaders": {
-          backgroundColor: colors.blueAccent[700],
-          color: colors.grey[100],
-        },
-        "& .MuiDataGrid-cell": {
-          borderBottom: `1px solid ${colors.primary[700]}`,
-        },
-        "& .MuiDataGrid-footerContainer": {
-          borderTop: `1px solid ${colors.primary[700]}`,
-          backgroundColor: colors.blueAccent[700],
-          color: colors.grey[100],
-        },
-        "& .MuiCheckbox-root": {
-          color: colors.greenAccent[200],
-        },
-        "& .MuiDataGrid-toolbarContainer": {
-          color: colors.grey[100],
-        },
-      }}>
-
-
-
-        <DataGrid
-          rows={reportData}
-          columns={columns}
-          pageSize={5}
-          rowsPerPageOptions={[5]}
-          disableSelectionOnClick
-        />
-      </Box>
+      
     </Box>
   );
 };
 
-export default SummaryTable;
+export default ReportsPage;
