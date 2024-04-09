@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, useTheme, Typography } from '@mui/material';
+import { Box, Grid, useTheme, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import Header from '../../components/Header';
 import { db } from '../../firebase.config';
 import { collection, getDocs } from 'firebase/firestore';
@@ -7,8 +7,11 @@ import { tokens } from "../../theme";
 import { Line, Bar } from 'react-chartjs-2';
 
 const ReportsPage = () => {
-  const [lineChartData, setLineChartData] = useState({});
-  const [ageDistributionData, setAgeDistributionData] = useState({});
+  const [timePeriod, setTimePeriod] = useState('monthly');
+
+  const [patientDemographicsChartData, setPatientDemographicsChartData] = useState({ labels: [], datasets: [] }); 
+  const [labTestsChartData, setLabTestsChartData] = useState({ labels: [], datasets: [] });
+
   const [treatmentStatusChartData, setTreatmentStatusChartData] = useState({
     labels: [],
     datasets: []
@@ -18,8 +21,51 @@ const ReportsPage = () => {
     labels: [],
     datasets: []
   });
+
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+
+
+  const handleTimePeriodChange = async (event) => {
+    const newTimePeriod = event.target.value;
+    setTimePeriod(newTimePeriod);
+    await fetchPatientDemographics(newTimePeriod);
+    await fetchLabTestsOverTime(newTimePeriod);
+    await fetchTreatmentData(newTimePeriod);
+    
+  };
+
+
+  const groupByTimePeriod = (data, period = 'monthly') => {
+    const grouped = {};
+    
+    data.forEach(item => {
+      const date = new Date(item.testDate);
+      let key;
+      
+      switch (period) {
+        case 'yearly':
+          key = `${date.getFullYear()}`;
+          break;
+        case 'quarterly':
+          const quarter = Math.floor((date.getMonth() + 3) / 3);
+          key = `${date.getFullYear()}-Q${quarter}`;
+          break;
+        case 'monthly':
+        default:
+          key = date.toLocaleDateString('en-us', { year: 'numeric', month: 'short' });
+          break;
+      }
+  
+      if (!grouped[key]) {
+        grouped[key] = 0;
+      }
+      
+      grouped[key]++;
+    });
+    
+    return grouped;
+  };
 
   // Function to calculate age from birthdate
   const calculateAge = (birthdateString) => {
@@ -32,133 +78,165 @@ const ReportsPage = () => {
     }
     return age;
   };
-
-// Function to fetch data from Firebase and process for line chart and age distribution histogram
-const fetchReportsData = async () => {
-  const malePatientCounts = {};
-  const femalePatientCounts = {};
-  const ageDistribution = {
-    '0-5': { male: 0, female: 0 },
-    '6-10': { male: 0, female: 0 },
-    '11-15': { male: 0, female: 0 },
-    '16-20': { male: 0, female: 0 },
-    '21-25': { male: 0, female: 0 },
+  const determineAgeGroup = (age) => {
+    if (age <= 5) return '0-5';
+    if (age <= 10) return '6-10';
+    if (age <= 15) return '11-15';
+    if (age <= 20) return '16-20';
   };
-  const totalPatientsOverTime = {};
-  const totalMalePatientsOverTime = {};
-  const totalFemalePatientsOverTime = {};
-
-  try {
+  
+  const fetchPatientDemographics = async (selectedTimePeriod = 'monthly') => {
+    let rawPatientData = {};
     const querySnapshot = await getDocs(collection(db, "patientsinfo"));
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      const dateAdded = new Date(data.dateAdded);
-      const monthYearKey = `${dateAdded.getMonth() + 1}-${dateAdded.getFullYear()}`;
-      const gender = data.gender.toLowerCase(); // Normalize gender to lowercase
-      const age = calculateAge(data.birthdate);
-
-      // Update patient counts by gender
-      if (gender === 'male') {
-        if (!malePatientCounts[monthYearKey]) {
-          malePatientCounts[monthYearKey] = 0;
-        }
-        malePatientCounts[monthYearKey]++;
-      } else if (gender === 'female') {
-        if (!femalePatientCounts[monthYearKey]) {
-          femalePatientCounts[monthYearKey] = 0;
-        }
-        femalePatientCounts[monthYearKey]++;
+    
+    querySnapshot.forEach(doc => {
+      const { birthdate, gender, dateAdded } = doc.data();
+      const age = calculateAge(birthdate);
+      const ageGroup = determineAgeGroup(age);
+      const genderKey = gender.toLowerCase();
+      
+      // Use dateAdded to group by time period
+      const date = new Date(dateAdded);
+      let dateKey;
+      switch (selectedTimePeriod) {
+        case 'yearly':
+          dateKey = `${date.getFullYear()}`;
+          break;
+        case 'quarterly':
+          const quarter = Math.floor((date.getMonth() + 3) / 3);
+          dateKey = `${date.getFullYear()}-Q${quarter}`;
+          break;
+        case 'monthly':
+        default:
+          dateKey = date.toLocaleDateString('en-us', { year: 'numeric', month: 'short' });
+          break;
       }
-
-      // Update age distribution
-      if (age >= 0 && age <= 5) {
-        ageDistribution['0-5'][gender]++;
-      } else if (age >= 6 && age <= 10) {
-        ageDistribution['6-10'][gender]++;
-      } else if (age >= 11 && age <= 15) {
-        ageDistribution['11-15'][gender]++;
-      } else if (age >= 16 && age <= 20) {
-        ageDistribution['16-20'][gender]++;
-      } else if (age >= 21 && age <= 25) {
-        ageDistribution['21-25'][gender]++;
+  
+      if (!rawPatientData[dateKey]) {
+        rawPatientData[dateKey] = {};
       }
-
-      // Update total patients over time
-      if (!totalPatientsOverTime[monthYearKey]) {
-        totalPatientsOverTime[monthYearKey] = 0;
+      
+      if (!rawPatientData[dateKey][ageGroup]) {
+        rawPatientData[dateKey][ageGroup] = { male: 0, female: 0 };
       }
-      totalPatientsOverTime[monthYearKey]++;
-
-      // Update total male patients over time
-      if (gender === 'male') {
-        if (!totalMalePatientsOverTime[monthYearKey]) {
-          totalMalePatientsOverTime[monthYearKey] = 0;
-        }
-        totalMalePatientsOverTime[monthYearKey]++;
-      }
-
-      // Update total female patients over time
-      if (gender === 'female') {
-        if (!totalFemalePatientsOverTime[monthYearKey]) {
-          totalFemalePatientsOverTime[monthYearKey] = 0;
-        }
-        totalFemalePatientsOverTime[monthYearKey]++;
-      }
+      
+      rawPatientData[dateKey][ageGroup][genderKey]++;
     });
-
-    // Prepare data for age distribution histogram
-    const ageDistributionChartData = {
-      labels: Object.keys(ageDistribution).filter(age => Object.values(ageDistribution[age]).some(count => count > 0)),
-      datasets: [
+  
+    // Transform rawPatientData into the structure needed for charting
+    const chartData = transformPatientDataForChart(rawPatientData);
+    setPatientDemographicsChartData(chartData);
+  };
+  
+  // Add a new function to transform the patient data into a chart-friendly format
+  const transformPatientDataForChart = (patientData) => {
+    const ageGroups = ['0-5', '6-10', '11-15', '16-20'];
+    const labels = Object.keys(patientData).sort((a, b) => new Date(a) - new Date(b));
+    const datasets = ageGroups.flatMap(ageGroup => {
+      const maleData = labels.map(label => patientData[label]?.[ageGroup]?.male || 0);
+      const femaleData = labels.map(label => patientData[label]?.[ageGroup]?.female || 0);
+  
+      return [
         {
-          label: 'Male Patients',
+          label: `${ageGroup} Male`,
+          data: maleData,
           backgroundColor: 'blue',
-          borderWidth: 1,
-          data: Object.keys(ageDistribution).filter(age => Object.values(ageDistribution[age]).some(count => count > 0)).map(age => ageDistribution[age].male),
+          stack: ageGroup,
         },
         {
-          label: 'Female Patients',
+          label: `${ageGroup} Female`,
+          data: femaleData,
           backgroundColor: 'pink',
-          borderWidth: 1,
-          data: Object.keys(ageDistribution).filter(age => Object.values(ageDistribution[age]).some(count => count > 0)).map(age => ageDistribution[age].female),
-        },
-      ],
-    };
-
-    // Prepare data for line chart (total patients over time)
-    const lineChartData = {
-      labels: Object.keys(totalPatientsOverTime),
-      datasets: [
-        {
-          label: 'Total Patients',
-          data: Object.values(totalPatientsOverTime),
-          fill: false,
-          borderColor: 'green',
-          tension: 0.1
-        },
-        {
-          label: 'Male Patients',
-          data: Object.values(totalMalePatientsOverTime),
-          fill: false,
-          borderColor: 'blue',
-          tension: 0.1
-        },
-        {
-          label: 'Female Patients',
-          data: Object.values(totalFemalePatientsOverTime),
-          fill: false,
-          borderColor: 'pink',
-          tension: 0.1
+          stack: ageGroup,
         }
-      ]
-    };
+      ];
+    });
+  
+    return { labels, datasets };
+  };
+  
+  const fetchLabTestsOverTime = async (timePeriod = 'monthly') => {
+    // Initialize patientData and labTestData
+    let patientData = {};
+    let labTestData = {};
+  
+    // Fetch and prepare patientData
+    const patientsSnapshot = await getDocs(collection(db, "patientsinfo"));
+    patientsSnapshot.forEach(doc => {
+      const patientInfo = doc.data();
+      patientData[patientInfo.caseNumber] = patientInfo; // Store entire patient info
+    });
+  
+    // Lab test types to be included in the chart
+    const labTestTypes = ['igra', 'mtbrif', 'xray', 'tst', 'dst'];
+  
+    // Prepare labTestData structure
+    labTestTypes.forEach(testType => {
+      labTestData[testType] = {};
+    });
+  
+    // Fetch lab test data for each type
+    for (let testType of labTestTypes) {
+      const querySnapshot = await getDocs(collection(db, testType));
+      querySnapshot.forEach(doc => {
+        const { caseNumber, testDate } = doc.data();
+  
+        // Match the test with the patient using caseNumber
+        if (patientData[caseNumber]) {
+          // Extract the month and year for the X-Axis labels
+          const monthYear = new Date(testDate).toLocaleDateString('en-us', { year: 'numeric', month: 'short' });
+  
+          // Initialize the monthYear key for the testType if it doesn't exist
+          if (!labTestData[testType][monthYear]) {
+            labTestData[testType][monthYear] = 0;
+          }
+  
+          // Increment the test count for the specific month and year
+          labTestData[testType][monthYear]++;
+        }
+      });
+      labTestData[testType] = groupByTimePeriod(Object.entries(labTestData[testType]).map(([date, count]) => ({
+        testDate: date,
+        count: count
+      })), timePeriod);
+    }
+  
+    // Create labels for the X-Axis based on the test dates
+    const labels = getUniqueSortedMonthYearKeys(labTestData);
+    
+  
+    // Create datasets for each lab test type
+    const datasets = labTestTypes.map(testType => {
+      // Map each label (month-year) to the corresponding test count
+      const data = labels.map(label => labTestData[testType][label] || 0);
+      return {
+        label: testType.toUpperCase(),
+        data: data,
+        borderColor: getRandomColor(),
+        fill: false,
+      };
+    });
+  
+    // Set the state with the new chart data
+    setLabTestsChartData({ labels, datasets });
+  };
 
-    setAgeDistributionData(ageDistributionChartData);
-    setLineChartData(lineChartData);
-  } catch (error) {
-    console.error("Error fetching reports data:", error);
+  function getUniqueSortedMonthYearKeys(labTestData) {
+    const allKeys = new Set();
+    Object.values(labTestData).forEach(testData => {
+      Object.keys(testData).forEach(key => allKeys.add(key));
+    });
+    return Array.from(allKeys).sort((a, b) => new Date(a) - new Date(b));
   }
-};
+  function getRandomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  }
+  
 
 
 const fetchTreatmentData = async () => {
@@ -255,50 +333,64 @@ function createChartDataset(labels, counts, type) {
 }
 
 
-// Define your colors outside of the function
-const outcomeColors = {
-  'Not Evaluated': 'rgba(255, 159, 64, 1)',
-  'Cured/Treatment Completed': 'rgba(153, 102, 255, 1)',
-  'Treatment Failed': 'rgba(255, 99, 132, 1)',
-  'Died': 'rgba(201, 203, 207, 1)',
-  'Lost to Follow up': 'rgba(54, 162, 235, 1)',
-  // Add any additional outcome colors here
-};
 
 // Call fetchTreatmentData inside useEffect
 useEffect(() => {
-  fetchReportsData();
+  fetchPatientDemographics(timePeriod);
+  fetchLabTestsOverTime(timePeriod);
   fetchTreatmentData();
-}, []);
+}, [timePeriod]);
 
   return (
     <Box m={2}>
       <Header title="Report Generation" subtitle="Summary Report" />
-
+      <Grid item xs={12}>
+  <FormControl fullWidth>
+    <InputLabel id="time-period-label">Time Period</InputLabel>
+    <Select
+      labelId="time-period-label"
+      id="time-period"
+      value={timePeriod}
+      label="Time Period"
+      onChange={handleTimePeriodChange}
+    >
+      <MenuItem value="monthly">Monthly</MenuItem>
+      <MenuItem value="quarterly">Quarterly</MenuItem>
+      <MenuItem value="yearly">Yearly</MenuItem>
+    </Select>
+  </FormControl>
+</Grid>
       <Grid container spacing={2}>
-      <Grid item xs={12} sx={{ textAlign: 'center', marginBottom: '10px' }}> {/* Add spacing */}
-        <Typography variant="h6" sx={{ fontSize: '25px', fontWeight: 'bold' }}> 
-        Overall Patient Trends and Age Distribution by Gender
-          </Typography>
-      </Grid>
+
+
+        {/* Patient Demographics Chart */}
         <Grid item xs={12} md={6}>
-          {/* Line Chart */}
-          <div style={{ width: '100%', height: '300px', background:  colors.primary[400], padding: '5px' }}>
-            {lineChartData.labels ? (
-              <Line data={lineChartData} options={{ plugins: { legend: { position: 'bottom' } } }} />
-            ) : (
-              <p>Loading chart data...</p>
-            )}
+          <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>Patient Demographics Overview</Typography>
+          <div style={{  height: '300px', background: colors.primary[400], padding: '5px' }}>
+            <Bar data={patientDemographicsChartData} options={{
+              plugins: { legend: { position: 'bottom' } },
+              scales: {
+                x: { stacked: true },
+                y: { stacked: true }
+              }
+            }} />
           </div>
         </Grid>
-        <Grid item xs={12} md={6}>
-          {/* Age Distribution Histogram */}
-          <div style={{ width: '100%', height: '300px', background:  colors.primary[400], padding: '5px' }}>
-            {ageDistributionData.labels ? (
-              <Bar data={ageDistributionData} options={{ plugins: { legend: { position: 'bottom' } } }} />
-            ) : (
-              <p>Loading age distribution data...</p>
-            )}
+
+         {/* Lab Tests Over Time Chart */}
+         <Grid item xs={12} md={6}>
+          <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
+            Lab Tests Over Time
+          </Typography>
+          <div style={{ height: '300px', background: colors.primary[400], padding: '5px' }}>
+            <Line data={labTestsChartData} options={{
+              plugins: { legend: { position: 'bottom' } },
+              responsive: true,
+              scales: {
+                x: { stacked: true },
+                y: {stacked: false}
+              }
+            }} />
           </div>
         </Grid>
      
