@@ -418,6 +418,7 @@ const fetchDataForReport = async () => {
 
   return reportData;
 };
+
 const downloadPdfDocument = async () => {
   const reportData = await fetchDataForReport();
   if (printRef.current && reportData.length > 0) {
@@ -434,6 +435,10 @@ const downloadPdfDocument = async () => {
     // Create a new page for the table
     pdf.addPage();
 
+    // Add a title for the table
+    pdf.setFontSize(25);
+    pdf.text('Total Patients Report', 14, 15);
+
     // Define the columns and data for the table
     const columns = ["Date", "Age", "Gender", "Total Lab Tests", "Ongoing Treatment", "Treatment Outcome"];
     const tableData = reportData.map(item => [
@@ -449,7 +454,7 @@ const downloadPdfDocument = async () => {
     pdf.autoTable({
       head: [columns],
       body: tableData,
-      startY: 10, // Start the table after a small vertical margin from the new page
+      startY: 20, // adjust this margin as needed to position the table below the header title
     });
 
     // Save the PDF
