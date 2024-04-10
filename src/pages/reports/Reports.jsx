@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, useTheme, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Box, Grid, useTheme, Typography, FormControl, InputLabel, Select, MenuItem, Button  } from '@mui/material';
 import Header from '../../components/Header';
 import { db } from '../../firebase.config';
 import { collection, getDocs } from 'firebase/firestore';
 import { tokens } from "../../theme";
 import { Line, Bar } from 'react-chartjs-2';
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
+
 
 const ReportsPage = () => {
   const [timePeriod, setTimePeriod] = useState('monthly');
@@ -345,9 +347,10 @@ useEffect(() => {
 
   return (
     <Box m={2}>
-      <Header title="Report Generation" subtitle="Summary Report" />
-      <Grid container spacing={2} alignItems="center">
-        <Grid item xs={12} sm={8} md={3} lg={4}>
+      <Header title="Report Generation" subtitle="Visual Summary Report" />
+
+      <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+      <Grid item xs={12} sm={6} md={4} lg={3}>
           <FormControl fullWidth>
             <InputLabel id="time-period-label">Time Period</InputLabel>
             <Select
@@ -363,7 +366,21 @@ useEffect(() => {
             </Select>
           </FormControl>
         </Grid>
-        {/* Other grid items */}
+
+        <Grid item>
+        <Button
+          variant="contained"
+          startIcon={<DownloadOutlinedIcon />}
+          sx={{backgroundColor: colors.blueAccent[700], color: colors.grey[100], fontSize: "14px", fontWeight: "bold", padding: "10px 20px",}}
+          onClick={() => {
+            // Logic to handle the download action
+          }}
+        >
+          Download FULL Report
+        </Button>
+      </Grid>
+
+
       </Grid>
 
 
