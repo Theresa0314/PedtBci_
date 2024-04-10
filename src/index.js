@@ -39,6 +39,8 @@ import TPForm from "./pages/treatmentPlan/TPform";
 import TPDetail from "./pages/treatmentPlan/TPdetail";
 import TPEdit from "./pages/treatmentPlan/TPedit";
 
+import FollowUpDetail from "./pages/followUp/FollowUpDetail";
+
 import { Form } from "react-router-dom";
 import { Bar, Pie, Line } from "react-chartjs-2";
 
@@ -75,7 +77,7 @@ const router = createBrowserRouter(
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/symptoms" element={<Symptoms />} />
         <Route path="/inventory" element={<Inventory />} />
-
+        <Route path="/FollowUpDetail" element={<FollowUpDetail />} />
 
       </Route>
       <Route path="/" element={<Protected />}>

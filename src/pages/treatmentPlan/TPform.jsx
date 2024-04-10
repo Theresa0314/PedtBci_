@@ -151,17 +151,22 @@ const TPForm = ({ handleCloseForm, handleUpdateTP, caseId, caseNumber }) => {
     const followUpDates = [];
     let currentDate = new Date(startDateTP);
     let endDate = new Date(endDateTP);
-
+  
     currentDate.setDate(currentDate.getDate() + 14); // Start two weeks after the initial start date
-
+  
     while (currentDate <= endDate) {
-      followUpDates.push(new Date(currentDate));
+      // Add an object with both the date and the status
+      followUpDates.push({
+        date: new Date(currentDate),
+        status: 'Pending' // Add the status here
+      });
       currentDate.setDate(currentDate.getDate() + 14); // Add 2 weeks
     }
     return followUpDates;
   };
-
+  
   const followUpDates = calculateFollowUpDates();
+  
 
   //Dosages for Intensive Phase
   function calculateDosageIntensive(weight, months) {
@@ -284,32 +289,32 @@ function calculateTotalDosage(weight, months) {
         };
 
         //Send SMS to number
-        const apikey = '1b35ebc5f7671828c3c6e76c04437c4e';
-        const number = '09760682065';//['09760682065','09276397317'];
-        const message = `${name}'s TP follow-up dates are confirmed! Check your google calendar for more information.`
+        // const apikey = '1b35ebc5f7671828c3c6e76c04437c4e';
+        // const number = '09760682065';//['09760682065','09276397317'];
+        // const message = `${name}'s TP follow-up dates are confirmed! Check your google calendar for more information.`
 
-        const parameters = {
-          apikey,
-          number,
-          message,
-        };
+        // const parameters = {
+        //   apikey,
+        //   number,
+        //   message,
+        // };
 
-        console.log(JSON.stringify(parameters))
+        // console.log(JSON.stringify(parameters))
 
-        fetch("https://api.semaphore.co/api/v4/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams(parameters),
-        })
-          .then((res) => res.text())
-          .then((output) => {
-            console.log(`Success: ${JSON.stringify(output)}`);
-          })
-          .catch((err) => {
-            console.error(err);
-          });
+        // fetch("https://api.semaphore.co/api/v4/messages", {
+        //   method: "POST",
+        //   headers: {
+        //     "Content-Type": "application/x-www-form-urlencoded",
+        //   },
+        //   body: new URLSearchParams(parameters),
+        // })
+        //   .then((res) => res.text())
+        //   .then((output) => {
+        //     console.log(`Success: ${JSON.stringify(output)}`);
+        //   })
+        //   .catch((err) => {
+        //     console.error(err);
+        //   });
 
         // Use the apiCalendar to add the event to Google Calendar
         apiCalendar
@@ -561,8 +566,10 @@ function calculateTotalDosage(weight, months) {
               <strong>Follow-Up Dates: </strong>
             </Typography>
             <ul>
-              {followUpDates.map((date, index) => (
-                <li key={index}>{date.toLocaleDateString()}</li>
+              {followUpDates.map((followUp, index) => (
+                <li key={index}>
+                  {followUp.date.toLocaleDateString()} - Status: {followUp.status}
+                </li>
               ))}
             </ul>
           </Grid>

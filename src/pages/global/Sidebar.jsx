@@ -24,7 +24,7 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import RecentActorsIcon from '@mui/icons-material/RecentActors';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'; 
-
+import PermContactCalendarIcon from '@mui/icons-material/PermContactCalendar';
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -205,6 +205,15 @@ const Sidebar = () => {
             />
             )} */}
 
+            {canView('Patient Follow Up') && (
+                <Item
+                title="Patient Follow Ups"
+                to="/FollowUpDetail"
+                icon={<PermContactCalendarIcon  />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+              )}
 
             {canView('Clinical Inventory') && (
               <Item
