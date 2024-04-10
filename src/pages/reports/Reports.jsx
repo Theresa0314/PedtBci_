@@ -6,6 +6,9 @@ import { collection, getDocs } from 'firebase/firestore';
 import { tokens } from "../../theme";
 import { Line, Bar } from 'react-chartjs-2';
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
 
 
 const ReportsPage = () => {
@@ -345,6 +348,27 @@ useEffect(() => {
   fetchTreatmentData(timePeriod);
 }, [timePeriod]);
 
+const printRef = React.useRef(null);
+
+
+const downloadPdfDocument = async () => {
+  if (printRef.current) {
+    const pdf = new jsPDF({ orientation: 'landscape' });
+    const canvas = await html2canvas(printRef.current);
+    const data = canvas.toDataURL('image/png');
+    const imgProps= pdf.getImageProperties(data);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+    // This will add the image to the PDF fitting the page size
+    pdf.addImage(data, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save('charts.pdf');
+  } else {
+    console.error('Element to print is not available');
+  }
+};
+
+
   return (
     <Box m={2}>
       <Header title="Report Generation" subtitle="Visual Summary Report" />
@@ -372,9 +396,7 @@ useEffect(() => {
           variant="contained"
           startIcon={<DownloadOutlinedIcon />}
           sx={{backgroundColor: colors.blueAccent[700], color: colors.grey[100], fontSize: "14px", fontWeight: "bold", padding: "10px 20px",}}
-          onClick={() => {
-            // Logic to handle the download action
-          }}
+          onClick={downloadPdfDocument}
         >
           Download FULL Report
         </Button>
@@ -383,14 +405,14 @@ useEffect(() => {
 
       </Grid>
 
-
+      <div ref={printRef}>
       <Grid container spacing={2}>
-
 
         {/* Patient Demographics Chart */}
         <Grid item xs={12} md={6}>
-          <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>Patient Demographics Overview</Typography>
-          <div style={{  height: '300px', background: colors.primary[400], padding: '5px' }}>
+          
+          <div style={{  height: '350px', background: colors.primary[400], padding: '5px' }}>
+            <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>Patient Demographics Overview</Typography>
             <Bar data={patientDemographicsChartData} options={{
               plugins: { legend: { position: 'bottom' } },
               scales: {
@@ -403,10 +425,11 @@ useEffect(() => {
 
          {/* Lab Tests Over Time Chart */}
          <Grid item xs={12} md={6}>
-          <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
+         
+          <div style={{  height: '350px', background: colors.primary[400], padding: '5px' }}>
+            <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
             Lab Tests Over Time
-          </Typography>
-          <div style={{ height: '300px', background: colors.primary[400], padding: '5px' }}>
+            </Typography> 
             <Line data={labTestsChartData} options={{
               plugins: { legend: { position: 'bottom' } },
               responsive: true,
@@ -421,10 +444,11 @@ useEffect(() => {
   
       {/* Treatment Status Chart */}
       <Grid item xs={12} md={6}>
+  
+        <div style={{  height: '350px', background: colors.primary[400], padding: '5px' }}>
         <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
           Treatment Status Overview
         </Typography>
-        <div style={{ height: '300px', background: colors.primary[400], padding: '5px' }}>
           <Bar 
             data={treatmentStatusChartData}
             options={{
@@ -440,10 +464,11 @@ useEffect(() => {
 
       {/* Treatment Outcome Chart */}
       <Grid item xs={12} md={6}>
-        <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
+       
+        <div style={{  height: '350px', background: colors.primary[400], padding: '5px' }}>
+           <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
           Treatment Outcomes Overview
         </Typography>
-        <div style={{ height: '300px', background: colors.primary[400], padding: '5px' }}>
           <Bar 
             data={treatmentOutcomeChartData}
             options={{
@@ -457,7 +482,7 @@ useEffect(() => {
         </div>
       </Grid>
     </Grid>
-      
+    </div>
 
       
     </Box>
