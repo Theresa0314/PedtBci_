@@ -205,7 +205,7 @@ const Sidebar = () => {
             />
             )} */}
 
-            {canView('Patient Follow Up') && (
+            {/* {canView('Patient Follow Up') && (
                 <Item
                 title="Patient Follow Ups"
                 to="/FollowUpDetail"
@@ -213,7 +213,7 @@ const Sidebar = () => {
                 selected={selected}
                 setSelected={setSelected}
               />
-              )}
+              )} */}
 
             {canView('Clinical Inventory') && (
               <Item
