@@ -225,11 +225,18 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
             )}
+             <Typography
+              variant="h6"
+              color={colors.grey[300]}
+              sx={{ m: "15px 0 5px 20px" }}
+            >
+              Reports
+            </Typography>
 
             {canView('Report') && (
                 <Item
-                  title="Reports"
-                  to="/report" 
+                  title="Patient Reports"
+                  to="/p-report" 
                   icon={<AssessmentOutlinedIcon />}
                   selected={selected}
                   setSelected={setSelected}
