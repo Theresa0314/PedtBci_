@@ -57,7 +57,7 @@ const router = createBrowserRouter(
         <Route path="/userlist" element={< UserList/>} />
         <Route path="/tbmasterlist" element={< TBMasterlist/>} />
         <Route path="/calendar" element={<Calendar />} />
-        <Route path="/report" element={<ReportPage/>} />
+        <Route path="/p-report" element={<ReportPage/>} />
 
         <Route path="/patientInfo" element={<PatientInfo />} />
         <Route path="/patientgenform" element={<PatientGenForm />} />
