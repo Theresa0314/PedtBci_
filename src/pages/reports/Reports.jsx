@@ -526,7 +526,7 @@ const downloadPdfDocument = async () => {
         {/* Patient Demographics Chart */}
         <Grid item xs={12} md={6}>
           
-          <div style={{  height: '350px', background: colors.primary[400], padding: '5px' }}>
+          <div style={{  height: '550px', background: colors.primary[400], padding: '5px' }}>
             <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>Patient Demographics Overview</Typography>
             <Bar data={patientDemographicsChartData} options={{
               plugins: { legend: { position: 'bottom' } },
@@ -541,7 +541,7 @@ const downloadPdfDocument = async () => {
          {/* Lab Tests Over Time Chart */}
          <Grid item xs={12} md={6}>
          
-          <div style={{  height: '350px', background: colors.primary[400], padding: '5px' }}>
+          <div style={{  height: '550px', background: colors.primary[400], padding: '5px' }}>
             <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
             Lab Tests Over Time
             </Typography> 
@@ -560,7 +560,7 @@ const downloadPdfDocument = async () => {
       {/* Treatment Status Chart */}
       <Grid item xs={12} md={6}>
   
-        <div style={{  height: '350px', background: colors.primary[400], padding: '5px' }}>
+        <div style={{  height: '550px', background: colors.primary[400], padding: '5px' }}>
         <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
           Treatment Status Overview
         </Typography>
@@ -580,7 +580,7 @@ const downloadPdfDocument = async () => {
       {/* Treatment Outcome Chart */}
       <Grid item xs={12} md={6}>
        
-        <div style={{  height: '350px', background: colors.primary[400], padding: '5px' }}>
+        <div style={{  height: '550px', background: colors.primary[400], padding: '5px' }}>
            <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
           Treatment Outcomes Overview
         </Typography>

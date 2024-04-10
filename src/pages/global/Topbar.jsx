@@ -45,7 +45,7 @@ const Topbar = () => {
   // Fetch today's events from Google Calendar
   useEffect(() => {
     if (apiCalendar.sign) {
-      apiCalendar.listUpcomingEvents(10)
+      apiCalendar.listUpcomingEvents(20)
         .then(({ result }) => {
           const now = new Date();
           const todayEvents = result.items.filter(event => {
