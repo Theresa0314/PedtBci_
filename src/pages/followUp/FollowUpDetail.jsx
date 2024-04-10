@@ -13,8 +13,7 @@ import { db } from "../../firebase.config";
 import {
   collection,
   getDocs,
-  doc,
-  updateDoc,
+  doc, updateDoc, arrayUnion, arrayRemove
 } from "firebase/firestore";
 //import EditIcon from "@mui/icons-material/Edit";
 import PageviewIcon from "@mui/icons-material/Pageview";
@@ -34,12 +33,13 @@ useEffect(() => {
     const loadedData = new Map(); // Using a Map to ensure unique keys
 
     querySnapshot.forEach((doc) => {
-      doc.data().followUpDates.forEach((followUpDate, index) => {
-        const data = doc.data();
+      const data = doc.data();
+      const followUpDates = Array.isArray(data.followUpDates) ? data.followUpDates : [data.followUpDates];
+
+      followUpDates.forEach((followUpDate, index) => {
         const date = followUpDate.date?.toDate();
         const dateString = date?.toLocaleString();
 
-        
         // Create a composite key using the document ID and the index
         const compositeKey = `${doc.id}-${index}`;
         loadedData.set(compositeKey, {
@@ -47,30 +47,32 @@ useEffect(() => {
           caseNumber: data.caseNumber,
           date: dateString,
           status: followUpDate.status,
+          docId: doc.id // Store the document ID for later reference
         });
       });
     });
-    
+
     setRows(Array.from(loadedData.values())); // Convert Map values to an array
   };
 
   fetchData();
 }, []);
-console.log(doc.data().followUpDates);
+
+
 //Update Status
-// const updateTreatmentPlan = async (compositeKey, newStatus) => {
-//   const [docId] = compositeKey.split('-'); // Extract the document ID from the composite key
-//   const documentRef = doc(collection(db, 'treatmentPlan'), docId);
+const updateTreatmentPlan = async (compositeKey, newStatus) => {
+  const [docId] = compositeKey.split('-'); // Extract the document ID from the composite key
+  const documentRef = doc(collection(db, 'treatmentPlan'), docId);
 
-//   // Update the status in the document
-//   await updateDoc(documentRef, {
-//     'followUpDates.status': newStatus, // Make sure to use the correct field path
-//   });
-// };
+  // Update the status in the document
+  await updateDoc(documentRef, {
+    'followUpDates.status': newStatus, // Make sure to use the correct field path
+  });
+};
 
-// const handleStatusChange = (compositeKey, newStatus) => {
-//   updateTreatmentPlan(compositeKey, newStatus);
-// };
+const handleStatusChange = (compositeKey, newStatus) => {
+  updateTreatmentPlan(compositeKey, newStatus);
+};
 
   const columns = [
     {
@@ -105,11 +107,8 @@ console.log(doc.data().followUpDates);
       headerName: "Action",
       flex: 2,
       renderCell: (params) => (
-
-
-
         <Box display="flex" justifyContent="center">
-          <Button
+          {/* <Button
             startIcon={<PageviewIcon />}
           //  onClick={() => handleViewDetails(params.id)}
             variant="contained"
@@ -117,11 +116,11 @@ console.log(doc.data().followUpDates);
             style={{ marginRight: 8 }}
           >
             View
-          </Button>
+          </Button> */}
             <>
           {/* Completed */}
               <IconButton
-             // onClick={() => handleStatusChange(params.row.id, 'Completed')}
+              onClick={() => handleStatusChange(params.row.id, 'Completed')}
                 variant="contained"
                 color="success"
                 style={{ marginRight: 8 }}
@@ -130,7 +129,7 @@ console.log(doc.data().followUpDates);
               </IconButton>
           {/* Missed */}
               <IconButton
-             // onClick={() => handleStatusChange(params.row.id, 'Missed')}
+              onClick={() => handleStatusChange(params.row.id, 'Missed')}
                 variant="contained"
                 color="error"
                 style={{ marginRight: 8 }}

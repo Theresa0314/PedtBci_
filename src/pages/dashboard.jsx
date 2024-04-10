@@ -1,66 +1,587 @@
-import { Box, Button, Typography, useTheme } from "@mui/material";
-import { tokens } from "../theme";
-import { Chart } from "chart.js/auto"
-import { Bar, Line } from "react-chartjs-2";
-import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import Header from "../components/Header";
-import StatBox from "../components/StatBox";
+import React, { useState, useEffect } from 'react';
+import { Box, Grid, useTheme, Typography, FormControl, InputLabel, Select, MenuItem, Button  } from '@mui/material';
+import Header from '../components/Header';
 import { db } from '../firebase.config';
-import { collection, getDocs, getCountFromServer, query, where } from 'firebase/firestore';
-import { useState, useEffect, useRef } from 'react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { tokens } from "../theme";
+import { Line, Bar } from 'react-chartjs-2';
+import { Chart as ChartJS } from 'chart.js/auto';
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
+import { jsPDF } from "jspdf";
+import 'jspdf-autotable';
+import html2canvas from "html2canvas";
 
 const Dashboard = () => {
+  const [timePeriod, setTimePeriod] = useState('monthly');
+
+  const [patientDemographicsChartData, setPatientDemographicsChartData] = useState({ labels: [], datasets: [] }); 
+  const [labTestsChartData, setLabTestsChartData] = useState({ labels: [], datasets: [] });
+
+  const [treatmentStatusChartData, setTreatmentStatusChartData] = useState({
+    labels: [],
+    datasets: []
+  });
+  
+  const [treatmentOutcomeChartData, setTreatmentOutcomeChartData] = useState({
+    labels: [],
+    datasets: []
+  });
+
+  const [treatmentRegimenChartData, setTreatmentRegimenChartData] = useState({
+    labels: [],
+    datasets: []
+  });
+
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const tableauVizRef = useRef(null);
 
-  useEffect(() => {
+
+  const handleTimePeriodChange = async (event) => {
+    const newTimePeriod = event.target.value;
+    setTimePeriod(newTimePeriod);
+    await fetchPatientDemographics(newTimePeriod);
+    await fetchLabTestsOverTime(newTimePeriod);
+    await fetchTreatmentData(newTimePeriod);
     
-    const scriptElement = document.createElement('script');
-    scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';
-    scriptElement.onload = () => {
-      const divElement = document.getElementById('viz1712191155443');
-      if (divElement) {
-        const vizElement = divElement.getElementsByTagName('object')[0];
-        if (vizElement) {
+  };
 
-            vizElement.style.width = '100%';
-            vizElement.style.height = '977px';
 
-          vizElement.style.display = 'block';
-        }
+  const groupByTimePeriod = (data, period = 'monthly') => {
+    const grouped = {};
+    
+    data.forEach(item => {
+      const date = new Date(item.testDate);
+      let key;
+      
+      switch (period) {
+        case 'yearly':
+          key = `${date.getFullYear()}`;
+          break;
+        case 'quarterly':
+          const quarter = Math.floor((date.getMonth() + 3) / 3);
+          key = `${date.getFullYear()}-Q${quarter}`;
+          break;
+        case 'monthly':
+        default:
+          key = date.toLocaleDateString('en-us', { year: 'numeric', month: 'short' });
+          break;
       }
-    };
-    document.body.appendChild(scriptElement);
-  }, []);
+  
+      if (!grouped[key]) {
+        grouped[key] = 0;
+      }
+      
+      grouped[key]++;
+    });
+    
+    return grouped;
+  };
+
+  // Function to calculate age from birthdate
+  const calculateAge = (birthdateString) => {
+    const birthdate = new Date(birthdateString);
+    const today = new Date();
+    let age = today.getFullYear() - birthdate.getFullYear();
+    const m = today.getMonth() - birthdate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthdate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+  const determineAgeGroup = (age) => {
+    if (age <= 5) return '0-5';
+    if (age <= 10) return '6-10';
+    if (age <= 15) return '11-15';
+    if (age <= 20) return '16-20';
+  };
+  
+  const fetchPatientDemographics = async (selectedTimePeriod = 'monthly') => {
+    let rawPatientData = {};
+    const querySnapshot = await getDocs(collection(db, "patientsinfo"));
+    
+    querySnapshot.forEach(doc => {
+      const { birthdate, gender, dateAdded } = doc.data();
+      const age = calculateAge(birthdate);
+      const ageGroup = determineAgeGroup(age);
+      const genderKey = gender.toLowerCase();
+      
+      // Use dateAdded to group by time period
+      const date = new Date(dateAdded);
+      let dateKey;
+      switch (selectedTimePeriod) {
+        case 'yearly':
+          dateKey = `${date.getFullYear()}`;
+          break;
+        case 'quarterly':
+          const quarter = Math.floor((date.getMonth() + 3) / 3);
+          dateKey = `${date.getFullYear()}-Q${quarter}`;
+          break;
+        case 'monthly':
+        default:
+          dateKey = date.toLocaleDateString('en-us', { year: 'numeric', month: 'short' });
+          break;
+      }
+  
+      if (!rawPatientData[dateKey]) {
+        rawPatientData[dateKey] = {};
+      }
+      
+      if (!rawPatientData[dateKey][ageGroup]) {
+        rawPatientData[dateKey][ageGroup] = { male: 0, female: 0 };
+      }
+      
+      rawPatientData[dateKey][ageGroup][genderKey]++;
+    });
+  
+    // Transform rawPatientData into the structure needed for charting
+    const chartData = transformPatientDataForChart(rawPatientData);
+    setPatientDemographicsChartData(chartData);
+  };
+  
+  // Add a new function to transform the patient data into a chart-friendly format
+  const transformPatientDataForChart = (patientData) => {
+    const ageGroups = ['0-5', '6-10', '11-15', '16-20'];
+    const labels = Object.keys(patientData).sort((a, b) => new Date(a) - new Date(b));
+    const datasets = ageGroups.flatMap(ageGroup => {
+      const maleData = labels.map(label => patientData[label]?.[ageGroup]?.male || 0);
+      const femaleData = labels.map(label => patientData[label]?.[ageGroup]?.female || 0);
+  
+      return [
+        {
+          label: `${ageGroup} Male`,
+          data: maleData,
+          backgroundColor: 'blue',
+          stack: ageGroup,
+        },
+        {
+          label: `${ageGroup} Female`,
+          data: femaleData,
+          backgroundColor: 'pink',
+          stack: ageGroup,
+        }
+      ];
+    });
+  
+    return { labels, datasets };
+  };
+  
+  const fetchLabTestsOverTime = async (timePeriod = 'monthly') => {
+    // Initialize patientData and labTestData
+    let patientData = {};
+    let labTestData = {};
+  
+    // Fetch and prepare patientData
+    const patientsSnapshot = await getDocs(collection(db, "patientsinfo"));
+    patientsSnapshot.forEach(doc => {
+      const patientInfo = doc.data();
+      patientData[patientInfo.caseNumber] = patientInfo; // Store entire patient info
+    });
+  
+    // Lab test types to be included in the chart
+    const labTestTypes = ['igra', 'mtbrif', 'xray', 'tst', 'dst'];
+  
+    // Prepare labTestData structure
+    labTestTypes.forEach(testType => {
+      labTestData[testType] = {};
+    });
+  
+    // Fetch lab test data for each type
+    for (let testType of labTestTypes) {
+      const querySnapshot = await getDocs(collection(db, testType));
+      querySnapshot.forEach(doc => {
+        const { caseNumber, testDate } = doc.data();
+  
+        // Match the test with the patient using caseNumber
+        if (patientData[caseNumber]) {
+          // Extract the month and year for the X-Axis labels
+          const monthYear = new Date(testDate).toLocaleDateString('en-us', { year: 'numeric', month: 'short' });
+  
+          // Initialize the monthYear key for the testType if it doesn't exist
+          if (!labTestData[testType][monthYear]) {
+            labTestData[testType][monthYear] = 0;
+          }
+  
+          // Increment the test count for the specific month and year
+          labTestData[testType][monthYear]++;
+        }
+      });
+      labTestData[testType] = groupByTimePeriod(Object.entries(labTestData[testType]).map(([date, count]) => ({
+        testDate: date,
+        count: count
+      })), timePeriod);
+    }
+  
+    // Create labels for the X-Axis based on the test dates
+    const labels = getUniqueSortedMonthYearKeys(labTestData);
+    
+  
+    // Create datasets for each lab test type
+    const datasets = labTestTypes.map(testType => {
+      // Map each label (month-year) to the corresponding test count
+      const data = labels.map(label => labTestData[testType][label] || 0);
+      return {
+        label: testType.toUpperCase(),
+        data: data,
+        borderColor: getRandomColor(),
+        fill: false,
+      };
+    });
+  
+    // Set the state with the new chart data
+    setLabTestsChartData({ labels, datasets });
+  };
+
+  function getUniqueSortedMonthYearKeys(labTestData) {
+    const allKeys = new Set();
+    Object.values(labTestData).forEach(testData => {
+      Object.keys(testData).forEach(key => allKeys.add(key));
+    });
+    return Array.from(allKeys).sort((a, b) => new Date(a) - new Date(b));
+  }
+  function getRandomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  }
   
 
+  const fetchTreatmentData = async (selectedTimePeriod = 'monthly') => {
+    // Initialize status and outcome counts objects
+    const treatmentStatusCounts = {
+      'Pending': {},
+      'Ongoing': {},
+      'End': {}
+    };
+    
+    const treatmentOutcomeCounts = {
+      'Not Evaluated': {},
+      'Cured/Treatment Completed': {},
+      'Treatment Failed': {},
+      'Died': {},
+      'Lost to Follow up': {}
+    };
+
+    const treatmentRegimenCounts = {
+      'I. 2HRZE/4HR': {},
+      'Ia. 2HRZE/10HR': {},
+      'II. 2HRZES/1HRZE/5HRE': {},
+      'IIa. 2HRZES/1HRZE/9HRE': {},
+    };
+  
+    try {
+      const querySnapshotTreatment = await getDocs(collection(db, "treatmentPlan"));
+      querySnapshotTreatment.forEach((doc) => {
+        const data = doc.data();
+        const startDate = new Date(data.startDateTP);
+  
+        // Use the groupByTimePeriod function to group the startDate by the selectedTimePeriod
+        let dateKey = startDate.toLocaleDateString('en-us', { year: 'numeric', month: 'short' });
+        if (selectedTimePeriod === 'yearly') {
+          dateKey = `${startDate.getFullYear()}`;
+        } else if (selectedTimePeriod === 'quarterly') {
+          const quarter = Math.floor((startDate.getMonth() + 3) / 3);
+          dateKey = `${startDate.getFullYear()}-Q${quarter}`;
+        }
+  
+        // Increment status count
+        if (!treatmentStatusCounts[data.status][dateKey]) {
+          treatmentStatusCounts[data.status][dateKey] = 0;
+        }
+        treatmentStatusCounts[data.status][dateKey]++;
+  
+        // Always increment outcome count, regardless of the status
+        const outcomeKey = data.outcome || 'Not Evaluated';
+        if (!treatmentOutcomeCounts[outcomeKey][dateKey]) {
+          treatmentOutcomeCounts[outcomeKey][dateKey] = 0;
+        }
+        treatmentOutcomeCounts[outcomeKey][dateKey]++;
+
+        // Increment regimen count
+        const regimenKey = data.regimen;
+        if (!treatmentRegimenCounts[regimenKey][dateKey]) {
+          treatmentRegimenCounts[regimenKey][dateKey] = 0;
+        }
+        treatmentRegimenCounts[regimenKey][dateKey]++;
+      });
+
+      
+      
+      // Combine all date keys from both status and outcomes, group by the selectedTimePeriod if necessary
+      const combinedKeys = new Set(Object.keys(treatmentStatusCounts['Pending'])
+        .concat(Object.keys(treatmentStatusCounts['Ongoing']))
+        .concat(Object.keys(treatmentStatusCounts['End']))
+        .concat(Object.keys(treatmentOutcomeCounts['Not Evaluated']))
+        .concat(Object.keys(treatmentOutcomeCounts['Cured/Treatment Completed']))
+        .concat(Object.keys(treatmentOutcomeCounts['Treatment Failed']))
+        .concat(Object.keys(treatmentOutcomeCounts['Died']))
+        .concat(Object.keys(treatmentOutcomeCounts['Lost to Follow up']))
+        .concat(Object.keys(treatmentRegimenCounts['I. 2HRZE/4HR']))
+        .concat(Object.keys(treatmentRegimenCounts['Ia. 2HRZE/10HR']))
+        .concat(Object.keys(treatmentRegimenCounts['II. 2HRZES/1HRZE/5HRE']))
+        .concat(Object.keys(treatmentRegimenCounts['IIa. 2HRZES/1HRZE/9HRE']))
+      );
+  
+      // Sort the combined keys to create the labels
+      const labels = Array.from(combinedKeys).sort((a, b) => new Date(a) - new Date(b));
+  
+      // Create the datasets for the status chart
+      const statusChartData = createChartDataset(labels, treatmentStatusCounts, 'status');
+  
+      // Create the datasets for the outcome chart
+      const outcomeChartData = createChartDataset(labels, treatmentOutcomeCounts, 'outcome');
+  
+      // Create the datasets for the regimen chart
+      const regimenChartData = createChartDataset(labels, treatmentRegimenCounts, 'regimen');
+
+      // Update state with the new chart data
+      setTreatmentStatusChartData(statusChartData);
+      setTreatmentOutcomeChartData(outcomeChartData);
+      setTreatmentRegimenChartData(regimenChartData);
+    } catch (error) {
+      console.error("Error fetching treatment data:", error);
+    }
+  };
+
+// Helper function to create the datasets for the chart
+function createChartDataset(labels, counts, type) {
+  const backgroundColors = {
+    'Pending': 'rgba(255, 206, 86, 1)',
+    'Ongoing': 'rgba(54, 162, 235, 1)',
+    'End': 'rgba(75, 192, 192, 1)',
+    'Not Evaluated': 'rgba(255, 159, 64, 1)',
+    'Cured/Treatment Completed': 'rgba(153, 102, 255, 1)',
+    'Treatment Failed': 'rgba(255, 99, 132, 1)',
+    'Died': 'rgba(201, 203, 207, 1)',
+    'Lost to Follow up': 'rgba(54, 162, 235, 1)',
+  };
+
+  return {
+    labels,
+    datasets: Object.keys(counts).map((key) => ({
+      label: key,
+      backgroundColor: backgroundColors[key],
+      data: labels.map(label => counts[key][label] || 0),
+    })),
+  };
+}
+
+
+
+// Call fetchTreatmentData inside useEffect
+useEffect(() => {
+  fetchPatientDemographics(timePeriod);
+  fetchLabTestsOverTime(timePeriod);
+  fetchTreatmentData(timePeriod);
+}, [timePeriod]);
+
+const fetchDataForReport = async () => {
+  const reportData = [];
+  const casesSnapshot = await getDocs(collection(db, 'cases'));
+
+  for (const caseDoc of casesSnapshot.docs) {
+    const caseData = caseDoc.data();
+    const startDate = caseData.startDate ? new Date(caseData.startDate).toLocaleDateString() : 'No date';
+    
+    const patientInfoRef = collection(db, 'patientsinfo');
+    const patientInfoQuery = query(patientInfoRef, where('caseNumber', '==', caseData.caseNumber));
+    const patientInfoSnapshot = await getDocs(patientInfoQuery);
+    
+    const patientInfoData = patientInfoSnapshot.docs[0]?.data();
+    
+    if (patientInfoData) {
+      // Calculate age using the birthdate
+      const age = patientInfoData.birthdate ? calculateAge(patientInfoData.birthdate) : 'No age';
+      let totalLabTests = 0;
+
+      // Aggregate the lab tests from different collections
+      const labTestTypes = ['igra', 'mtbrif', 'xray', 'tst', 'dst'];
+      for (const testType of labTestTypes) {
+        const labTestSnapshot = await getDocs(query(collection(db, testType), where('caseNumber', '==', caseData.caseNumber)));
+        totalLabTests += labTestSnapshot.size; // Sum up the lab tests
+      }
+      let ongoingTreatment = 0;
+      let treatmentOutcomes = {
+        'Not Evaluated': 0,
+        'Cured/Treatment Completed': 0,
+        'Treatment Failed': 0,
+        'Died': 0,
+        'Lost to Follow up': 0,
+      };
+      let treatmentRegimens = {
+        'I. 2HRZE/4HR': 0,
+        'Ia. 2HRZE/10HR': 0,
+        'II. 2HRZES/1HRZE/5HRE': 0,
+        'IIa. 2HRZES/1HRZE/9HRE': 0,
+
+      };
+
+      // Fetch and count treatment outcomes and ongoing treatments
+      const treatmentPlansSnapshot = await getDocs(query(
+        collection(db, 'treatmentPlan'),
+        where('caseNumber', '==', caseData.caseNumber)
+      ));
+    
+      treatmentPlansSnapshot.forEach((doc) => {
+        const treatmentPlan = doc.data();
+        const outcome = treatmentPlan.outcome || 'Not Evaluated';
+        treatmentOutcomes[outcome] = (treatmentOutcomes[outcome] || 0) + 1;
+        const regimen = treatmentPlan.regimen;
+        treatmentRegimens[regimen] = (treatmentRegimens[regimen] || 0) + 1;
+
+        if (treatmentPlan.status === 'Ongoing') {
+          ongoingTreatment++;
+        }
+      });
+      reportData.push({
+        date: startDate,
+        age: age,
+        gender: patientInfoData.gender,
+        totalLabTests: totalLabTests,
+        ongoingTreatment: ongoingTreatment,
+        treatmentOutcome: treatmentOutcomes,
+        treatmentRegimen: treatmentRegimens,
+      });
+    } else {
+      console.log('No patient info found for caseNumber:', caseData.caseNumber);
+    }
+  }
+  
+  // Sort by date after all data has been pushed
+  reportData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  return reportData;
+};
+
+
+
   return (
-    <div className='tableauPlaceholder' id='viz1712191155443' style={{ position: 'relative' }}>
-      <noscript>
-        <a href='#'>
-          <img alt='Dashboard 1 ' src='https://public.tableau.com/static/images/Da/Dashboard1_17121908292650/Dashboard1/1_rss.png' style={{ border: 'none' }} />
-        </a>
-      </noscript>
-      <object className='tableauViz' style={{ display: 'none' }}>
-        <param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' />
-        <param name='embed_code_version' value='3' />
-        <param name='site_root' value='' />
-        <param name='name' value='Dashboard1_17121908292650/Dashboard1' />
-        <param name='tabs' value='no' />
-        <param name='toolbar' value='yes' />
-        <param name='static_image' value='https://public.tableau.com/static/images/Da/Dashboard1_17121908292650/Dashboard1/1.png' />
-        <param name='animate_transition' value='yes' />
-        <param name='display_static_image' value='yes' />
-        <param name='display_spinner' value='yes' />
-        <param name='display_overlay' value='yes' />
-        <param name='display_count' value='yes' />
-        <param name='language' value='en-US' />
-        <param name='filter' value='publish=yes' />
-      </object>
-    </div>
+    <Box m={2}>
+      <Header title="Dashboard" />
+
+      <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+      <Grid item xs={12} sm={6} md={4} lg={3}>
+          <FormControl fullWidth>
+            <InputLabel id="time-period-label">Time Period</InputLabel>
+            <Select
+              labelId="time-period-label"
+              id="time-period"
+              value={timePeriod}
+              label="Time Period"
+              onChange={handleTimePeriodChange}
+            >
+              <MenuItem value="monthly">Monthly</MenuItem>
+              <MenuItem value="quarterly">Quarterly</MenuItem>
+              <MenuItem value="yearly">Yearly</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+
+      </Grid>
+
+      <Grid container spacing={2}>
+
+        {/* Patient Demographics Chart */}
+        <Grid item xs={12} md={6}>
+          
+          <div style={{  height: '550px', background: colors.primary[400], padding: '5px' }}>
+            <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>Patient Demographics Overview</Typography>
+            <Bar data={patientDemographicsChartData} options={{
+              plugins: { legend: { position: 'bottom' } },
+              scales: {
+                x: { stacked: true },
+                y: { stacked: true }
+              }
+            }} />
+          </div>
+        </Grid>
+
+         {/* Lab Tests Over Time Chart */}
+         <Grid item xs={12} md={6}>
+         
+          <div style={{  height: '550px', background: colors.primary[400], padding: '5px' }}>
+            <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
+            Lab Tests Over Time
+            </Typography> 
+            <Line data={labTestsChartData} options={{
+              plugins: { legend: { position: 'bottom' } },
+              responsive: true,
+              scales: {
+                x: { stacked: true },
+                y: {stacked: false}
+              }
+            }} />
+          </div>
+        </Grid>
+     
+  
+      {/* Treatment Status Chart */}
+      <Grid item xs={12} md={6}>
+  
+        <div style={{  height: '550px', background: colors.primary[400], padding: '5px' }}>
+        <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
+          Treatment Status Overview
+        </Typography>
+          <Bar 
+            data={treatmentStatusChartData}
+            options={{
+              plugins: { legend: { position: 'bottom' } },
+              scales: {
+                x: { stacked: true },
+                y: { stacked: true }
+              }
+            }} 
+          />
+        </div>
+      </Grid>
+
+      {/* Treatment Outcome Chart */}
+      <Grid item xs={10} md={6}>
+       
+        <div style={{  height: '550px', background: colors.primary[400], padding: '5px' }}>
+           <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
+          Treatment Outcomes Overview
+        </Typography>
+          <Bar 
+            data={treatmentOutcomeChartData}
+            options={{
+              plugins: { legend: { position: 'bottom' } },
+              scales: {
+                x: { stacked: true },
+                y: { stacked: true }
+              }
+            }} 
+          />
+        </div>
+      </Grid>
+
+      {/* Treatment Regimen Chart */}
+      <Grid item xs={10} md={6}>
+       
+       <div style={{  height: '550px', background: colors.primary[400], padding: '5px' }}>
+          <Typography variant="h6" sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
+         Treatment Regimens Overview
+       </Typography>
+         <Bar 
+           data={treatmentRegimenChartData}
+           options={{
+             plugins: { legend: { position: 'bottom' } },
+             scales: {
+               x: { stacked: true },
+               y: { stacked: true }
+             }
+           }} 
+         />
+       </div>
+     </Grid>
+
+
+    </Grid>
+      
+    </Box>
   );
 };
 
