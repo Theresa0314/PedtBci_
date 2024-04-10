@@ -238,76 +238,78 @@ const ReportsPage = () => {
   }
   
 
-
-const fetchTreatmentData = async () => {
-  // Initialize status and outcome counts objects
-  const treatmentStatusCounts = {
-    'Pending': {},
-    'Ongoing': {},
-    'End': {}
-  };
-  
-  const treatmentOutcomeCounts = {
-    'Not Evaluated': {},
-    'Cured/Treatment Completed': {},
-    'Treatment Failed': {},
-    'Died': {},
-    'Lost to Follow up': {}
-  };
-
-  try {
-    const querySnapshotTreatment = await getDocs(collection(db, "treatmentPlan"));
-    querySnapshotTreatment.forEach((doc) => {
-      const data = doc.data();
-      const startDate = new Date(data.startDateTP);
-      const monthYearKey = `${startDate.getMonth() + 1}-${startDate.getFullYear()}`;
-
-      // Increment status count
-      if (!treatmentStatusCounts[data.status][monthYearKey]) {
-        treatmentStatusCounts[data.status][monthYearKey] = 0;
-      }
-      treatmentStatusCounts[data.status][monthYearKey]++;
-
-      // Always increment outcome count, regardless of the status
-      const outcomeKey = data.outcome || 'Not Evaluated';
-      if (!treatmentOutcomeCounts[outcomeKey][monthYearKey]) {
-        treatmentOutcomeCounts[outcomeKey][monthYearKey] = 0;
-      }
-      treatmentOutcomeCounts[outcomeKey][monthYearKey]++;
-    });
+  const fetchTreatmentData = async (selectedTimePeriod = 'monthly') => {
+    // Initialize status and outcome counts objects
+    const treatmentStatusCounts = {
+      'Pending': {},
+      'Ongoing': {},
+      'End': {}
+    };
     
-    // Combine all month-year keys from both status and outcomes
-    const combinedKeys = new Set([
-      ...Object.keys(treatmentStatusCounts['Pending']),
-      ...Object.keys(treatmentStatusCounts['Ongoing']),
-      ...Object.keys(treatmentStatusCounts['End']),
-      ...Object.keys(treatmentOutcomeCounts['Not Evaluated']),
-      ...Object.keys(treatmentOutcomeCounts['Cured/Treatment Completed']),
-      ...Object.keys(treatmentOutcomeCounts['Treatment Failed']),
-      ...Object.keys(treatmentOutcomeCounts['Died']),
-      ...Object.keys(treatmentOutcomeCounts['Lost to Follow up']),
-    ]);
-
-    // Sort the combined keys to create the labels
-    const labels = Array.from(combinedKeys).sort((a, b) => 
-      new Date(a.split('-')[1], a.split('-')[0]) - 
-      new Date(b.split('-')[1], b.split('-')[0])
-    );
-
-    // Create the datasets for the status chart
-    const statusChartData = createChartDataset(labels, treatmentStatusCounts, 'status');
-
-    // Create the datasets for the outcome chart
-    const outcomeChartData = createChartDataset(labels, treatmentOutcomeCounts, 'outcome');
-
-    // Update state with the new chart data
-    setTreatmentStatusChartData(statusChartData);
-    setTreatmentOutcomeChartData(outcomeChartData);
-
-  } catch (error) {
-    console.error("Error fetching treatment data:", error);
-  }
-};
+    const treatmentOutcomeCounts = {
+      'Not Evaluated': {},
+      'Cured/Treatment Completed': {},
+      'Treatment Failed': {},
+      'Died': {},
+      'Lost to Follow up': {}
+    };
+  
+    try {
+      const querySnapshotTreatment = await getDocs(collection(db, "treatmentPlan"));
+      querySnapshotTreatment.forEach((doc) => {
+        const data = doc.data();
+        const startDate = new Date(data.startDateTP);
+  
+        // Use the groupByTimePeriod function to group the startDate by the selectedTimePeriod
+        let dateKey = startDate.toLocaleDateString('en-us', { year: 'numeric', month: 'short' });
+        if (selectedTimePeriod === 'yearly') {
+          dateKey = `${startDate.getFullYear()}`;
+        } else if (selectedTimePeriod === 'quarterly') {
+          const quarter = Math.floor((startDate.getMonth() + 3) / 3);
+          dateKey = `${startDate.getFullYear()}-Q${quarter}`;
+        }
+  
+        // Increment status count
+        if (!treatmentStatusCounts[data.status][dateKey]) {
+          treatmentStatusCounts[data.status][dateKey] = 0;
+        }
+        treatmentStatusCounts[data.status][dateKey]++;
+  
+        // Always increment outcome count, regardless of the status
+        const outcomeKey = data.outcome || 'Not Evaluated';
+        if (!treatmentOutcomeCounts[outcomeKey][dateKey]) {
+          treatmentOutcomeCounts[outcomeKey][dateKey] = 0;
+        }
+        treatmentOutcomeCounts[outcomeKey][dateKey]++;
+      });
+      
+      // Combine all date keys from both status and outcomes, group by the selectedTimePeriod if necessary
+      const combinedKeys = new Set(Object.keys(treatmentStatusCounts['Pending'])
+        .concat(Object.keys(treatmentStatusCounts['Ongoing']))
+        .concat(Object.keys(treatmentStatusCounts['End']))
+        .concat(Object.keys(treatmentOutcomeCounts['Not Evaluated']))
+        .concat(Object.keys(treatmentOutcomeCounts['Cured/Treatment Completed']))
+        .concat(Object.keys(treatmentOutcomeCounts['Treatment Failed']))
+        .concat(Object.keys(treatmentOutcomeCounts['Died']))
+        .concat(Object.keys(treatmentOutcomeCounts['Lost to Follow up'])));
+  
+      // Sort the combined keys to create the labels
+      const labels = Array.from(combinedKeys).sort((a, b) => new Date(a) - new Date(b));
+  
+      // Create the datasets for the status chart
+      const statusChartData = createChartDataset(labels, treatmentStatusCounts, 'status');
+  
+      // Create the datasets for the outcome chart
+      const outcomeChartData = createChartDataset(labels, treatmentOutcomeCounts, 'outcome');
+  
+      // Update state with the new chart data
+      setTreatmentStatusChartData(statusChartData);
+      setTreatmentOutcomeChartData(outcomeChartData);
+  
+    } catch (error) {
+      console.error("Error fetching treatment data:", error);
+    }
+  };
 
 // Helper function to create the datasets for the chart
 function createChartDataset(labels, counts, type) {
@@ -338,28 +340,33 @@ function createChartDataset(labels, counts, type) {
 useEffect(() => {
   fetchPatientDemographics(timePeriod);
   fetchLabTestsOverTime(timePeriod);
-  fetchTreatmentData();
+  fetchTreatmentData(timePeriod);
 }, [timePeriod]);
 
   return (
     <Box m={2}>
       <Header title="Report Generation" subtitle="Summary Report" />
-      <Grid item xs={12}>
-  <FormControl fullWidth>
-    <InputLabel id="time-period-label">Time Period</InputLabel>
-    <Select
-      labelId="time-period-label"
-      id="time-period"
-      value={timePeriod}
-      label="Time Period"
-      onChange={handleTimePeriodChange}
-    >
-      <MenuItem value="monthly">Monthly</MenuItem>
-      <MenuItem value="quarterly">Quarterly</MenuItem>
-      <MenuItem value="yearly">Yearly</MenuItem>
-    </Select>
-  </FormControl>
-</Grid>
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={12} sm={8} md={3} lg={4}>
+          <FormControl fullWidth>
+            <InputLabel id="time-period-label">Time Period</InputLabel>
+            <Select
+              labelId="time-period-label"
+              id="time-period"
+              value={timePeriod}
+              label="Time Period"
+              onChange={handleTimePeriodChange}
+            >
+              <MenuItem value="monthly">Monthly</MenuItem>
+              <MenuItem value="quarterly">Quarterly</MenuItem>
+              <MenuItem value="yearly">Yearly</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        {/* Other grid items */}
+      </Grid>
+
+
       <Grid container spacing={2}>
 
 
