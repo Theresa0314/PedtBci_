@@ -251,7 +251,16 @@ const Sidebar = () => {
                   setSelected={setSelected}
                 />
               )}
-
+              
+            {canView('Report') && (
+                <Item
+                  title="Referral Reports"
+                  to="/r-report" 
+                  icon={<AssessmentOutlinedIcon />}
+                  selected={selected}
+                  setSelected={setSelected}
+                />
+              )}
 
             <Typography
               variant="h6"
