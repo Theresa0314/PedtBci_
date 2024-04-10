@@ -19,6 +19,7 @@ import TBMasterlist from "./pages/tbmasterlist";
 import Symptoms from "./pages/symptoms";
 import Contacts from "./pages/contacts";
 import ReportPage from "./pages/reports/ReportPage";
+import ReferralReport from "./pages/reports/ReferralReport";
 
 import Calendar from "./pages/calendar";
 
@@ -58,6 +59,7 @@ const router = createBrowserRouter(
         <Route path="/tbmasterlist" element={< TBMasterlist/>} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/p-report" element={<ReportPage/>} />
+        <Route path="/r-report" element={<ReferralReport/>} />
 
         <Route path="/patientInfo" element={<PatientInfo />} />
         <Route path="/patientgenform" element={<PatientGenForm />} />
