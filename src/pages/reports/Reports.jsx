@@ -466,7 +466,7 @@ const downloadPdfDocument = async () => {
 
   return (
     <Box m={2}>
-      <Header title="Report Generation" subtitle="Visual Summary Report" />
+      <Header title="Patient Report Generation" subtitle="Visual Summary Report" />
 
       <Grid container spacing={2} alignItems="center" justifyContent="space-between">
       <Grid item xs={12} sm={6} md={4} lg={3}>
