@@ -424,7 +424,19 @@ const downloadPdfDocument = async () => {
   if (printRef.current && reportData.length > 0) {
     const pdf = new jsPDF({ orientation: 'landscape' });
 
-    // Convert the charts div to a canvas
+    // A common footer for all pages
+    const addFooter = (pdf) => {
+      const pageCount = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(10);
+        pdf.setTextColor(0);
+        const footerText = 'Page ' + i + ' of ' + pageCount;
+        pdf.text(footerText, pdf.internal.pageSize.getWidth() - 40, pdf.internal.pageSize.getHeight() - 10);
+      }
+    };
+
+    // Convert the charts div to a canvas and add it as an image to the PDF
     const chartsCanvas = await html2canvas(printRef.current);
     const chartsData = chartsCanvas.toDataURL('image/png');
     const imgProps = pdf.getImageProperties(chartsData);
@@ -435,13 +447,12 @@ const downloadPdfDocument = async () => {
     // Create a new page for the table
     pdf.addPage();
 
-    // Add a title for the table
+    // Add the header for the table on the new page
     pdf.setFontSize(25);
     pdf.text('Total Patients Report', 14, 15);
 
-    // Define the columns and data for the table
-    const columns = ["Date", "Age", "Gender", "Total Lab Tests", "Ongoing Treatment", "Treatment Outcome"];
-    const tableData = reportData.map(item => [
+    // Define the table data and add it to the PDF
+    const bodyData = reportData.map(item => [
       item.date,
       item.age,
       item.gender,
@@ -450,12 +461,20 @@ const downloadPdfDocument = async () => {
       Object.entries(item.treatmentOutcome).map(([key, value]) => `${key}: ${value}`).join(', ')
     ]);
 
-    // Add the table to the new page
+    // Add the table to the document after the header
     pdf.autoTable({
-      head: [columns],
-      body: tableData,
-      startY: 20, // adjust this margin as needed to position the table below the header title
+      head: [["Date", "Age", "Gender", "Total Lab Tests", "Ongoing Treatment", "Treatment Outcome"]],
+      body: bodyData,
+      startY: 30,
     });
+
+    // Add the footer after the table has been created
+    addFooter(pdf);
+
+    // Add "END OF REPORTS" text on the last page
+    const today = new Date().toLocaleDateString();
+    pdf.setFontSize(16);
+    pdf.text(`END OF REPORTS (Date Generated: ${today})`, 14, pdf.internal.pageSize.getHeight() - 20);
 
     // Save the PDF
     pdf.save('patient-report.pdf');
@@ -463,6 +482,7 @@ const downloadPdfDocument = async () => {
     console.error('Element to print is not available');
   }
 };
+
 
   return (
     <Box m={2}>
