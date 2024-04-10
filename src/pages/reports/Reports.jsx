@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Box, Grid, useTheme, Typography, FormControl, InputLabel, Select, MenuItem, Button  } from '@mui/material';
 import Header from '../../components/Header';
 import { db } from '../../firebase.config';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { tokens } from "../../theme";
 import { Line, Bar } from 'react-chartjs-2';
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { jsPDF } from "jspdf";
+import 'jspdf-autotable';
+import html2canvas from "html2canvas";
 
 
 
@@ -350,24 +351,113 @@ useEffect(() => {
 
 const printRef = React.useRef(null);
 
+const fetchDataForReport = async () => {
+  const reportData = [];
+  const casesSnapshot = await getDocs(collection(db, 'cases'));
 
+  for (const caseDoc of casesSnapshot.docs) {
+    const caseData = caseDoc.data();
+    const startDate = caseData.startDate ? new Date(caseData.startDate).toLocaleDateString() : 'No date';
+    
+    const patientInfoRef = collection(db, 'patientsinfo');
+    const patientInfoQuery = query(patientInfoRef, where('caseNumber', '==', caseData.caseNumber));
+    const patientInfoSnapshot = await getDocs(patientInfoQuery);
+    
+    const patientInfoData = patientInfoSnapshot.docs[0]?.data();
+    
+    if (patientInfoData) {
+      // Calculate age using the birthdate
+      const age = patientInfoData.birthdate ? calculateAge(patientInfoData.birthdate) : 'No age';
+      let totalLabTests = 0;
+
+      // Aggregate the lab tests from different collections
+      const labTestTypes = ['igra', 'mtbrif', 'xray', 'tst', 'dst'];
+      for (const testType of labTestTypes) {
+        const labTestSnapshot = await getDocs(query(collection(db, testType), where('caseNumber', '==', caseData.caseNumber)));
+        totalLabTests += labTestSnapshot.size; // Sum up the lab tests
+      }
+      let ongoingTreatment = 0;
+      let treatmentOutcomes = {
+        'Not Evaluated': 0,
+        'Cured/Treatment Completed': 0,
+        'Treatment Failed': 0,
+        'Died': 0,
+        'Lost to Follow up': 0,
+      };
+    
+      // Fetch and count treatment outcomes and ongoing treatments
+      const treatmentPlansSnapshot = await getDocs(query(
+        collection(db, 'treatmentPlan'),
+        where('caseNumber', '==', caseData.caseNumber)
+      ));
+    
+      treatmentPlansSnapshot.forEach((doc) => {
+        const treatmentPlan = doc.data();
+        const outcome = treatmentPlan.outcome || 'Not Evaluated';
+        treatmentOutcomes[outcome] = (treatmentOutcomes[outcome] || 0) + 1;
+    
+        if (treatmentPlan.status === 'Ongoing') {
+          ongoingTreatment++;
+        }
+      });
+      reportData.push({
+        date: startDate,
+        age: age,
+        gender: patientInfoData.gender,
+        totalLabTests: totalLabTests,
+        ongoingTreatment: ongoingTreatment,
+        treatmentOutcome: treatmentOutcomes,
+      });
+    } else {
+      console.log('No patient info found for caseNumber:', caseData.caseNumber);
+    }
+  }
+  
+  // Sort by date after all data has been pushed
+  reportData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  return reportData;
+};
 const downloadPdfDocument = async () => {
-  if (printRef.current) {
+  const reportData = await fetchDataForReport();
+  if (printRef.current && reportData.length > 0) {
     const pdf = new jsPDF({ orientation: 'landscape' });
-    const canvas = await html2canvas(printRef.current);
-    const data = canvas.toDataURL('image/png');
-    const imgProps= pdf.getImageProperties(data);
+
+    // Convert the charts div to a canvas
+    const chartsCanvas = await html2canvas(printRef.current);
+    const chartsData = chartsCanvas.toDataURL('image/png');
+    const imgProps = pdf.getImageProperties(chartsData);
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(chartsData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
-    // This will add the image to the PDF fitting the page size
-    pdf.addImage(data, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save('charts.pdf');
+    // Create a new page for the table
+    pdf.addPage();
+
+    // Define the columns and data for the table
+    const columns = ["Date", "Age", "Gender", "Total Lab Tests", "Ongoing Treatment", "Treatment Outcome"];
+    const tableData = reportData.map(item => [
+      item.date,
+      item.age,
+      item.gender,
+      item.totalLabTests,
+      item.ongoingTreatment,
+      Object.entries(item.treatmentOutcome).map(([key, value]) => `${key}: ${value}`).join(', ')
+    ]);
+
+    // Add the table to the new page
+    pdf.autoTable({
+      head: [columns],
+      body: tableData,
+      startY: 10, // Start the table after a small vertical margin from the new page
+    });
+
+    // Save the PDF
+    pdf.save('patient-report.pdf');
   } else {
     console.error('Element to print is not available');
   }
 };
-
 
   return (
     <Box m={2}>
